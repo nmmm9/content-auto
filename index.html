@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>조합 생성기</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #fff;
+            color: #111;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 48px 24px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 32px;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #fff;
+            color: #333;
+            transition: border-color 0.15s, background 0.15s;
+        }
+
+        .btn:hover {
+            border-color: #999;
+            background: #fafafa;
+        }
+
+        .btn-primary {
+            background: #111;
+            color: #fff;
+            border-color: #111;
+        }
+
+        .btn-primary:hover {
+            background: #333;
+            border-color: #333;
+        }
+
+        .btn-delete {
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            border-radius: 4px;
+            font-size: 16px;
+            color: #999;
+            border-color: transparent;
+        }
+
+        .btn-delete:hover {
+            color: #e00;
+            background: #fee;
+            border-color: transparent;
+        }
+
+        .section-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .boxes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .box {
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .box-title {
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            background: none;
+            padding: 0;
+            width: 120px;
+            color: #111;
+        }
+
+        .box-title:focus {
+            outline: none;
+        }
+
+        .box-title::placeholder {
+            color: #999;
+        }
+
+        .box textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            border: 1px solid #e5e5e5;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: none;
+            color: #111;
+        }
+
+        .box textarea:focus {
+            outline: none;
+            border-color: #111;
+        }
+
+        .box textarea::placeholder {
+            color: #999;
+        }
+
+        .box-hint {
+            margin-top: 6px;
+            font-size: 11px;
+            color: #999;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #e5e5e5;
+            margin: 32px 0;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .result-count {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .result-list {
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .result-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            background: #fafafa;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .result-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .result-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .result-table .row-num {
+            width: 40px;
+            color: #999;
+            font-size: 13px;
+        }
+
+        .result-table .cell-value {
+            background: #f5f5f5;
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .empty-state {
+            padding: 48px 20px;
+            text-align: center;
+            color: #999;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>조합 생성기</h1>
+
+        <div class="toolbar">
+            <button class="btn" onclick="addBox()">+ 상자 추가</button>
+            <button class="btn btn-primary" onclick="generateCombinations()">조합 생성</button>
+            <button class="btn" onclick="copyResults()">복사</button>
+        </div>
+
+        <div class="section-label">입력</div>
+        <div class="boxes-grid" id="boxesContainer"></div>
+
+        <hr>
+
+        <div class="result-header">
+            <div class="section-label" style="margin:0">결과</div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <button class="btn" id="excelBtn" onclick="downloadExcel()" style="display:none;">엑셀 다운로드</button>
+                <div class="result-count" id="resultCount">0개</div>
+            </div>
+        </div>
+
+        <div class="result-list" id="resultList">
+            <div class="empty-state">상자에 요소를 입력하고 "조합 생성" 버튼을 클릭하세요</div>
+        </div>
+    </div>
+
+    <script>
+        let boxCount = 0;
+        let lastArrays = [];
+        let lastColumnNames = [];
+
+        window.onload = function() {
+            addBox('성별', '남\n여');
+            addBox('연령대', '20대\n30대\n40대\n50대이상');
+            addBox('가구형태', '1인가구\n2인가구\n3~4인가구\n5인이상');
+            addBox('거주형태', '아파트\n단독주택\n빌라/연립\n오피스텔');
+            addBox('거주지역성격', '도심\n주거밀집\n외곽\n농어촌');
+            addBox('소유형태', '자가\n전세\n월세\n기타');
+            addBox('라이프스테이지', '사회초년\n신혼\n자녀양육기\n은퇴기');
+            addBox('거주기간', '1년미만\n1~3년\n3~5년\n5년이상');
+            addBox('이동성', '정주형\n반정주형\n유동형\n빈번이동형');
+            addBox('생활리듬', '아침형\n저녁형\n불규칙형\n교대근무형');
+            addBox('주거결정방식', '본인단독\n배우자협의\n가족협의\n타인의존');
+            addBox('삶의우선순위', '가족중심\n개인중심\n일중심\n관계중심');
+            addBox('외부노출정도', '개방적\n선택적개방\n폐쇄적\n은둔형');
+            addBox('라이프이벤트상태', '준비중\n진행중\n완료\n해당없음');
+            addBox('공간사용밀도', '고밀도\n중밀도\n저밀도\n극저밀도');
+            addBox('집의기능적역할', '휴식공간\n작업공간\n사교공간\n복합공간');
+            addBox('방문자빈도', '매우잦음\n가끔\n드묾\n거의없음');
+            addBox('생활소음허용도', '매우민감\n민감\n보통\n관대');
+            addBox('수납소유량규모', '미니멀\n적정\n다소많음\n맥시멀');
+            addBox('집관리방식', '직접꼼꼼\n직접간단\n외주관리\n방치형');
+            addBox('집에대한관여도', '매우높음\n높음\n보통\n낮음');
+            addBox('주거안정성인식', '매우안정\n안정\n불안정\n매우불안정');
+        };
+
+        function addBox(title = '', defaultValue = '') {
+            boxCount++;
+            const container = document.getElementById('boxesContainer');
+            const boxId = 'box_' + boxCount;
+
+            const boxDiv = document.createElement('div');
+            boxDiv.className = 'box';
+            boxDiv.id = boxId;
+            boxDiv.innerHTML = `
+                <div class="box-header">
+                    <input type="text" class="box-title" placeholder="상자 ${boxCount}" value="${title}">
+                    <button class="btn btn-delete" onclick="deleteBox('${boxId}')">×</button>
+                </div>
+                <textarea placeholder="요소 입력 (줄바꿈으로 구분)">${defaultValue}</textarea>
+                <div class="box-hint">한 줄에 하나씩 입력</div>
+            `;
+            container.appendChild(boxDiv);
+        }
+
+        function deleteBox(boxId) {
+            const box = document.getElementById(boxId);
+            if (box && document.querySelectorAll('.box').length > 1) {
+                box.remove();
+            } else {
+                alert('최소 1개의 상자는 필요합니다.');
+            }
+        }
+
+        function parseItems(text) {
+            return text.split('\n').map(s => s.trim()).filter(s => s);
+        }
+
+        // 조합 총 개수 계산 (메모리 사용 없이)
+        function getTotalCount(arrays) {
+            return arrays.reduce((acc, arr) => acc * arr.length, 1);
+        }
+
+        // Generator로 조합 생성 (메모리 효율적)
+        function* cartesianGenerator(arrays) {
+            if (arrays.length === 0) {
+                yield [];
+                return;
+            }
+            const lengths = arrays.map(a => a.length);
+            const total = getTotalCount(arrays);
+            const indices = new Array(arrays.length).fill(0);
+
+            for (let i = 0; i < total; i++) {
+                yield arrays.map((arr, j) => arr[indices[j]]);
+
+                // 인덱스 증가 (오른쪽부터)
+                for (let j = arrays.length - 1; j >= 0; j--) {
+                    indices[j]++;
+                    if (indices[j] < lengths[j]) break;
+                    indices[j] = 0;
+                }
+            }
+        }
+
+        // N개만 가져오기
+        function getFirstN(arrays, n) {
+            const result = [];
+            const gen = cartesianGenerator(arrays);
+            for (let i = 0; i < n; i++) {
+                const next = gen.next();
+                if (next.done) break;
+                result.push(next.value);
+            }
+            return result;
+        }
+
+        function formatNumber(num) {
+            if (num >= 1e12) return (num / 1e12).toFixed(1) + '조';
+            if (num >= 1e8) return (num / 1e8).toFixed(1) + '억';
+            if (num >= 1e4) return (num / 1e4).toFixed(1) + '만';
+            return num.toLocaleString();
+        }
+
+        function generateCombinations() {
+            const boxes = document.querySelectorAll('.box');
+            const allItems = [];
+            const columnNames = [];
+
+            boxes.forEach((box, idx) => {
+                const items = parseItems(box.querySelector('textarea').value);
+                if (items.length > 0) {
+                    allItems.push(items);
+                    const title = box.querySelector('.box-title').value || `상자 ${idx + 1}`;
+                    columnNames.push(title);
+                }
+            });
+
+            if (allItems.length === 0) {
+                alert('최소 하나의 상자에 요소를 입력해주세요.');
+                return;
+            }
+
+            const totalCount = getTotalCount(allItems);
+            lastArrays = allItems;
+            lastColumnNames = columnNames;
+
+            document.getElementById('resultCount').textContent = formatNumber(totalCount) + '개';
+
+            const PREVIEW_LIMIT = 100;
+            const previewData = getFirstN(allItems, PREVIEW_LIMIT);
+
+            const headerHtml = `
+                <tr>
+                    <th class="row-num">#</th>
+                    ${columnNames.map(name => `<th>${name}</th>`).join('')}
+                </tr>
+            `;
+
+            const rowsHtml = previewData.map((combo, i) => `
+                <tr>
+                    <td class="row-num">${i + 1}</td>
+                    ${combo.map(x => `<td><span class="cell-value">${x}</span></td>`).join('')}
+                </tr>
+            `).join('');
+
+            let noticeHtml = '';
+            if (totalCount > PREVIEW_LIMIT) {
+                noticeHtml = `<div style="padding:16px;text-align:center;color:#666;font-size:13px;border-top:1px solid #e5e5e5;">
+                    미리보기 ${PREVIEW_LIMIT}개만 표시 · 전체 ${formatNumber(totalCount)}개는 엑셀 다운로드
+                    ${totalCount > 1e6 ? '<br><span style="color:#e00;">⚠️ 100만 개 초과 시 다운로드에 시간이 걸릴 수 있습니다</span>' : ''}
+                </div>`;
+            }
+
+            document.getElementById('resultList').innerHTML = `<table class="result-table"><thead>${headerHtml}</thead><tbody>${rowsHtml}</tbody></table>${noticeHtml}`;
+            document.getElementById('excelBtn').style.display = 'inline-block';
+        }
+
+        function copyResults() {
+            if (lastArrays.length === 0) {
+                alert('먼저 조합을 생성해주세요.');
+                return;
+            }
+
+            const totalCount = getTotalCount(lastArrays);
+            const COPY_LIMIT = 10000;
+
+            if (totalCount > COPY_LIMIT) {
+                alert(`복사는 ${formatNumber(COPY_LIMIT)}개까지만 가능합니다.\n전체 데이터는 엑셀 다운로드를 이용해주세요.`);
+            }
+
+            const data = getFirstN(lastArrays, COPY_LIMIT);
+            const header = lastColumnNames.join('\t');
+            const rows = data.map(c => c.join('\t')).join('\n');
+            const text = header + '\n' + rows;
+            navigator.clipboard.writeText(text).then(() => alert('복사되었습니다.'));
+        }
+
+        async function downloadExcel() {
+            if (lastArrays.length === 0) {
+                alert('먼저 조합을 생성해주세요.');
+                return;
+            }
+
+            const totalCount = getTotalCount(lastArrays);
+            const MAX_EXCEL = 10000000; // 1000만 개 제한
+
+            if (totalCount > MAX_EXCEL) {
+                alert(`엑셀 다운로드는 최대 ${formatNumber(MAX_EXCEL)}개까지 가능합니다.\n현재: ${formatNumber(totalCount)}개\n\n상자 수나 요소를 줄여주세요.`);
+                return;
+            }
+
+            const btn = document.getElementById('excelBtn');
+            btn.disabled = true;
+            btn.textContent = '생성 중...';
+
+            // UI 업데이트를 위해 잠시 대기
+            await new Promise(r => setTimeout(r, 50));
+
+            try {
+                const CHUNK_SIZE = 100000;
+                const gen = cartesianGenerator(lastArrays);
+                const data = [lastColumnNames];
+                let count = 0;
+
+                while (true) {
+                    const next = gen.next();
+                    if (next.done) break;
+                    data.push(next.value);
+                    count++;
+
+                    // 진행률 표시
+                    if (count % CHUNK_SIZE === 0) {
+                        btn.textContent = `생성 중... ${formatNumber(count)}/${formatNumber(totalCount)}`;
+                        await new Promise(r => setTimeout(r, 0)); // UI 업데이트 허용
+                    }
+                }
+
+                btn.textContent = '엑셀 변환 중...';
+                await new Promise(r => setTimeout(r, 50));
+
+                const ws = XLSX.utils.aoa_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, '조합결과');
+                XLSX.writeFile(wb, '조합결과.xlsx');
+            } catch (e) {
+                alert('오류가 발생했습니다: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '엑셀 다운로드';
+            }
+        }
+    </script>
+</body>
+</html>
