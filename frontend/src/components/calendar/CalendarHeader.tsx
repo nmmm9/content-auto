@@ -10,27 +10,25 @@ interface CalendarHeaderProps {
 
 export default function CalendarHeader({ year, month, onPrev, onNext, onToday }: CalendarHeaderProps) {
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onPrev}
-          className="p-1.5 rounded-lg hover:bg-gray-100 transition"
-        >
-          <ChevronLeft size={20} className="text-gray-600" />
-        </button>
-        <h3 className="text-lg font-bold text-gray-900 min-w-[140px] text-center">
-          {year}년 {month + 1}월
-        </h3>
-        <button
-          onClick={onNext}
-          className="p-1.5 rounded-lg hover:bg-gray-100 transition"
-        >
-          <ChevronRight size={20} className="text-gray-600" />
-        </button>
-      </div>
+    <div className="flex items-center gap-2">
+      <button
+        onClick={onPrev}
+        className="p-1 rounded-md hover:bg-gray-100 transition"
+      >
+        <ChevronLeft size={16} className="text-gray-500" />
+      </button>
+      <span className="text-sm font-bold text-gray-800 min-w-[100px] text-center">
+        {year}년 {month + 1}월
+      </span>
+      <button
+        onClick={onNext}
+        className="p-1 rounded-md hover:bg-gray-100 transition"
+      >
+        <ChevronRight size={16} className="text-gray-500" />
+      </button>
       <button
         onClick={onToday}
-        className="px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition"
+        className="ml-1 px-2.5 py-1 text-[11px] font-semibold text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition"
       >
         오늘
       </button>

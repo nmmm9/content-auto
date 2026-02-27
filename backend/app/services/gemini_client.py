@@ -1,5 +1,7 @@
+import re
 import time
 import json
+import asyncio
 import logging
 from google import genai
 from google.genai import types
@@ -8,6 +10,8 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 _client = None
+
+MAX_RETRIES = 3
 
 
 def get_client() -> genai.Client:
@@ -20,6 +24,31 @@ def get_client() -> genai.Client:
 
 
 DEFAULT_MODEL = "gemini-2.5-flash"
+
+
+def _parse_retry_delay(error_msg: str) -> float:
+    """429 에러 메시지에서 retry delay 추출"""
+    match = re.search(r'retry in (\d+(?:\.\d+)?)', str(error_msg), re.IGNORECASE)
+    if match:
+        return min(float(match.group(1)), 60.0)
+    return 10.0
+
+
+async def _retry_on_rate_limit(func, *args, **kwargs):
+    """429 Rate Limit 자동 재시도 (최대 MAX_RETRIES회)"""
+    for attempt in range(MAX_RETRIES + 1):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            error_str = str(e)
+            if '429' in error_str or 'RESOURCE_EXHAUSTED' in error_str:
+                if attempt >= MAX_RETRIES:
+                    raise
+                delay = _parse_retry_delay(error_str)
+                logger.warning(f"Rate limit hit (attempt {attempt + 1}/{MAX_RETRIES}), waiting {delay:.0f}s...")
+                await asyncio.sleep(delay)
+            else:
+                raise
 
 
 async def upload_video(file_path: str) -> object:
@@ -45,7 +74,8 @@ async def analyze_video(video_file: object, prompt: str, model: str = DEFAULT_MO
     """업로드된 비디오를 분석하여 JSON 결과 반환"""
     client = get_client()
 
-    response = client.models.generate_content(
+    response = await _retry_on_rate_limit(
+        client.models.generate_content,
         model=model,
         contents=[video_file, prompt],
         config=types.GenerateContentConfig(
@@ -62,7 +92,8 @@ async def generate_content(prompt: str, system_instruction: str, model: str = DE
     """텍스트 기반 콘텐츠 생성 (플랫폼 변환용)"""
     client = get_client()
 
-    response = client.models.generate_content(
+    response = await _retry_on_rate_limit(
+        client.models.generate_content,
         model=model,
         contents=prompt,
         config=types.GenerateContentConfig(
