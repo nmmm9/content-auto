@@ -58,33 +58,35 @@ export default function CalendarGrid({ days, selectedDate, onDateClick }: Calend
           const platforms = getUniquePlatforms(day.contents)
           const dayOfWeek = day.date.getDay()
 
+          if (!day.isCurrentMonth) {
+            return <div key={i} className="border-b border-r border-gray-100 bg-gray-50/40" />
+          }
+
           return (
             <button
               key={i}
               onClick={() => onDateClick(dateStr)}
               className={`relative flex flex-col justify-between p-2 border-b border-r border-gray-100 text-left transition-all duration-150
-                ${!day.isCurrentMonth ? 'bg-gray-50/60' : 'bg-white hover:bg-gray-50'}
+                bg-white hover:bg-gray-50
                 ${isSelected ? 'bg-blue-50/80 ring-2 ring-inset ring-blue-500' : ''}
               `}
             >
               {/* 날짜 숫자 */}
               <span className={`text-sm font-semibold leading-none
-                ${!day.isCurrentMonth
-                    ? 'text-gray-300'
-                    : isSelected
-                      ? 'text-blue-700'
-                      : dayOfWeek === 0
-                        ? 'text-red-400'
-                        : dayOfWeek === 6
-                          ? 'text-blue-400'
-                          : 'text-gray-700'
+                ${isSelected
+                  ? 'text-blue-700'
+                  : dayOfWeek === 0
+                    ? 'text-red-400'
+                    : dayOfWeek === 6
+                      ? 'text-blue-400'
+                      : 'text-gray-700'
                 }`}
               >
                 {day.date.getDate()}
               </span>
 
               {/* 플랫폼 바 */}
-              {platforms.length > 0 && day.isCurrentMonth && (
+              {platforms.length > 0 && (
                 <div className="flex flex-col gap-0.5 mt-auto">
                   {platforms.map(p => {
                     const cfg = platformConfig[p]
