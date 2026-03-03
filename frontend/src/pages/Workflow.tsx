@@ -764,21 +764,24 @@ function WorkflowInner() {
   }, [])
 
   return (
-    <div className="h-[calc(100vh-64px)] flex flex-col">
+    <div className="h-[calc(100vh-73px)] flex flex-col animate-in fade-in duration-500">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          <Zap size={20} className="text-yellow-500" />
-          <h2 className="text-lg font-bold text-gray-900">워크플로우</h2>
-          <span className={`text-xs px-2 py-0.5 rounded-full ${
-            currentPhase === 'approval'
-              ? 'bg-amber-100 text-amber-700'
-              : currentPhase === 'pending'
-                ? 'bg-red-100 text-red-700'
-                : isRunning
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'bg-gray-100 text-gray-500'
-          }`}>
+      <div className="flex items-center justify-between px-6 py-3 bg-white/70 backdrop-blur-md border-b border-slate-200/60 shadow-sm z-10">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-100 text-amber-600 rounded-xl shadow-inner">
+              <Zap size={20} className="text-amber-600" strokeWidth={2.5} />
+            </div>
+            <h2 className="text-lg font-extrabold tracking-tight text-slate-900">자동화 워크플로우</h2>
+          </div>
+          <span className={`text-xs font-bold px-3 py-1 rounded-full shadow-sm ${currentPhase === 'approval'
+            ? 'bg-amber-100 text-amber-700'
+            : currentPhase === 'pending'
+              ? 'bg-rose-100 text-rose-700'
+              : isRunning
+                ? 'bg-indigo-100 text-indigo-700 outline outline-2 outline-indigo-200'
+                : 'bg-slate-100 text-slate-500'
+            }`}>
             {currentPhase === 'approval'
               ? `승인 대기 (${pendingApprovals.length}개)`
               : currentPhase === 'pending'
@@ -792,44 +795,43 @@ function WorkflowInner() {
                       : 'YouTube URL을 입력하세요'}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {currentPhase === 'approval' && pendingApprovals.length > 0 && (
             <>
               <button
                 onClick={approveAll}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 transition"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-green-500 rounded-xl hover:shadow-md hover:scale-105 transition-all"
               >
-                <CheckCircle size={14} />
+                <CheckCircle size={16} strokeWidth={2.5} />
                 전체 승인
               </button>
               <button
                 onClick={rejectAll}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-red-500 rounded-lg hover:bg-red-600 transition"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-rose-600 bg-rose-50 rounded-xl hover:bg-rose-100 hover:shadow-sm transition-all border border-rose-100"
               >
-                <XCircle size={14} />
+                <XCircle size={16} strokeWidth={2.5} />
                 전체 거절
               </button>
-              <div className="w-px h-6 bg-gray-300 mx-1" />
+              <div className="w-px h-8 bg-slate-200 mx-2" />
             </>
           )}
           <button
             onClick={resetWorkflow}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-slate-200/60 rounded-xl hover:bg-slate-50 hover:shadow-sm transition-all shadow-sm"
           >
-            <RotateCcw size={14} />
+            <RotateCcw size={16} strokeWidth={2.5} />
             초기화
           </button>
           <button
             onClick={runWorkflow}
             disabled={isRunning || currentPhase === 'approval' || !analysisResult}
-            className={`flex items-center gap-1.5 px-4 py-1.5 text-sm text-white rounded-lg transition ${
-              isRunning || currentPhase === 'approval' || !analysisResult
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-green-600 hover:bg-green-700'
-            }`}
+            className={`flex items-center gap-2 px-5 py-2 text-sm font-bold text-white rounded-xl shadow-md transition-all ${isRunning || currentPhase === 'approval' || !analysisResult
+              ? 'bg-slate-300 cursor-not-allowed shadow-none'
+              : 'bg-gradient-to-r from-indigo-500 to-violet-500 hover:shadow-lg hover:scale-105'
+              }`}
           >
-            <Play size={14} />
-            {isRunning ? '변환 중...' : !analysisResult ? 'URL 입력 필요' : '실행'}
+            <Play size={16} strokeWidth={2.5} />
+            {isRunning ? '변환 중...' : !analysisResult ? 'URL 입력 필요' : '보내기'}
           </button>
         </div>
       </div>

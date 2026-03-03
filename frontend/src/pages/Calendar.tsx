@@ -362,13 +362,15 @@ export default function Calendar() {
   }, [selectedContent])
 
   return (
-    <div className="h-[calc(100vh-64px)] flex flex-col">
+    <div className="h-[calc(100vh-73px)] flex flex-col animate-in fade-in duration-500">
       {/* 헤더 */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100 bg-white">
+      <div className="flex items-center justify-between px-6 py-3 border-b border-slate-200/60 bg-white/70 backdrop-blur-md shadow-sm z-10">
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2.5">
-            <CalendarDays size={20} className="text-blue-600" />
-            <h2 className="text-lg font-bold text-gray-900">컨텐츠 캘린더</h2>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center shadow-inner">
+              <CalendarDays size={20} className="text-indigo-600" strokeWidth={2.5} />
+            </div>
+            <h2 className="text-lg font-extrabold tracking-tight text-slate-900">컨텐츠 캘린더</h2>
           </div>
 
           {/* 캘린더 네비게이션 */}
@@ -680,9 +682,8 @@ export default function Calendar() {
                           <span className="text-xs font-bold text-gray-700">{platformLabel[platform]} {pDef.label} 추이</span>
                         </div>
                         {changeRate !== 0 && (
-                          <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${
-                            changeRate > 0 ? 'bg-emerald-50' : 'bg-red-50'
-                          }`}>
+                          <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${changeRate > 0 ? 'bg-emerald-50' : 'bg-red-50'
+                            }`}>
                             {changeRate > 0
                               ? <ArrowUpRight size={12} className="text-emerald-600" />
                               : <ArrowDownRight size={12} className="text-red-600" />
@@ -766,19 +767,21 @@ export default function Calendar() {
         </div>
 
         {/* 상세 패널 */}
-        <div className="w-[380px] border-l border-gray-200 bg-white flex flex-col overflow-hidden">
+        <div className="w-[400px] border-l border-slate-200/60 bg-slate-50 flex flex-col overflow-hidden shadow-sm relative z-0">
           {selectedDate && (
             <>
               {/* 패널 헤더 */}
-              <div className="flex items-center px-5 py-4 border-b border-gray-100">
-                <div className="flex items-center gap-2.5">
-                  <CalendarClock size={16} className="text-blue-500" />
+              <div className="flex items-center px-6 py-5 border-b border-slate-200/60 bg-white">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo-50 rounded-lg shadow-inner flex items-center justify-center">
+                    <CalendarClock size={20} className="text-indigo-600" strokeWidth={2.5} />
+                  </div>
                   <div>
-                    <div className="font-bold text-gray-900 text-sm">{formatSelectedDate(selectedDate)}</div>
-                    <div className="text-[11px] text-gray-400">
+                    <div className="font-bold text-slate-900 text-base">{formatSelectedDate(selectedDate)}</div>
+                    <div className="text-xs font-semibold text-slate-500 mt-0.5">
                       {selectedDayContents.length > 0
-                        ? `${selectedDayContents.length}개 콘텐츠`
-                        : '콘텐츠 없음'}
+                        ? `${selectedDayContents.length}개 콘텐츠 업로드`
+                        : '업로드 예정 콘텐츠 없음'}
                     </div>
                   </div>
                 </div>
