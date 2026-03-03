@@ -18,7 +18,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 
-import PlatformNode from '../components/workflow/PlatformNode'
+import PlatformNode, { type PlatformNodeData } from '../components/workflow/PlatformNode'
 import ResultNode from '../components/workflow/ResultNode'
 import TemplateNode from '../components/workflow/TemplateNode'
 import EditModal from '../components/workflow/EditModal'
@@ -214,7 +214,7 @@ function WorkflowInner() {
   const [pendingApprovals, setPendingApprovals] = useState<string[]>([])
   const [completedCount, setCompletedCount] = useState(0)
   const [failedCount, setFailedCount] = useState(0)
-  const [youtubeUrl, setYoutubeUrl] = useState<string | null>(null)
+  const [, setYoutubeUrl] = useState<string | null>(null)
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null)
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash')
@@ -235,7 +235,7 @@ function WorkflowInner() {
   // 동적 자동 레이아웃 (노드 크기 측정 기반)
   const { fitView, getNodes } = useReactFlow()
   const prevPhaseRef = useRef(currentPhase)
-  const layoutTimerRef = useRef<ReturnType<typeof setTimeout>>()
+  const layoutTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const autoLayout = useCallback(() => {
     const allNodes = getNodes()

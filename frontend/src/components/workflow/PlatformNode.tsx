@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { Youtube, FileText, Facebook, Instagram, CheckCircle, XCircle, Loader2, Clock, Clapperboard, Film, AtSign, UserCheck, Edit3, Link, ArrowRight } from 'lucide-react'
 
-interface PlatformNodeData {
+export interface PlatformNodeData {
   label: string
   platform: string
   status: 'idle' | 'pending' | 'waiting_approval' | 'uploading' | 'success' | 'failed' | 'ready'
@@ -16,7 +16,6 @@ interface PlatformNodeData {
   videoThumbnail?: string
   channelName?: string
   analysisResult?: Record<string, unknown>
-  progress?: number
   analysisSteps?: { message: string; progress: number; active: boolean; done: boolean }[]
   generatedContent?: {
     title?: string
