@@ -1,13 +1,5 @@
-from openai import OpenAI
-from app.core.config import settings
-
-client = None
-
-def get_client():
-    global client
-    if client is None:
-        client = OpenAI(api_key=settings.OPENAI_API_KEY)
-    return client
+import json
+from app.services.gemini_client import generate_content
 
 
 PLATFORM_PROMPTS = {
@@ -132,19 +124,10 @@ async def transform_content(
         tags=tags,
     )
 
-    openai_client = get_client()
-    response = openai_client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": prompt_config["system"]},
-            {"role": "user", "content": user_prompt},
-        ],
-        response_format={"type": "json_object"},
-        temperature=0.7,
+    result = await generate_content(
+        prompt=user_prompt,
+        system_instruction=prompt_config["system"],
     )
-
-    import json
-    result = json.loads(response.choices[0].message.content)
     return result
 
 
