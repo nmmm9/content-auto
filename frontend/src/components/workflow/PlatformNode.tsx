@@ -143,7 +143,7 @@ export default function PlatformNode({ id, data }: NodeProps) {
     <div
       onClick={handleNodeClick}
       className={`px-5 py-4 rounded-xl border-2 shadow-lg bg-white overflow-hidden ${borderByStatus[d.status || 'idle'] || 'border-gray-200'} ${d.isMain ? 'ring-2 ring-red-500 ring-offset-2' : ''} ${d.isMain && d.analysisResult && (d.status === 'ready' || d.status === 'success') ? 'cursor-pointer hover:shadow-xl transition-shadow' : ''}`}
-      style={{ width: d.isMain ? 300 : 260, minHeight: 80 }}
+      style={{ width: '100%', height: '100%' }}
     >
       <NodeResizer
         minWidth={d.isMain ? 280 : 220}
