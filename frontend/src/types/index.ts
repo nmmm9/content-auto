@@ -47,3 +47,32 @@ export interface UploadHistory {
 }
 
 export type Platform = 'youtube' | 'naver_blog' | 'facebook' | 'instagram'
+
+// Analytics
+export interface PlatformClickSummary {
+  platform: string
+  total_clicks: number
+  percentage: number
+}
+
+export interface ContentClickRanking {
+  content_id: number
+  content_title: string
+  total_clicks: number
+  platforms: string[]
+}
+
+export interface ClickTrendPoint {
+  date: string
+  click_count: number
+}
+
+export interface AnalyticsSummary {
+  total_clicks: number
+  total_links: number
+  today_clicks: number
+  avg_clicks_per_link: number
+  platform_breakdown: PlatformClickSummary[]
+  top_content: ContentClickRanking[]
+  daily_trend: ClickTrendPoint[]
+}

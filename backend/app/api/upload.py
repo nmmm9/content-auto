@@ -1,12 +1,15 @@
+import secrets
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime
 
 from app.core.database import get_db
+from app.core.config import settings
 from app.models.content import Content
 from app.models.upload_history import UploadHistory
 from app.models.template import Template
+from app.models.tracking_link import TrackingLink
 
 router = APIRouter()
 
@@ -37,10 +40,26 @@ async def upload_content(
         # TODO: Add background task for actual upload
         # background_tasks.add_task(upload_to_platform, history.id, platform)
 
+        # Auto-generate tracking link
+        short_code = secrets.token_urlsafe(6)
+        tracking_link = TrackingLink(
+            upload_history_id=history.id,
+            content_id=content_id,
+            platform=platform,
+            short_code=short_code,
+            destination_url=settings.TRACKING_DESTINATION_URL,
+            utm_source=platform,
+            utm_medium="social",
+            utm_campaign=f"content_{content_id}",
+        )
+        db.add(tracking_link)
+        db.commit()
+
         results.append({
             "platform": platform,
             "history_id": history.id,
-            "status": "pending"
+            "status": "pending",
+            "tracking_url": f"/t/{short_code}",
         })
 
     # Update content status

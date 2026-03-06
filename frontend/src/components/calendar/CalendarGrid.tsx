@@ -59,14 +59,14 @@ export default function CalendarGrid({ days, selectedDate, onDateClick }: Calend
           const dayOfWeek = day.date.getDay()
 
           if (!day.isCurrentMonth) {
-            return <div key={i} className="border-b border-r border-gray-100 bg-gray-50/40" />
+            return <div key={i} className="min-h-[200px] border-b border-r border-gray-100 bg-gray-50/40" />
           }
 
           return (
             <button
               key={i}
               onClick={() => onDateClick(dateStr)}
-              className={`relative flex flex-col justify-between p-2 border-b border-r border-gray-100 text-left transition-all duration-150
+              className={`relative flex flex-col justify-between min-h-[200px] p-2 border-b border-r border-gray-100 text-left transition-all duration-150
                 bg-white hover:bg-gray-50
                 ${isSelected ? 'bg-blue-50/80 ring-2 ring-inset ring-blue-500' : ''}
               `}

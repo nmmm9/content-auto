@@ -3,6 +3,7 @@ import { CalendarDays, CalendarClock, Inbox, Eye, Heart, MessageCircle, Share2, 
 import CalendarHeader from '../components/calendar/CalendarHeader'
 import CalendarGrid from '../components/calendar/CalendarGrid'
 import ContentCard from '../components/calendar/ContentCard'
+import { supabase } from '../lib/supabase'
 
 // 타입 export (하위 컴포넌트에서 사용)
 export type ContentStatus =
@@ -23,6 +24,7 @@ export interface CalendarContent {
   youtube_url?: string
   thumbnail?: string
   metrics?: Record<string, number>
+  platformMetrics?: Record<string, Record<string, number>>
   created_at: string
   updated_at: string
 }
@@ -153,169 +155,105 @@ function formatNumber(n: number): string {
   return n.toLocaleString()
 }
 
+// DB status → CalendarContent status 매핑
+function mapDbStatus(status: string): ContentStatus {
+  switch (status) {
+    case 'completed': return 'uploaded'
+    case 'scheduled': return 'scheduled'
+    case 'uploading': return 'scheduled'
+    case 'failed': return 'review_needed'
+    case 'draft':
+    default: return 'planning'
+  }
+}
+
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [contents] = useState<CalendarContent[]>([
-    {
-      id: 1,
-      title: '카페 브이로그',
-      description: '성수동 신상 카페 3곳 투어 영상',
-      status: 'uploaded',
-      scheduled_date: '2026-02-27',
-      platforms: ['youtube'],
-      youtube_url: 'https://youtube.com/watch?v=example1',
-      thumbnail: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg',
-      metrics: { views: 12400, watch_time: 18600, avg_duration: 245, ctr: 6.8, impressions: 45200, subscribers: 38 },
-      created_at: '2026-02-25T10:00:00Z',
-      updated_at: '2026-02-27T09:00:00Z',
-    },
-    {
-      id: 2,
-      title: '카페 브이로그 숏츠',
-      description: '성수동 카페 하이라이트 60초',
-      status: 'uploaded',
-      scheduled_date: '2026-02-27',
-      platforms: ['youtube_shorts'],
-      metrics: { views: 34500, likes: 2100, avg_duration: 42, comments: 312, shares: 890 },
-      created_at: '2026-02-25T10:00:00Z',
-      updated_at: '2026-02-27T09:30:00Z',
-    },
-    {
-      id: 3,
-      title: '성수동 카페 추천 TOP3',
-      description: '성수동 신상 카페 블로그 리뷰',
-      status: 'uploaded',
-      scheduled_date: '2026-02-27',
-      platforms: ['naver_blog'],
-      metrics: { views: 3200, likes: 180, comments: 42, search_visits: 1840, neighbor_add: 12 },
-      created_at: '2026-02-25T11:00:00Z',
-      updated_at: '2026-02-27T10:00:00Z',
-    },
-    {
-      id: 4,
-      title: '카페 인스타 포스트',
-      description: '성수동 카페 감성 사진 포스트',
-      status: 'uploaded',
-      scheduled_date: '2026-02-27',
-      platforms: ['instagram'],
-      metrics: { reach: 6200, impressions: 22300, likes: 1240, saves: 320, profile_visits: 89 },
-      created_at: '2026-02-25T12:00:00Z',
-      updated_at: '2026-02-27T10:30:00Z',
-    },
-    {
-      id: 5,
-      title: '카페 릴스',
-      description: '성수동 카페 15초 릴스',
-      status: 'uploaded',
-      scheduled_date: '2026-02-27',
-      platforms: ['instagram_reels'],
-      metrics: { plays: 21000, reach: 15400, likes: 3400, saves: 890, shares: 510 },
-      created_at: '2026-02-25T12:00:00Z',
-      updated_at: '2026-02-27T11:00:00Z',
-    },
-    {
-      id: 6,
-      title: '카페 페이스북 포스트',
-      description: '성수동 카페 투어 후기',
-      status: 'uploaded',
-      scheduled_date: '2026-02-27',
-      platforms: ['facebook'],
-      metrics: { reach: 8400, engagement: 1240, likes: 420, shares: 312, comments: 67 },
-      created_at: '2026-02-25T13:00:00Z',
-      updated_at: '2026-02-27T11:30:00Z',
-    },
-    {
-      id: 7,
-      title: '오늘의 카페 일상',
-      description: '쓰레드 감성 텍스트 포스트',
-      status: 'uploaded',
-      scheduled_date: '2026-02-27',
-      platforms: ['threads'],
-      metrics: { views: 1800, likes: 290, replies: 34, reposts: 45, quotes: 12 },
-      created_at: '2026-02-25T14:00:00Z',
-      updated_at: '2026-02-27T12:00:00Z',
-    },
-    {
-      id: 8,
-      title: '홍대 맛집 투어',
-      description: '홍대 숨은 맛집 5곳 리뷰 영상',
-      status: 'uploaded',
-      scheduled_date: '2026-03-03',
-      platforms: ['youtube'],
-      youtube_url: 'https://youtube.com/watch?v=example2',
-      metrics: { views: 18700, watch_time: 28400, avg_duration: 312, ctr: 8.2, impressions: 52100, subscribers: 67 },
-      created_at: '2026-03-01T10:00:00Z',
-      updated_at: '2026-03-03T09:00:00Z',
-    },
-    {
-      id: 9,
-      title: '홍대 맛집 숏츠',
-      description: '홍대 떡볶이 먹방 30초',
-      status: 'uploaded',
-      scheduled_date: '2026-03-03',
-      platforms: ['youtube_shorts'],
-      metrics: { views: 52000, likes: 4200, avg_duration: 28, comments: 580, shares: 1200 },
-      created_at: '2026-03-01T10:00:00Z',
-      updated_at: '2026-03-03T09:30:00Z',
-    },
-    {
-      id: 10,
-      title: '홍대 맛집 블로그',
-      description: '홍대 맛집 상세 리뷰 포스팅',
-      status: 'uploaded',
-      scheduled_date: '2026-03-03',
-      platforms: ['naver_blog'],
-      metrics: { views: 4800, likes: 320, comments: 78, search_visits: 2900, neighbor_add: 24 },
-      created_at: '2026-03-01T11:00:00Z',
-      updated_at: '2026-03-03T10:00:00Z',
-    },
-    {
-      id: 11,
-      title: '홍대 맛집 인스타',
-      description: '홍대 맛집 감성 피드',
-      status: 'uploaded',
-      scheduled_date: '2026-03-03',
-      platforms: ['instagram'],
-      metrics: { reach: 9100, impressions: 31500, likes: 1890, saves: 520, profile_visits: 145 },
-      created_at: '2026-03-01T12:00:00Z',
-      updated_at: '2026-03-03T10:30:00Z',
-    },
-    {
-      id: 12,
-      title: '홍대 맛집 릴스',
-      description: '홍대 떡볶이 릴스',
-      status: 'uploaded',
-      scheduled_date: '2026-03-03',
-      platforms: ['instagram_reels'],
-      metrics: { plays: 38000, reach: 28000, likes: 5600, saves: 1340, shares: 780 },
-      created_at: '2026-03-01T12:00:00Z',
-      updated_at: '2026-03-03T11:00:00Z',
-    },
-    {
-      id: 13,
-      title: '홍대 맛집 페북',
-      description: '홍대 맛집 투어 후기 공유',
-      status: 'uploaded',
-      scheduled_date: '2026-03-03',
-      platforms: ['facebook'],
-      metrics: { reach: 12400, engagement: 1890, likes: 560, shares: 430, comments: 92 },
-      created_at: '2026-03-01T13:00:00Z',
-      updated_at: '2026-03-03T11:30:00Z',
-    },
-    {
-      id: 14,
-      title: '홍대 맛집 스레드',
-      description: '홍대 떡볶이 솔직후기',
-      status: 'uploaded',
-      scheduled_date: '2026-03-03',
-      platforms: ['threads'],
-      metrics: { views: 2400, likes: 410, replies: 56, reposts: 78, quotes: 23 },
-      created_at: '2026-03-01T14:00:00Z',
-      updated_at: '2026-03-03T12:00:00Z',
-    },
-  ])
+  const [contents, setContents] = useState<CalendarContent[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [selectedDate, setSelectedDate] = useState<string | null>(formatDate(new Date()))
   const [selectedContent, setSelectedContent] = useState<CalendarContent | null>(null)
+
+  // Supabase에서 콘텐츠 조회
+  useEffect(() => {
+    const fetchContents = async () => {
+      try {
+        // 예약일이 있는 콘텐츠 조회
+        const { data: dbContents } = await supabase
+          .from('contents')
+          .select('*')
+          .eq('status', 'completed')
+          .not('scheduled_at', 'is', null)
+          .order('scheduled_at', { ascending: true })
+
+        if (!dbContents || dbContents.length === 0) {
+          setContents([])
+          setIsLoading(false)
+          return
+        }
+
+        // 업로드 이력에서 플랫폼 정보 조회
+        const contentIds = dbContents.map(c => c.id)
+        const { data: uploads } = await supabase
+          .from('upload_history')
+          .select('content_id, platform')
+          .in('content_id', contentIds)
+
+        // content_id별 platforms 맵
+        const platformMap: Record<number, string[]> = {}
+        uploads?.forEach(u => {
+          if (!platformMap[u.content_id]) platformMap[u.content_id] = []
+          if (!platformMap[u.content_id].includes(u.platform)) {
+            platformMap[u.content_id].push(u.platform)
+          }
+        })
+
+        // DB 데이터 → 플랫폼별 CalendarContent로 펼치기
+        const expanded: CalendarContent[] = []
+        dbContents.forEach(row => {
+          const pMetrics = row.metrics as Record<string, Record<string, number>> | null
+          const platforms = platformMap[row.id] || []
+
+          if (platforms.length === 0) {
+            // 플랫폼 없는 콘텐츠는 그대로
+            expanded.push({
+              id: row.id,
+              title: row.title,
+              description: row.description || '',
+              status: mapDbStatus(row.status),
+              scheduled_date: row.scheduled_at?.slice(0, 10) || '',
+              platforms: [],
+              created_at: row.created_at,
+              updated_at: row.updated_at,
+            })
+          } else {
+            // 플랫폼별로 카드 1개씩 생성
+            platforms.forEach((platform, idx) => {
+              expanded.push({
+                id: row.id * 100 + idx, // 유니크 ID
+                title: row.title,
+                description: row.description || '',
+                status: mapDbStatus(row.status),
+                scheduled_date: row.scheduled_at?.slice(0, 10) || '',
+                platforms: [platform],
+                metrics: pMetrics?.[platform] || undefined,
+                platformMetrics: pMetrics || undefined,
+                created_at: row.created_at,
+                updated_at: row.updated_at,
+              })
+            })
+          }
+        })
+        setContents(expanded)
+      } catch (error) {
+        console.error('Failed to fetch calendar contents:', error)
+        setContents([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchContents()
+  }, [])
 
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
@@ -360,6 +298,14 @@ export default function Calendar() {
       }, 100)
     }
   }, [selectedContent])
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 rounded-full border-2 border-indigo-200 border-t-indigo-600 animate-spin"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="h-[calc(100vh-73px)] flex flex-col animate-in fade-in duration-500">
@@ -780,8 +726,8 @@ export default function Calendar() {
                     <div className="font-bold text-slate-900 text-base">{formatSelectedDate(selectedDate)}</div>
                     <div className="text-xs font-semibold text-slate-500 mt-0.5">
                       {selectedDayContents.length > 0
-                        ? `${selectedDayContents.length}개 콘텐츠 업로드`
-                        : '업로드 예정 콘텐츠 없음'}
+                        ? `${selectedDayContents.length}개 콘텐츠`
+                        : '업로드된 콘텐츠 없음'}
                     </div>
                   </div>
                 </div>
@@ -802,11 +748,23 @@ export default function Calendar() {
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-center px-4">
-                    <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center mb-3">
-                      <Inbox size={24} className="text-gray-300" />
-                    </div>
-                    <p className="text-sm font-medium text-gray-400 mb-1">콘텐츠가 없습니다</p>
-                    <p className="text-xs text-gray-300">이 날짜에 예정된 콘텐츠가 없습니다</p>
+                    {contents.length === 0 ? (
+                      <>
+                        <div className="w-16 h-16 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl flex items-center justify-center mb-4 shadow-inner">
+                          <CalendarDays size={28} className="text-indigo-300" />
+                        </div>
+                        <p className="text-sm font-semibold text-gray-500 mb-1.5">아직 업로드된 콘텐츠가 없습니다</p>
+                        <p className="text-xs text-gray-400 leading-relaxed">콘텐츠를 업로드하면<br/>캘린더에 자동으로 표시됩니다</p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center mb-3">
+                          <Inbox size={24} className="text-gray-300" />
+                        </div>
+                        <p className="text-sm font-medium text-gray-400 mb-1">콘텐츠가 없습니다</p>
+                        <p className="text-xs text-gray-300">이 날짜에 업로드된 콘텐츠가 없습니다</p>
+                      </>
+                    )}
                   </div>
                 )}
               </div>

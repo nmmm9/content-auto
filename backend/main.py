@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import router
+from app.api.redirect import router as redirect_router
 from app.core.database import engine, Base
 
 # Create database tables
@@ -23,6 +24,9 @@ app.add_middleware(
 
 # API 라우터 등록
 app.include_router(router, prefix="/api")
+
+# 리다이렉트 라우터 (루트에 등록 - /t/{short_code})
+app.include_router(redirect_router)
 
 @app.get("/")
 def root():

@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     # Gemini
     GEMINI_API_KEY: Optional[str] = None
 
+    # Tracking
+    TRACKING_DESTINATION_URL: str = "https://your-site.com"
+
     # Video Processing
     TEMP_DOWNLOAD_DIR: str = "./uploads/temp"
     MAX_VIDEO_DURATION: int = 600  # 10분 (초)
