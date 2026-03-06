@@ -23,7 +23,7 @@ import ResultNode from '../components/workflow/ResultNode'
 import TemplateNode from '../components/workflow/TemplateNode'
 import EditModal from '../components/workflow/EditModal'
 
-import { Play, RotateCcw, Zap, CheckCircle, XCircle, Sparkles, Target, Eye, Film, MessageSquare, Lightbulb, TrendingUp, Users, Hash, Volume2, Palette, X } from 'lucide-react'
+import { Play, RotateCcw, Zap, CheckCircle, XCircle, Sparkles, Target, Eye, Film, MessageSquare, Lightbulb, TrendingUp, Users, Hash, Volume2, Palette, X, Map } from 'lucide-react'
 
 const nodeTypes = {
   platformNode: PlatformNode,
@@ -237,6 +237,7 @@ function WorkflowInner() {
   // 분석 결과 모달
   const [analysisModalOpen, setAnalysisModalOpen] = useState(false)
   const [analysisTab, setAnalysisTab] = useState<'overview' | 'detail' | 'strategy'>('overview')
+  const [showMiniMap, setShowMiniMap] = useState(true)
 
   // 동적 자동 레이아웃 (노드 크기 측정 기반)
   const { fitView, getNodes } = useReactFlow()
@@ -865,12 +866,26 @@ function WorkflowInner() {
         >
           <Background color="#e2e8f0" gap={20} size={1} />
           <Controls position="bottom-left" />
-          <MiniMap
-            nodeColor={miniMapNodeColor}
-            maskColor="rgba(0, 0, 0, 0.1)"
-            position="bottom-right"
-            style={{ borderRadius: 8 }}
-          />
+          {showMiniMap && (
+            <MiniMap
+              nodeColor={miniMapNodeColor}
+              maskColor="rgba(0, 0, 0, 0.1)"
+              position="bottom-right"
+              style={{ borderRadius: 8 }}
+            />
+          )}
+          {/* 미니맵 토글 버튼 */}
+          <button
+            onClick={() => setShowMiniMap(!showMiniMap)}
+            className={`absolute bottom-3 right-3 z-10 p-2 rounded-lg shadow-md border transition-all ${
+              showMiniMap
+                ? 'bg-white/80 border-gray-200 text-gray-600 bottom-[140px]'
+                : 'bg-white/80 border-gray-200 text-gray-400'
+            } hover:bg-white hover:text-gray-800`}
+            title={showMiniMap ? '미니맵 숨기기' : '미니맵 보기'}
+          >
+            <Map size={16} />
+          </button>
         </ReactFlow>
       </div>
 
