@@ -14,20 +14,11 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS 설정
-allowed_origins = [
-    "http://localhost:5173",
-    "http://localhost:3000",
-]
-# 환경변수로 추가 origin 허용 (Vercel 등)
-extra_origins = os.getenv("CORS_ORIGINS", "")
-if extra_origins:
-    allowed_origins.extend([o.strip() for o in extra_origins.split(",") if o.strip()])
-
+# CORS 설정 - Vercel 프리뷰 URL이 매번 바뀌므로 모든 origin 허용
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
