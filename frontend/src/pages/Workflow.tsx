@@ -23,7 +23,7 @@ import ResultNode from '../components/workflow/ResultNode'
 import TemplateNode from '../components/workflow/TemplateNode'
 import EditModal from '../components/workflow/EditModal'
 
-import { Play, RotateCcw, Zap, CheckCircle, XCircle } from 'lucide-react'
+import { Play, RotateCcw, Zap, CheckCircle, XCircle, Sparkles, Target, Eye, Film, MessageSquare, Lightbulb, TrendingUp, Users, Hash, Volume2, Palette, X } from 'lucide-react'
 
 const nodeTypes = {
   platformNode: PlatformNode,
@@ -68,6 +68,7 @@ interface VideoInfo {
 
 interface AnalysisResult {
   summary: string
+  detailed_summary: string
   topic: string
   keywords: string[]
   mood: string
@@ -76,6 +77,8 @@ interface AnalysisResult {
   scenes: string[]
   audio_summary: string
   recommended_style: string
+  viral_hook: string
+  content_type: string
 }
 
 const derivedPlatformIds = [
@@ -225,12 +228,15 @@ function WorkflowInner() {
   const [editingContent, setEditingContent] = useState<{
     title?: string
     description?: string
+    content?: string
     caption?: string
     hashtags?: string[]
+    tags?: string[]
   }>({})
 
   // 분석 결과 모달
   const [analysisModalOpen, setAnalysisModalOpen] = useState(false)
+  const [analysisTab, setAnalysisTab] = useState<'overview' | 'detail' | 'strategy'>('overview')
 
   // 동적 자동 레이아웃 (노드 크기 측정 기반)
   const { fitView, getNodes } = useReactFlow()
@@ -545,7 +551,7 @@ function WorkflowInner() {
     const onEdit = (data: unknown) => handleEdit(data as string)
     const onYoutubeUrl = (data: unknown) => handleYoutubeUrl(data as string)
     const onModelChange = (data: unknown) => handleModelChange(data as string)
-    const onShowAnalysis = () => setAnalysisModalOpen(true)
+    const onShowAnalysis = () => { setAnalysisTab('overview'); setAnalysisModalOpen(true) }
 
     eventBus.on('approve', onApprove)
     eventBus.on('reject', onReject)
@@ -880,104 +886,280 @@ function WorkflowInner() {
         platform={editingNodeId ? platformKeys[editingNodeId] || '' : ''}
         platformName={editingNodeId ? platformNames[editingNodeId] || '' : ''}
         content={editingContent}
+        videoThumbnail={videoInfo?.thumbnail_url}
       />
 
       {/* Analysis Result Modal */}
       {analysisModalOpen && analysisResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setAnalysisModalOpen(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-[600px] max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setAnalysisModalOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-[720px] max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-red-500 to-red-600">
-              <div className="text-white">
-                <h3 className="font-bold text-lg">Gemini 영상 분석 결과</h3>
-                {videoInfo && <p className="text-red-100 text-sm truncate max-w-[400px]">{videoInfo.title}</p>}
+            <div className="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-slate-900 via-red-900 to-slate-900">
+              {videoInfo && (
+                <div className="w-16 h-10 rounded-md overflow-hidden flex-shrink-0 border border-white/20">
+                  <img src={videoInfo.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <Sparkles size={11} className="text-amber-400 flex-shrink-0" />
+                  <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wider">Gemini AI</span>
+                  {analysisResult.content_type && (
+                    <span className="px-1.5 py-px bg-white/15 text-white/80 text-[9px] font-medium rounded-full">
+                      {analysisResult.content_type}
+                    </span>
+                  )}
+                </div>
+                {videoInfo && (
+                  <h3 className="font-semibold text-white text-xs leading-snug truncate mt-0.5">{videoInfo.title}</h3>
+                )}
               </div>
-              <button onClick={() => setAnalysisModalOpen(false)} className="text-white/80 hover:text-white text-xl font-bold px-2">
-                &times;
+              <button onClick={() => setAnalysisModalOpen(false)} className="text-white/50 hover:text-white transition-colors p-1 flex-shrink-0">
+                <X size={16} />
               </button>
             </div>
 
-            {/* Content */}
-            <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)] space-y-4">
-              {/* 주제 + 요약 */}
-              <div className="bg-red-50 rounded-xl p-4">
-                <div className="text-xs font-semibold text-red-600 uppercase mb-1">주제</div>
-                <div className="font-bold text-gray-900">{analysisResult.topic}</div>
-                <div className="text-sm text-gray-700 mt-2">{analysisResult.summary}</div>
-              </div>
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200 bg-gray-50/80">
+              {([
+                { id: 'overview' as const, label: '개요', icon: Eye },
+                { id: 'detail' as const, label: '상세 분석', icon: Film },
+                { id: 'strategy' as const, label: '콘텐츠 전략', icon: Lightbulb },
+              ]).map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setAnalysisTab(tab.id)}
+                  className={`flex items-center gap-1.5 px-5 py-2.5 text-xs font-semibold transition-all border-b-2 ${
+                    analysisTab === tab.id
+                      ? 'border-red-500 text-red-600 bg-white'
+                      : 'border-transparent text-gray-400 hover:text-gray-600 hover:bg-white/50'
+                  }`}
+                >
+                  <tab.icon size={13} />
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
-              {/* 키워드 */}
-              {analysisResult.keywords?.length > 0 && (
-                <div>
-                  <div className="text-xs font-semibold text-gray-500 uppercase mb-2">키워드</div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {analysisResult.keywords.map((kw: string, i: number) => (
-                      <span key={i} className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs rounded-full border border-blue-200">
-                        {kw}
-                      </span>
-                    ))}
+            {/* Tab Content */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              {/* ── 개요 탭 ── */}
+              {analysisTab === 'overview' && (
+                <>
+                  {/* 주제 + 요약 */}
+                  <div className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl p-4 border border-gray-100">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Target size={13} className="text-red-500" />
+                      <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider">주제</span>
+                    </div>
+                    <p className="font-bold text-gray-900 text-sm">{analysisResult.topic}</p>
+                    <p className="text-sm text-gray-600 mt-2 leading-relaxed">{analysisResult.summary}</p>
                   </div>
-                </div>
+
+                  {/* 메타 정보 그리드 */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-purple-50/80 rounded-xl p-3.5 border border-purple-100/80">
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <Palette size={12} className="text-purple-500" />
+                        <span className="text-[10px] font-bold text-purple-500 uppercase tracking-wider">분위기</span>
+                      </div>
+                      <p className="text-sm text-gray-800 leading-relaxed">{analysisResult.mood}</p>
+                    </div>
+                    <div className="bg-emerald-50/80 rounded-xl p-3.5 border border-emerald-100/80">
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <Users size={12} className="text-emerald-500" />
+                        <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">타겟 시청자</span>
+                      </div>
+                      <p className="text-sm text-gray-800 leading-relaxed">{analysisResult.target_audience}</p>
+                    </div>
+                  </div>
+
+                  {/* 키워드 */}
+                  {analysisResult.keywords?.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-2.5">
+                        <Hash size={13} className="text-blue-500" />
+                        <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">키워드</span>
+                        <span className="text-[10px] text-gray-400 ml-1">{analysisResult.keywords.length}개</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {analysisResult.keywords.map((kw: string, i: number) => (
+                          <span key={i} className="px-2.5 py-1 bg-blue-50 text-blue-600 text-[11px] font-medium rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors cursor-default">
+                            {kw}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 핵심 포인트 */}
+                  {analysisResult.key_points?.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-2.5">
+                        <Lightbulb size={13} className="text-amber-500" />
+                        <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">핵심 포인트</span>
+                      </div>
+                      <div className="space-y-2">
+                        {analysisResult.key_points.map((point: string, i: number) => (
+                          <div key={i} className="flex items-start gap-2.5 bg-amber-50/50 rounded-lg px-3 py-2 border border-amber-100/60">
+                            <span className="w-5 h-5 flex-shrink-0 bg-gradient-to-br from-amber-400 to-orange-400 text-white rounded-full flex items-center justify-center text-[10px] font-bold mt-0.5 shadow-sm">
+                              {i + 1}
+                            </span>
+                            <p className="text-sm text-gray-700 leading-relaxed">{point}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
-              {/* 분위기 + 타겟 */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-purple-50 rounded-xl p-3">
-                  <div className="text-xs font-semibold text-purple-600 uppercase mb-1">분위기</div>
-                  <div className="text-sm text-gray-800">{analysisResult.mood}</div>
-                </div>
-                <div className="bg-green-50 rounded-xl p-3">
-                  <div className="text-xs font-semibold text-green-600 uppercase mb-1">타겟층</div>
-                  <div className="text-sm text-gray-800">{analysisResult.target_audience}</div>
-                </div>
-              </div>
+              {/* ── 상세 분석 탭 ── */}
+              {analysisTab === 'detail' && (
+                <>
+                  {/* 영상 내용 정리 */}
+                  {analysisResult.detailed_summary && (
+                    <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-xl p-4 border border-slate-200/60">
+                      <div className="flex items-center gap-1.5 mb-3">
+                        <Film size={13} className="text-slate-600" />
+                        <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">영상 내용 정리</span>
+                      </div>
+                      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{analysisResult.detailed_summary}</p>
+                    </div>
+                  )}
 
-              {/* 핵심 포인트 */}
-              {analysisResult.key_points?.length > 0 && (
-                <div>
-                  <div className="text-xs font-semibold text-gray-500 uppercase mb-2">핵심 포인트</div>
-                  <ul className="space-y-1.5">
-                    {analysisResult.key_points.map((point: string, i: number) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                        <span className="w-5 h-5 flex-shrink-0 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
-                          {i + 1}
-                        </span>
-                        {point}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                  {/* 주요 장면 타임라인 */}
+                  {analysisResult.scenes?.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-3">
+                        <Film size={13} className="text-indigo-500" />
+                        <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider">주요 장면</span>
+                      </div>
+                      <div className="relative pl-5 space-y-0">
+                        {/* 타임라인 선 */}
+                        <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-gradient-to-b from-indigo-300 via-violet-300 to-purple-300 rounded-full" />
+                        {analysisResult.scenes.map((scene: string, i: number) => (
+                          <div key={i} className="relative flex items-start gap-3 py-2">
+                            <div className="absolute -left-5 top-3 w-3.5 h-3.5 bg-white border-2 border-indigo-400 rounded-full shadow-sm flex items-center justify-center">
+                              <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full" />
+                            </div>
+                            <div className="flex-1 bg-indigo-50/50 rounded-lg px-3 py-2 border border-indigo-100/60 ml-1">
+                              <p className="text-sm text-gray-700 leading-relaxed">{scene}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 오디오/나레이션 분석 */}
+                  {analysisResult.audio_summary && (
+                    <div className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl p-4 border border-gray-100">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Volume2 size={13} className="text-slate-500" />
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">오디오 / 나레이션 분석</span>
+                      </div>
+                      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{analysisResult.audio_summary}</p>
+                    </div>
+                  )}
+
+                  {/* 분위기 상세 */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-purple-50/80 rounded-xl p-3.5 border border-purple-100/80">
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <Palette size={12} className="text-purple-500" />
+                        <span className="text-[10px] font-bold text-purple-500 uppercase tracking-wider">영상 톤앤매너</span>
+                      </div>
+                      <p className="text-sm text-gray-800 leading-relaxed">{analysisResult.mood}</p>
+                    </div>
+                    {analysisResult.content_type && (
+                      <div className="bg-rose-50/80 rounded-xl p-3.5 border border-rose-100/80">
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <Film size={12} className="text-rose-500" />
+                          <span className="text-[10px] font-bold text-rose-500 uppercase tracking-wider">콘텐츠 유형</span>
+                        </div>
+                        <p className="text-sm text-gray-800 font-semibold capitalize">{analysisResult.content_type}</p>
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
 
-              {/* 주요 장면 */}
-              {analysisResult.scenes?.length > 0 && (
-                <div>
-                  <div className="text-xs font-semibold text-gray-500 uppercase mb-2">주요 장면</div>
-                  <ul className="space-y-1.5">
-                    {analysisResult.scenes.map((scene: string, i: number) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                        <span className="text-indigo-400 mt-0.5">&#9654;</span>
-                        {scene}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {/* ── 콘텐츠 전략 탭 ── */}
+              {analysisTab === 'strategy' && (
+                <>
+                  {/* 바이럴 포인트 */}
+                  {analysisResult.viral_hook && (
+                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200/60">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <TrendingUp size={13} className="text-amber-600" />
+                        <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">바이럴 포인트</span>
+                      </div>
+                      <p className="text-sm text-gray-800 leading-relaxed font-medium">{analysisResult.viral_hook}</p>
+                      <p className="text-[10px] text-amber-500 mt-2">SNS에서 주목받을 수 있는 핵심 포인트입니다.</p>
+                    </div>
+                  )}
 
-              {/* 오디오 요약 */}
-              {analysisResult.audio_summary && (
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <div className="text-xs font-semibold text-gray-500 uppercase mb-1">오디오/나레이션</div>
-                  <div className="text-sm text-gray-700">{analysisResult.audio_summary}</div>
-                </div>
-              )}
+                  {/* 추천 스타일 */}
+                  {analysisResult.recommended_style && (
+                    <div className="bg-gradient-to-br from-indigo-50 to-violet-50 rounded-xl p-4 border border-indigo-200/60">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <MessageSquare size={13} className="text-indigo-600" />
+                        <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">추천 글 스타일</span>
+                      </div>
+                      <p className="text-sm text-gray-800 leading-relaxed">{analysisResult.recommended_style}</p>
+                    </div>
+                  )}
 
-              {/* 추천 스타일 */}
-              {analysisResult.recommended_style && (
-                <div className="bg-indigo-50 rounded-xl p-3">
-                  <div className="text-xs font-semibold text-indigo-600 uppercase mb-1">추천 글 스타일</div>
-                  <div className="text-sm text-gray-800">{analysisResult.recommended_style}</div>
-                </div>
+                  {/* 타겟 + 키워드 전략 */}
+                  <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200/60">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Users size={13} className="text-emerald-600" />
+                      <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">타겟 시청자 분석</span>
+                    </div>
+                    <p className="text-sm text-gray-800 leading-relaxed">{analysisResult.target_audience}</p>
+                  </div>
+
+                  {/* 핵심 포인트를 콘텐츠 활용 관점으로 */}
+                  {analysisResult.key_points?.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-2.5">
+                        <Lightbulb size={13} className="text-amber-500" />
+                        <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">콘텐츠 재가공 포인트</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {analysisResult.key_points.map((point: string, i: number) => (
+                          <div key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                            <CheckCircle size={14} className="text-emerald-400 mt-0.5 flex-shrink-0" />
+                            <span>{point}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SEO 키워드 추천 */}
+                  {analysisResult.keywords?.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-2.5">
+                        <Hash size={13} className="text-blue-500" />
+                        <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">SEO / 해시태그 추천</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {analysisResult.keywords.slice(0, 10).map((kw: string, i: number) => (
+                          <span key={i} className="px-2.5 py-1 bg-blue-50 text-blue-600 text-[11px] font-medium rounded-lg border border-blue-100">
+                            #{kw}
+                          </span>
+                        ))}
+                        {analysisResult.keywords.length > 10 && (
+                          <span className="px-2.5 py-1 text-gray-400 text-[11px]">
+                            +{analysisResult.keywords.length - 10}개
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

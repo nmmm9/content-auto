@@ -17,14 +17,15 @@ ANALYSIS_PROMPT = """당신은 유튜브 영상 콘텐츠 분석 전문가입니
 ## 출력 형식 (반드시 아래 JSON 구조로만 응답)
 
 {
-  "summary": "영상 전체 내용을 200자 이내로 요약. 누가, 무엇을, 왜 하는 영상인지 명확히",
+  "summary": "영상 전체 내용을 상세하게 요약. 누가, 무엇을, 왜 하는 영상인지 명확히. 글자수 제한 없이 충분히 자세하게 작성",
+  "detailed_summary": "영상의 처음부터 끝까지 시간 순서대로 전체 내용을 상세히 정리. 각 파트/챕터별로 무슨 내용을 다루는지, 어떤 장면이 나오는지, 출연자가 어떤 말을 하는지 구체적으로 서술. 최소 500자 이상으로 빠짐없이 기록",
   "topic": "핵심 주제를 한 문장으로 (예: '자취생을 위한 10분 원팬 요리 레시피')",
   "keywords": ["키워드1", "키워드2", ...],
   "mood": "영상의 전체적인 톤앤매너 (예: '밝고 유쾌한 예능 톤', '차분하고 신뢰감 있는 정보 전달')",
   "target_audience": "이 영상의 주요 시청 대상 (연령대, 관심사, 상황 포함. 예: '20~30대 자취생, 요리 초보자')",
-  "key_points": ["핵심 포인트1", "핵심 포인트2", ...],
+  "key_points": ["핵심 포인트1", "핵심 포인트2", ...],  // 개수 제한 없이 모두 나열
   "scenes": ["타임스탬프와 함께 주요 장면 설명1", "주요 장면 설명2", ...],
-  "audio_summary": "출연자의 핵심 발언/나레이션 내용 요약. 인용구가 있다면 직접 인용 포함. 음성이 없으면 '음성 없음'",
+  "audio_summary": "출연자의 핵심 발언/나레이션 내용을 가능한 한 상세하게 정리. 중요한 발언은 직접 인용 포함. 음성이 없으면 '음성 없음'",
   "recommended_style": "이 영상을 SNS 글로 재가공할 때 추천하는 글쓰기 톤 (예: '친근한 반말체로 꿀팁 공유', '전문적인 존댓말로 정보 전달')",
   "viral_hook": "이 영상에서 SNS에서 주목받을 수 있는 핵심 포인트/반전/명장면 (한 문장)",
   "content_type": "영상 유형 (예: 'vlog', 'tutorial', 'review', 'entertainment', 'news', 'shorts' 등)"
@@ -32,9 +33,12 @@ ANALYSIS_PROMPT = """당신은 유튜브 영상 콘텐츠 분석 전문가입니
 
 ## 작성 규칙
 - 모든 필드는 한국어로 작성
+- summary: 글자수 제한 없이 충분히 상세하게
+- detailed_summary: 영상 전체를 시간순으로 빠짐없이 정리 (최소 500자)
 - keywords: 검색에 잘 걸리는 키워드 15~20개 (일반 키워드 + 롱테일 키워드 혼합)
-- key_points: 영상의 핵심 메시지 3~7개 (시청자가 기억해야 할 것)
-- scenes: 주요 장면 3~5개 (가능하면 대략적인 시간대 포함)"""
+- key_points: 영상의 핵심 메시지를 빠짐없이 모두 나열 (개수 제한 없음)
+- scenes: 주요 장면 5~10개 (가능하면 대략적인 시간대 포함, 장면 설명을 구체적으로)
+- audio_summary: 핵심 발언을 최대한 상세하게, 직접 인용 적극 활용"""
 
 
 # ── 플랫폼별 변환 프롬프트 ──
@@ -53,9 +57,11 @@ PLATFORM_PROMPTS = {
 ## 원본 영상 분석
 - 주제: {topic}
 - 요약: {summary}
+- 상세 내용: {detailed_summary}
 - 키워드: {keywords}
 - 분위기: {mood}
 - 타겟: {target_audience}
+- 바이럴 포인트: {viral_hook}
 - 핵심 포인트:
 {key_points}
 
@@ -87,8 +93,10 @@ PLATFORM_PROMPTS = {
 ## 원본 영상 분석
 - 주제: {topic}
 - 요약: {summary}
+- 상세 내용: {detailed_summary}
 - 키워드: {keywords}
 - 분위기: {mood}
+- 바이럴 포인트: {viral_hook}
 - 핵심 포인트:
 {key_points}
 - 주요 장면:
@@ -130,8 +138,10 @@ PLATFORM_PROMPTS = {
 ## 원본 영상 분석
 - 주제: {topic}
 - 요약: {summary}
+- 상세 내용: {detailed_summary}
 - 분위기: {mood}
 - 타겟: {target_audience}
+- 바이럴 포인트: {viral_hook}
 - 핵심 포인트:
 {key_points}
 
@@ -163,9 +173,11 @@ PLATFORM_PROMPTS = {
 ## 원본 영상 분석
 - 주제: {topic}
 - 요약: {summary}
+- 상세 내용: {detailed_summary}
 - 키워드: {keywords}
 - 분위기: {mood}
 - 타겟: {target_audience}
+- 바이럴 포인트: {viral_hook}
 - 핵심 포인트:
 {key_points}
 
@@ -201,7 +213,9 @@ PLATFORM_PROMPTS = {
 ## 원본 영상 분석
 - 주제: {topic}
 - 요약: {summary}
+- 상세 내용: {detailed_summary}
 - 분위기: {mood}
+- 바이럴 포인트: {viral_hook}
 - 핵심 포인트:
 {key_points}
 
@@ -233,8 +247,10 @@ PLATFORM_PROMPTS = {
 ## 원본 영상 분석
 - 주제: {topic}
 - 요약: {summary}
+- 상세 내용: {detailed_summary}
 - 분위기: {mood}
 - 타겟: {target_audience}
+- 바이럴 포인트: {viral_hook}
 - 핵심 포인트:
 {key_points}
 
@@ -288,12 +304,14 @@ async def transform_for_platform(
     format_data = {
         "topic": analysis.get("topic", ""),
         "summary": analysis.get("summary", ""),
+        "detailed_summary": analysis.get("detailed_summary", ""),
         "keywords": ", ".join(analysis.get("keywords", [])),
         "mood": analysis.get("mood", ""),
         "target_audience": analysis.get("target_audience", ""),
         "key_points": "\n".join(f"- {p}" for p in analysis.get("key_points", [])),
         "scenes": "\n".join(f"- {s}" for s in analysis.get("scenes", [])),
         "audio_summary": analysis.get("audio_summary", ""),
+        "viral_hook": analysis.get("viral_hook", ""),
         "video_title": video_title,
     }
 
