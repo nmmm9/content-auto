@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Youtube, FileText, Facebook, Instagram, CheckCircle, XCircle, ExternalLink, Clapperboard, Film, AtSign } from 'lucide-react'
 
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api'
+
 interface PlatformConnection {
   id: number
   platform: string
@@ -85,7 +87,7 @@ export default function Settings() {
 
   const fetchConnections = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/platforms/')
+      const response = await fetch(`${API_BASE}/platforms/`)
       if (response.ok) {
         const data = await response.json()
         setConnections(data)
@@ -106,7 +108,7 @@ export default function Settings() {
     if (!confirm(`${platformInfo[platform].name} 연동을 해제하시겠습니까?`)) return
 
     try {
-      const response = await fetch(`http://localhost:8000/api/platforms/${platform}/disconnect`, {
+      const response = await fetch(`${API_BASE}/platforms/${platform}/disconnect`, {
         method: 'POST',
       })
       if (response.ok) {

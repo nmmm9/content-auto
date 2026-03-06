@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, Youtube, FileText, Facebook, Instagram } from 'lucide-react'
 
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api'
+
 interface Template {
   id: number
   name: string
@@ -37,7 +39,7 @@ export default function Templates() {
 
   const fetchTemplates = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/templates/')
+      const response = await fetch(`${API_BASE}/templates/`)
       if (response.ok) {
         const data = await response.json()
         setTemplates(data)
@@ -82,8 +84,8 @@ export default function Templates() {
 
     try {
       const url = editingTemplate
-        ? `http://localhost:8000/api/templates/${editingTemplate.id}`
-        : 'http://localhost:8000/api/templates/'
+        ? `${API_BASE}/templates/${editingTemplate.id}`
+        : `${API_BASE}/templates/`
 
       const method = editingTemplate ? 'PATCH' : 'POST'
 
@@ -106,7 +108,7 @@ export default function Templates() {
     if (!confirm('템플릿을 삭제하시겠습니까?')) return
 
     try {
-      const response = await fetch(`http://localhost:8000/api/templates/${id}`, {
+      const response = await fetch(`${API_BASE}/templates/${id}`, {
         method: 'DELETE',
       })
       if (response.ok) {
