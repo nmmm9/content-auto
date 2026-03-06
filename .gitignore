@@ -21,3 +21,4 @@ Thumbs.db
 
 # Temp
 backend/uploads/
+backend/auto_upload.db
