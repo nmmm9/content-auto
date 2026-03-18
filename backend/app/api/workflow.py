@@ -3,7 +3,6 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app.services import youtube_info, video_analyzer
-from app.services.youtube_info import cleanup_temp_file
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -50,7 +49,6 @@ async def analyze_video(request: AnalyzeRequest):
     3. Gemini 3.1 Pro로 영상 분석
     """
     url = request.youtube_url.strip()
-    video_path = None
 
     try:
         # 1. URL 유효성 + 메타데이터
@@ -61,18 +59,9 @@ async def analyze_video(request: AnalyzeRequest):
                 raise HTTPException(status_code=404, detail="영상을 찾을 수 없습니다")
             raise HTTPException(status_code=400, detail=str(e))
 
-        # 2. 영상 다운로드
+        # 2. Gemini에 YouTube URL 직접 전달하여 분석
         try:
-            video_path = await youtube_info.download_video(url)
-        except RuntimeError as e:
-            raise HTTPException(
-                status_code=400,
-                detail=f"영상 다운로드 실패: {str(e)[:200]}",
-            )
-
-        # 3. Gemini 영상 분석
-        try:
-            analysis = await video_analyzer.analyze_video(video_path, model=request.model)
+            analysis = await video_analyzer.analyze_video(url, model=request.model)
         except RuntimeError as e:
             raise HTTPException(
                 status_code=500,
@@ -86,10 +75,6 @@ async def analyze_video(request: AnalyzeRequest):
     except Exception as e:
         logger.exception("Unexpected error in analyze_video")
         raise HTTPException(status_code=500, detail=f"서버 오류: {str(e)[:200]}")
-    finally:
-        # 임시 파일 정리
-        if video_path:
-            cleanup_temp_file(video_path)
 
 
 @router.post("/transform", response_model=TransformResponse)

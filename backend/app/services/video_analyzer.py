@@ -272,21 +272,13 @@ PLATFORM_PROMPTS = {
 }
 
 
-async def analyze_video(video_path: str, model: str = gemini_client.DEFAULT_MODEL) -> dict:
-    """영상을 Gemini에 업로드하고 분석 결과를 반환"""
-    logger.info(f"Starting video analysis: {video_path} (model={model})")
+async def analyze_video(youtube_url: str, model: str = gemini_client.DEFAULT_MODEL) -> dict:
+    """YouTube URL을 Gemini에 직접 전달하여 분석 (다운로드 불필요)"""
+    logger.info(f"Starting video analysis via URL: {youtube_url} (model={model})")
 
-    # 1. Gemini File API에 영상 업로드
-    uploaded_file = await gemini_client.upload_video(video_path)
-
-    try:
-        # 2. 영상 분석 요청
-        analysis = await gemini_client.analyze_video(uploaded_file, ANALYSIS_PROMPT, model=model)
-        logger.info(f"Analysis complete: topic={analysis.get('topic', 'N/A')}")
-        return analysis
-    finally:
-        # 3. 업로드 파일 정리
-        await gemini_client.delete_file(uploaded_file.name)
+    analysis = await gemini_client.analyze_youtube_url(youtube_url, ANALYSIS_PROMPT, model=model)
+    logger.info(f"Analysis complete: topic={analysis.get('topic', 'N/A')}")
+    return analysis
 
 
 async def transform_for_platform(

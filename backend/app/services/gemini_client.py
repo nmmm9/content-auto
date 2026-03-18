@@ -88,6 +88,29 @@ async def analyze_video(video_file: object, prompt: str, model: str = DEFAULT_MO
     return result
 
 
+async def analyze_youtube_url(youtube_url: str, prompt: str, model: str = DEFAULT_MODEL) -> dict:
+    """YouTube URL을 Gemini에 직접 전달하여 영상 분석 (다운로드 불필요)"""
+    client = get_client()
+
+    video_part = types.Part.from_uri(
+        file_uri=youtube_url,
+        mime_type="video/*",
+    )
+
+    response = await _retry_on_rate_limit(
+        client.models.generate_content,
+        model=model,
+        contents=[video_part, prompt],
+        config=types.GenerateContentConfig(
+            temperature=0.3,
+            response_mime_type="application/json",
+        ),
+    )
+
+    result = json.loads(response.text)
+    return result
+
+
 async def generate_content(prompt: str, system_instruction: str, model: str = DEFAULT_MODEL) -> dict:
     """텍스트 기반 콘텐츠 생성 (플랫폼 변환용)"""
     client = get_client()
