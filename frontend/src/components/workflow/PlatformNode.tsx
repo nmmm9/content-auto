@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import { Youtube, FileText, Facebook, Instagram, CheckCircle, XCircle, Loader2, Clock, Clapperboard, Film, AtSign, UserCheck, Edit3, Link, ArrowRight } from 'lucide-react'
+import { Youtube, FileText, Facebook, Instagram, CheckCircle, XCircle, Loader2, Clock, Clapperboard, Film, AtSign, UserCheck, Edit3, Link, ArrowRight, Linkedin, FlaskConical } from 'lucide-react'
 
 export interface PlatformNodeData {
   label: string
@@ -82,6 +82,20 @@ const platformConfig: Record<string, {
     gradient: 'from-gray-700 to-gray-900',
     iconBg: 'bg-gray-100',
     iconColor: 'text-gray-800',
+  },
+  linkedin: {
+    name: 'LinkedIn',
+    icon: Linkedin,
+    gradient: 'from-blue-600 to-blue-800',
+    iconBg: 'bg-blue-100',
+    iconColor: 'text-blue-700',
+  },
+  living_sequence_lab: {
+    name: 'Living Sequence Lab',
+    icon: FlaskConical,
+    gradient: 'from-emerald-500 to-teal-600',
+    iconBg: 'bg-emerald-100',
+    iconColor: 'text-emerald-600',
   },
 }
 

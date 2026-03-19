@@ -1,4 +1,4 @@
-import { Youtube, FileText, Facebook, Instagram, Clapperboard, Film, AtSign } from 'lucide-react'
+import { Youtube, FileText, Facebook, Instagram, Clapperboard, Film, AtSign, Linkedin, FlaskConical } from 'lucide-react'
 import type { CalendarContent, ContentStatus } from '../../pages/Calendar'
 
 const STATUS_CONFIG: Record<ContentStatus, {
@@ -24,6 +24,8 @@ const platformConfig: Record<string, { icon: typeof Youtube; label: string; colo
   instagram:       { icon: Instagram,     label: 'Instagram',    color: 'text-pink-500' },
   instagram_reels: { icon: Film,          label: 'Reels',        color: 'text-purple-500' },
   threads:         { icon: AtSign,        label: 'Threads',      color: 'text-gray-700' },
+  linkedin:        { icon: Linkedin,      label: 'LinkedIn',     color: 'text-blue-700' },
+  living_sequence_lab: { icon: FlaskConical, label: 'LSL',       color: 'text-emerald-600' },
 }
 
 interface ContentCardProps {

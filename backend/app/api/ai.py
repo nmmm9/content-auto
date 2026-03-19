@@ -64,5 +64,7 @@ async def get_supported_platforms():
             {"id": "instagram", "name": "Instagram"},
             {"id": "instagram_reels", "name": "Instagram Reels"},
             {"id": "threads", "name": "Threads"},
+            {"id": "linkedin", "name": "LinkedIn"},
+            {"id": "living_sequence_lab", "name": "Living Sequence Lab"},
         ]
     }

@@ -83,6 +83,7 @@ async def transform_content(request: TransformRequest):
     valid_platforms = [
         "youtube_shorts", "naver_blog", "facebook",
         "instagram", "instagram_reels", "threads",
+        "linkedin", "living_sequence_lab",
     ]
 
     # 플랫폼 유효성 검사

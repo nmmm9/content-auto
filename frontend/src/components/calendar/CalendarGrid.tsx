@@ -1,4 +1,4 @@
-import { Youtube, FileText, Facebook, Instagram, Clapperboard, Film, AtSign } from 'lucide-react'
+import { Youtube, FileText, Facebook, Instagram, Clapperboard, Film, AtSign, Linkedin, FlaskConical } from 'lucide-react'
 import type { CalendarContent, CalendarDay } from '../../pages/Calendar'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
@@ -11,6 +11,8 @@ const platformConfig: Record<string, { color: string; iconColor: string; icon: t
   instagram:       { color: 'bg-gradient-to-r from-purple-600 via-pink-500 to-orange-300',        iconColor: 'text-pink-500',   icon: Instagram,     label: 'Instagram' },
   instagram_reels: { color: 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-300',       iconColor: 'text-purple-500', icon: Film,          label: 'Reels' },
   threads:         { color: 'bg-gradient-to-r from-gray-900 via-gray-600 to-gray-300',            iconColor: 'text-gray-700',   icon: AtSign,        label: 'Threads' },
+  linkedin:        { color: 'bg-gradient-to-r from-blue-800 via-blue-500 to-sky-400',            iconColor: 'text-blue-700',   icon: Linkedin,      label: 'LinkedIn' },
+  living_sequence_lab: { color: 'bg-gradient-to-r from-emerald-600 via-teal-400 to-cyan-300',    iconColor: 'text-emerald-600', icon: FlaskConical,  label: 'LSL' },
 }
 
 interface CalendarGridProps {

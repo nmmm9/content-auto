@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Youtube, FileText, Facebook, Instagram, CheckCircle, XCircle, ExternalLink, Clapperboard, Film, AtSign } from 'lucide-react'
+import { Youtube, FileText, Facebook, Instagram, CheckCircle, XCircle, ExternalLink, Clapperboard, Film, AtSign, Linkedin, FlaskConical } from 'lucide-react'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api'
 
@@ -74,6 +74,22 @@ const platformInfo: Record<string, {
     bgColor: 'bg-gray-50',
     description: 'Threads API를 통해 게시물을 올립니다.',
     setupUrl: 'https://developers.facebook.com/'
+  },
+  linkedin: {
+    name: 'LinkedIn',
+    icon: Linkedin,
+    color: 'text-blue-700',
+    bgColor: 'bg-blue-50',
+    description: 'LinkedIn API를 통해 게시물을 올립니다.',
+    setupUrl: 'https://www.linkedin.com/developers/'
+  },
+  living_sequence_lab: {
+    name: 'Living Sequence Lab',
+    icon: FlaskConical,
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-50',
+    description: 'Living Sequence Lab 자체 사이트에 아티클을 게시합니다.',
+    setupUrl: ''
   },
 }
 

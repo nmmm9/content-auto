@@ -37,7 +37,7 @@ const defaultEdgeOptions = {
   markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
 }
 
-const DERIVED_PLATFORMS = 6
+const DERIVED_PLATFORMS = 8
 
 const platformNames: Record<string, string> = {
   'youtube-shorts': 'YouTube Shorts',
@@ -46,6 +46,8 @@ const platformNames: Record<string, string> = {
   'instagram': 'Instagram',
   'instagram-reels': 'Instagram Reels',
   'threads': 'Threads',
+  'linkedin': 'LinkedIn',
+  'living-sequence-lab': 'Living Sequence Lab',
 }
 
 const platformKeys: Record<string, string> = {
@@ -55,6 +57,8 @@ const platformKeys: Record<string, string> = {
   'instagram': 'instagram',
   'instagram-reels': 'instagram_reels',
   'threads': 'threads',
+  'linkedin': 'linkedin',
+  'living-sequence-lab': 'living_sequence_lab',
 }
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api'
@@ -88,6 +92,8 @@ const derivedPlatformIds = [
   'instagram',
   'instagram-reels',
   'threads',
+  'linkedin',
+  'living-sequence-lab',
 ]
 
 
@@ -155,6 +161,20 @@ const createInitialNodes = (): Node[] => [
     position: { x: 720, y: 475 },
     style: { width: 260 },
     data: { label: 'Threads', platform: 'threads', status: 'idle' },
+  },
+  {
+    id: 'linkedin',
+    type: 'platformNode',
+    position: { x: 720, y: 570 },
+    style: { width: 260 },
+    data: { label: 'LinkedIn', platform: 'linkedin', status: 'idle' },
+  },
+  {
+    id: 'living-sequence-lab',
+    type: 'platformNode',
+    position: { x: 720, y: 665 },
+    style: { width: 260 },
+    data: { label: 'Living Sequence Lab', platform: 'living_sequence_lab', status: 'idle' },
   },
   {
     id: 'result',

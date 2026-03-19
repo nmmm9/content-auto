@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   Youtube, FileText, Facebook, Instagram, Clapperboard, Film, AtSign,
-  Link, Sparkles, ArrowRight, CheckCircle, Loader2, Play
+  Link, Sparkles, ArrowRight, CheckCircle, Loader2, Play, Linkedin, FlaskConical
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
@@ -12,6 +12,8 @@ const derivedPlatforms = [
   { id: 'instagram', name: 'Instagram', icon: Instagram, color: 'text-pink-500', bg: 'bg-pink-50', border: 'border-pink-200' },
   { id: 'instagram_reels', name: 'Instagram Reels', icon: Film, color: 'text-purple-500', bg: 'bg-purple-50', border: 'border-purple-200' },
   { id: 'threads', name: 'Threads', icon: AtSign, color: 'text-gray-700', bg: 'bg-gray-50', border: 'border-gray-200' },
+  { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200' },
+  { id: 'living_sequence_lab', name: 'Living Sequence Lab', icon: FlaskConical, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
 ]
 
 interface YouTubeInfo {

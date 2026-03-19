@@ -137,6 +137,19 @@ const PLATFORM_METRICS: Record<string, { key: string; label: string; icon: typeo
     { key: 'reposts', label: '리포스트', icon: Repeat2, color: 'text-emerald-600', bg: 'bg-emerald-500/10', gradient: 'from-emerald-500 to-green-400' },
     { key: 'quotes', label: '인용', icon: Share2, color: 'text-violet-600', bg: 'bg-violet-500/10', gradient: 'from-violet-500 to-purple-400' },
   ],
+  linkedin: [
+    { key: 'impressions', label: '노출', icon: Eye, color: 'text-blue-600', bg: 'bg-blue-500/10', gradient: 'from-blue-500 to-cyan-400' },
+    { key: 'likes', label: '좋아요', icon: Heart, color: 'text-rose-600', bg: 'bg-rose-500/10', gradient: 'from-rose-500 to-pink-400' },
+    { key: 'comments', label: '댓글', icon: MessageCircle, color: 'text-amber-600', bg: 'bg-amber-500/10', gradient: 'from-amber-500 to-yellow-400' },
+    { key: 'shares', label: '공유', icon: Share2, color: 'text-emerald-600', bg: 'bg-emerald-500/10', gradient: 'from-emerald-500 to-green-400' },
+    { key: 'clicks', label: '클릭', icon: MousePointerClick, color: 'text-violet-600', bg: 'bg-violet-500/10', gradient: 'from-violet-500 to-purple-400' },
+  ],
+  living_sequence_lab: [
+    { key: 'views', label: '조회수', icon: Eye, color: 'text-blue-600', bg: 'bg-blue-500/10', gradient: 'from-blue-500 to-cyan-400' },
+    { key: 'likes', label: '좋아요', icon: Heart, color: 'text-rose-600', bg: 'bg-rose-500/10', gradient: 'from-rose-500 to-pink-400' },
+    { key: 'comments', label: '댓글', icon: MessageCircle, color: 'text-amber-600', bg: 'bg-amber-500/10', gradient: 'from-amber-500 to-yellow-400' },
+    { key: 'shares', label: '공유', icon: Share2, color: 'text-emerald-600', bg: 'bg-emerald-500/10', gradient: 'from-emerald-500 to-green-400' },
+  ],
 }
 
 function formatMetricValue(value: number, format?: 'time' | 'pct'): string {

@@ -22,3 +22,14 @@ Thumbs.db
 # Temp
 backend/uploads/
 backend/auto_upload.db
+
+frontend/.claude
+frontend/docs
+
+docs/
+backend/auto_upload.db
+
+.gitignore
+.claude
+
+docs/

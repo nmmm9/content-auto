@@ -8,7 +8,7 @@ from app.schemas.platform import PlatformConnectionResponse
 
 router = APIRouter()
 
-SUPPORTED_PLATFORMS = ["youtube", "naver_blog", "facebook", "instagram"]
+SUPPORTED_PLATFORMS = ["youtube", "naver_blog", "facebook", "instagram", "linkedin", "living_sequence_lab"]
 
 @router.get("/", response_model=List[PlatformConnectionResponse])
 def get_platforms(db: Session = Depends(get_db)):

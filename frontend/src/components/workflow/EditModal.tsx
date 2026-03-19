@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Sparkles, Save, Youtube, FileText, Facebook, Instagram, Clapperboard, Film, AtSign, Heart, MessageCircle, Send, Bookmark, Share2, ThumbsUp, MoreHorizontal, Search, Home } from 'lucide-react'
+import { X, Sparkles, Save, Youtube, FileText, Facebook, Instagram, Clapperboard, Film, AtSign, Heart, MessageCircle, Send, Bookmark, Share2, ThumbsUp, MoreHorizontal, Search, Home, Linkedin, FlaskConical } from 'lucide-react'
 
 interface GeneratedContent {
   title?: string
@@ -316,6 +316,8 @@ const platformIcons: Record<string, typeof Youtube> = {
   instagram: Instagram,
   instagram_reels: Film,
   threads: AtSign,
+  linkedin: Linkedin,
+  living_sequence_lab: FlaskConical,
 }
 
 const platformColors: Record<string, string> = {
@@ -325,6 +327,8 @@ const platformColors: Record<string, string> = {
   instagram: 'from-purple-500 via-pink-500 to-orange-400',
   instagram_reels: 'from-purple-600 to-pink-500',
   threads: 'from-gray-800 to-gray-900',
+  linkedin: 'from-blue-600 to-blue-800',
+  living_sequence_lab: 'from-emerald-500 to-teal-600',
 }
 
 // ── 메인 컴포넌트 ──
@@ -389,6 +393,10 @@ export default function EditModal({
         return <InstagramReelsPreview content={previewContent} thumbnail={videoThumbnail} />
       case 'threads':
         return <ThreadsPreview content={previewContent} />
+      case 'linkedin':
+        return <FacebookPreview content={previewContent} />
+      case 'living_sequence_lab':
+        return <NaverBlogPreview content={previewContent} />
       default:
         return null
     }
@@ -406,6 +414,7 @@ export default function EditModal({
           </>
         )
       case 'naver_blog':
+      case 'living_sequence_lab':
         return (
           <>
             <Field label="제목" value={editedContent.title || ''} onChange={(v) => setEditedContent({ ...editedContent, title: v })} maxLength={60} />
@@ -415,6 +424,7 @@ export default function EditModal({
         )
       case 'facebook':
       case 'threads':
+      case 'linkedin':
         return (
           <>
             <Field label="캡션" value={editedContent.caption || ''} onChange={(v) => setEditedContent({ ...editedContent, caption: v })} rows={6} />
