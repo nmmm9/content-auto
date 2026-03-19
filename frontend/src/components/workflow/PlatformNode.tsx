@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Handle, Position, type NodeProps, NodeResizer } from '@xyflow/react'
+import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { Youtube, FileText, Facebook, Instagram, CheckCircle, XCircle, Loader2, Clock, Clapperboard, Film, AtSign, UserCheck, Edit3, Link, ArrowRight } from 'lucide-react'
 
 export interface PlatformNodeData {
@@ -20,8 +20,10 @@ export interface PlatformNodeData {
   generatedContent?: {
     title?: string
     description?: string
+    content?: string
     caption?: string
     hashtags?: string[]
+    tags?: string[]
   }
 }
 
@@ -143,14 +145,7 @@ export default function PlatformNode({ id, data }: NodeProps) {
     <div
       onClick={handleNodeClick}
       className={`px-5 py-4 rounded-xl border-2 shadow-lg bg-white overflow-hidden ${borderByStatus[d.status || 'idle'] || 'border-gray-200'} ${d.isMain ? 'ring-2 ring-red-500 ring-offset-2' : ''} ${d.isMain && d.analysisResult && (d.status === 'ready' || d.status === 'success') ? 'cursor-pointer hover:shadow-xl transition-shadow' : ''}`}
-      style={{ width: '100%', height: '100%' }}
     >
-      <NodeResizer
-        minWidth={d.isMain ? 280 : 220}
-        minHeight={80}
-        handleStyle={{ width: 8, height: 8, borderRadius: 4, background: '#94a3b8', border: '2px solid white' }}
-        lineStyle={{ borderColor: 'transparent' }}
-      />
       <Handle type="target" position={Position.Left} className="!w-3 !h-3 !bg-gray-400 !border-2 !border-white" />
 
       {/* Main Badge */}
@@ -259,16 +254,18 @@ export default function PlatformNode({ id, data }: NodeProps) {
 
       {/* Generated Content Preview (when waiting approval) */}
       {d.status === 'waiting_approval' && d.generatedContent && (
-        <div className="mb-3 p-2 bg-gray-50 rounded-lg text-xs overflow-hidden">
+        <div className="mb-3 p-2 bg-gray-50 rounded-lg text-xs overflow-hidden max-h-[100px]">
           {d.generatedContent.title && (
             <div className="font-medium text-gray-900 line-clamp-1">{d.generatedContent.title}</div>
           )}
-          {d.generatedContent.caption && (
-            <div className="text-gray-600 line-clamp-2 mt-1">{d.generatedContent.caption}</div>
+          {(d.generatedContent.caption || d.generatedContent.content || d.generatedContent.description) && (
+            <div className="text-gray-600 line-clamp-2 mt-1">
+              {d.generatedContent.caption || d.generatedContent.content || d.generatedContent.description}
+            </div>
           )}
-          {d.generatedContent.hashtags && d.generatedContent.hashtags.length > 0 && (
+          {(d.generatedContent.hashtags || d.generatedContent.tags || []).length > 0 && (
             <div className="text-blue-500 line-clamp-1 mt-1">
-              {d.generatedContent.hashtags.slice(0, 3).join(' ')}
+              {(d.generatedContent.hashtags || d.generatedContent.tags || []).slice(0, 3).join(' ')}
             </div>
           )}
         </div>
