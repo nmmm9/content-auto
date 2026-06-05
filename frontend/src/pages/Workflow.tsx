@@ -248,6 +248,8 @@ function WorkflowInner() {
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null)
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash')
+  const [lastResults, setLastResults] = useState<Record<string, { status: string; data?: Record<string, unknown>; error?: string }>>({})
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
   // 모달 상태
   const [editModalOpen, setEditModalOpen] = useState(false)
@@ -687,6 +689,7 @@ function WorkflowInner() {
 
       const data = await res.json()
       transformResults = data.results
+      setLastResults(transformResults)
     } catch (err) {
       // API 실패 시 에러 표시
       setNodes((nds) =>
@@ -773,6 +776,29 @@ function WorkflowInner() {
     setCurrentPhase('done')
   }, [pendingApprovals, handleReject])
 
+  // 저장
+  const handleSave = async () => {
+    if (!videoInfo || !analysisResult) return
+    setSaveStatus('saving')
+    try {
+      const res = await fetch(`${API_BASE}/workflow/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          video_info: videoInfo,
+          analysis: analysisResult,
+          results: lastResults,
+        }),
+      })
+      if (!res.ok) throw new Error(`Save failed: ${res.status}`)
+      await res.json()
+      setSaveStatus('saved')
+    } catch (err) {
+      console.error('Save failed:', err)
+      setSaveStatus('error')
+    }
+  }
+
   // 리셋
   const resetWorkflow = useCallback(() => {
     setNodes(createInitialNodes())
@@ -786,6 +812,8 @@ function WorkflowInner() {
     setVideoInfo(null)
     setAnalysisResult(null)
     setSelectedModel('gemini-2.5-flash')
+    setSaveStatus('idle')
+    setLastResults({})
   }, [setNodes, setEdges])
 
   const miniMapNodeColor = useCallback((node: Node) => {
@@ -848,6 +876,15 @@ function WorkflowInner() {
               </button>
               <div className="w-px h-8 bg-slate-200 mx-2" />
             </>
+          )}
+          {currentPhase === 'approval' && (
+            <button
+              onClick={handleSave}
+              disabled={saveStatus === 'saving' || saveStatus === 'saved' || !videoInfo || !analysisResult}
+              className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white rounded-xl shadow-md transition-all bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {saveStatus === 'saved' ? '저장됨' : saveStatus === 'saving' ? '저장 중…' : saveStatus === 'error' ? '저장 실패 — 재시도' : '저장'}
+            </button>
           )}
           <button
             onClick={resetWorkflow}
