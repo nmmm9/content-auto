@@ -94,7 +94,12 @@ export default function Dashboard() {
     if (!date) return
     try {
       await api.scheduleContent(id, date)
-      setDrafts((prev) => prev.filter((d) => d.id !== id))
+      setScheduleDates((prev) => {
+        const next = { ...prev }
+        delete next[id]
+        return next
+      })
+      await fetchData()
     } catch (err) {
       console.error('Schedule failed:', err)
       alert('예약에 실패했습니다.')
