@@ -44,9 +44,6 @@ class FakeQuery:
     def range(self, *args, **kwargs):
         return self
 
-    def single(self):
-        return self
-
     def _match(self, row):
         return all(row.get(c) == v for c, v in self._filters)
 
