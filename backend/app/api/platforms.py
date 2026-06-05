@@ -1,63 +1,41 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from typing import List
+from supabase import Client
 
-from app.core.database import get_db
-from app.models.platform import PlatformConnection
-from app.schemas.platform import PlatformConnectionResponse
+from app.core.database import get_supabase
 
 router = APIRouter()
 
-SUPPORTED_PLATFORMS = ["youtube", "naver_blog", "facebook", "instagram", "linkedin", "living_sequence_lab"]
+SUPPORTED_PLATFORMS = [
+    "youtube", "naver_blog", "facebook", "instagram", "linkedin", "living_sequence_lab",
+]
 
-@router.get("/", response_model=List[PlatformConnectionResponse])
-def get_platforms(db: Session = Depends(get_db)):
-    # Get all platform connections
-    connections = db.query(PlatformConnection).all()
-    existing = {c.platform for c in connections}
+_COLUMNS = "id, platform, is_connected, account_name, account_id"
 
-    # Create entries for missing platforms
-    for platform in SUPPORTED_PLATFORMS:
-        if platform not in existing:
-            new_connection = PlatformConnection(
-                platform=platform,
-                is_connected=False
-            )
-            db.add(new_connection)
 
-    db.commit()
+@router.get("/")
+def list_platforms(sb: Client = Depends(get_supabase)):
+    res = sb.table("platform_connections").select(_COLUMNS).execute()
+    existing = {row["platform"] for row in res.data}
+    missing = [p for p in SUPPORTED_PLATFORMS if p not in existing]
+    if missing:
+        sb.table("platform_connections").insert(
+            [{"platform": p, "is_connected": False} for p in missing]
+        ).execute()
+        res = sb.table("platform_connections").select(_COLUMNS).execute()
+    return res.data
 
-    return db.query(PlatformConnection).all()
-
-@router.get("/{platform}", response_model=PlatformConnectionResponse)
-def get_platform(platform: str, db: Session = Depends(get_db)):
-    if platform not in SUPPORTED_PLATFORMS:
-        raise HTTPException(status_code=400, detail="Unsupported platform")
-
-    connection = db.query(PlatformConnection).filter(
-        PlatformConnection.platform == platform
-    ).first()
-
-    if not connection:
-        connection = PlatformConnection(platform=platform, is_connected=False)
-        db.add(connection)
-        db.commit()
-        db.refresh(connection)
-
-    return connection
 
 @router.post("/{platform}/disconnect")
-def disconnect_platform(platform: str, db: Session = Depends(get_db)):
-    connection = db.query(PlatformConnection).filter(
-        PlatformConnection.platform == platform
-    ).first()
-
-    if connection:
-        connection.is_connected = False
-        connection.access_token = None
-        connection.refresh_token = None
-        connection.account_name = None
-        connection.account_id = None
-        db.commit()
-
-    return {"message": f"Disconnected from {platform}"}
+def disconnect_platform(platform: str, sb: Client = Depends(get_supabase)):
+    if platform not in SUPPORTED_PLATFORMS:
+        raise HTTPException(status_code=400, detail=f"Unsupported platform: {platform}")
+    res = sb.table("platform_connections").update({
+        "is_connected": False,
+        "access_token": None,
+        "refresh_token": None,
+        "account_name": None,
+        "account_id": None,
+    }).eq("platform", platform).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Platform connection not found")
+    return res.data[0]
