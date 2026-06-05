@@ -5,9 +5,10 @@ from app.core.config import settings
 def test_get_supabase_builds_client_with_settings(monkeypatch):
     captured = {}
 
-    def fake_create_client(url, key):
+    def fake_create_client(url, key, options=None):
         captured["url"] = url
         captured["key"] = key
+        captured["options"] = options
         return object()
 
     monkeypatch.setattr(db, "create_client", fake_create_client)
@@ -20,3 +21,5 @@ def test_get_supabase_builds_client_with_settings(monkeypatch):
     assert client is not None
     assert captured["url"] == "https://example.supabase.co"
     assert captured["key"] == "test-key"
+    assert captured["options"] is not None
+    assert captured["options"].schema == "content"
