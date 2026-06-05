@@ -64,6 +64,16 @@ export const api = {
     return { success: true }
   },
 
+  scheduleContent: async (id: number, scheduledAt: string) => {
+    const response = await fetch(`${API_BASE}/contents/${id}/schedule`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scheduled_at: scheduledAt }),
+    })
+    if (!response.ok) throw new Error(`Schedule failed: ${response.status}`)
+    return response.json()
+  },
+
   // Platforms
   getPlatforms: async () => {
     const { data, error } = await supabase

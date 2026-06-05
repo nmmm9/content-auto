@@ -44,6 +44,8 @@ export default function Dashboard() {
   })
 
   const [recentContents, setRecentContents] = useState<Content[]>([])
+  const [drafts, setDrafts] = useState<Content[]>([])
+  const [scheduleDates, setScheduleDates] = useState<Record<number, string>>({})
   const [platforms, setPlatforms] = useState<PlatformConnection[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null)
@@ -68,6 +70,7 @@ export default function Dashboard() {
       // Fetch contents from Supabase
       const contents = await api.getContents()
       setRecentContents(contents.slice(0, 5))
+      setDrafts(contents.filter((c: Content) => c.status === 'draft'))
 
       setStats({
         total: contents.length,
@@ -83,6 +86,18 @@ export default function Dashboard() {
       console.error('Failed to fetch data:', error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleSchedule = async (id: number) => {
+    const date = scheduleDates[id]
+    if (!date) return
+    try {
+      await api.scheduleContent(id, date)
+      setDrafts((prev) => prev.filter((d) => d.id !== id))
+    } catch (err) {
+      console.error('Schedule failed:', err)
+      alert('예약에 실패했습니다.')
     }
   }
 
@@ -296,6 +311,32 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {drafts.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+          <h2 className="text-sm font-bold text-slate-700 mb-3">예약 대기 드래프트</h2>
+          <div className="space-y-2">
+            {drafts.map((d) => (
+              <div key={d.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50">
+                <span className="flex-1 truncate text-sm text-slate-700">{d.title}</span>
+                <input
+                  type="date"
+                  value={scheduleDates[d.id] || ''}
+                  onChange={(e) => setScheduleDates((prev) => ({ ...prev, [d.id]: e.target.value }))}
+                  className="text-xs border border-slate-200 rounded-lg px-2 py-1"
+                />
+                <button
+                  onClick={() => handleSchedule(d.id)}
+                  disabled={!scheduleDates[d.id]}
+                  className="text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 rounded-lg px-3 py-1"
+                >
+                  예약
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 링크 분석 섹션 */}
       {analytics && (() => {
