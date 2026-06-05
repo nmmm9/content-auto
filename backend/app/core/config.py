@@ -7,8 +7,9 @@ class Settings(BaseSettings):
     APP_NAME: str = "Auto Upload System"
     DEBUG: bool = True
 
-    # Database
-    DATABASE_URL: str = "sqlite:///./auto_upload.db"
+    # Supabase
+    SUPABASE_URL: str = ""
+    SUPABASE_SERVICE_ROLE_KEY: str = ""
 
     # File Upload
     UPLOAD_DIR: str = "./uploads"
@@ -42,6 +43,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 settings = Settings()
 

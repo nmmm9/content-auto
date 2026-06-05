@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 
 engine = create_engine(
-    settings.DATABASE_URL,
+    "sqlite:///./auto_upload.db",
     connect_args={"check_same_thread": False}  # SQLite only
 )
 
@@ -18,3 +18,13 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+from functools import lru_cache
+from supabase import create_client, Client
+
+
+@lru_cache
+def get_supabase() -> Client:
+    """Supabase 클라이언트 싱글톤 (service_role 키 — RLS 우회)."""
+    return create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
