@@ -1,104 +1,68 @@
 import secrets
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
-from sqlalchemy.orm import Session
-from typing import List
-from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from supabase import Client
 
-from app.core.database import get_db
+from app.core.database import get_supabase
 from app.core.config import settings
-from app.models.content import Content
-from app.models.upload_history import UploadHistory
-from app.models.template import Template
-from app.models.tracking_link import TrackingLink
 
 router = APIRouter()
 
+
+class UploadRequest(BaseModel):
+    platforms: list[str]
+
+
 @router.post("/{content_id}")
-async def upload_content(
-    content_id: int,
-    platforms: List[str],
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
-):
-    """Start upload to selected platforms"""
-    content = db.query(Content).filter(Content.id == content_id).first()
-    if not content:
+def upload_content(content_id: int, body: UploadRequest, sb: Client = Depends(get_supabase)):
+    content = sb.table("contents").select("id").eq("id", content_id).limit(1).execute()
+    if not content.data:
         raise HTTPException(status_code=404, detail="Content not found")
 
     results = []
-    for platform in platforms:
-        # Create upload history entry
-        history = UploadHistory(
-            content_id=content_id,
-            platform=platform,
-            status="pending"
-        )
-        db.add(history)
-        db.commit()
-        db.refresh(history)
+    for platform in body.platforms:
+        hist = sb.table("upload_history").insert({
+            "content_id": content_id,
+            "platform": platform,
+            "status": "pending",
+        }).execute()
+        history_id = hist.data[0]["id"]
 
-        # TODO: Add background task for actual upload
-        # background_tasks.add_task(upload_to_platform, history.id, platform)
-
-        # Auto-generate tracking link
         short_code = secrets.token_urlsafe(6)
-        tracking_link = TrackingLink(
-            upload_history_id=history.id,
-            content_id=content_id,
-            platform=platform,
-            short_code=short_code,
-            destination_url=settings.TRACKING_DESTINATION_URL,
-            utm_source=platform,
-            utm_medium="social",
-            utm_campaign=f"content_{content_id}",
-        )
-        db.add(tracking_link)
-        db.commit()
+        sb.table("tracking_links").insert({
+            "upload_history_id": history_id,
+            "content_id": content_id,
+            "platform": platform,
+            "short_code": short_code,
+            "destination_url": settings.TRACKING_DESTINATION_URL,
+            "utm_source": platform,
+            "utm_medium": "social",
+            "utm_campaign": f"content_{content_id}",
+        }).execute()
 
         results.append({
             "platform": platform,
-            "history_id": history.id,
+            "history_id": history_id,
             "status": "pending",
             "tracking_url": f"/t/{short_code}",
         })
 
-    # Update content status
-    content.status = "uploading"
-    db.commit()
-
+    sb.table("contents").update({"status": "uploading"}).eq("id", content_id).execute()
     return {"message": "Upload started", "results": results}
 
-@router.get("/history/{content_id}")
-def get_upload_history(content_id: int, db: Session = Depends(get_db)):
-    """Get upload history for a content"""
-    history = db.query(UploadHistory).filter(
-        UploadHistory.content_id == content_id
-    ).order_by(UploadHistory.created_at.desc()).all()
 
-    return history
+@router.get("/history/{content_id}")
+def get_upload_history(content_id: int, sb: Client = Depends(get_supabase)):
+    res = sb.table("upload_history").select("*").eq("content_id", content_id).order("created_at", desc=True).execute()
+    return res.data
+
 
 @router.post("/retry/{history_id}")
-async def retry_upload(
-    history_id: int,
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
-):
-    """Retry failed upload"""
-    history = db.query(UploadHistory).filter(
-        UploadHistory.id == history_id
-    ).first()
-
-    if not history:
-        raise HTTPException(status_code=404, detail="Upload history not found")
-
-    if history.status != "failed":
-        raise HTTPException(status_code=400, detail="Can only retry failed uploads")
-
-    history.status = "pending"
-    history.error_message = None
-    db.commit()
-
-    # TODO: Add background task for actual upload
-    # background_tasks.add_task(upload_to_platform, history.id, history.platform)
-
+def retry_upload(history_id: int, sb: Client = Depends(get_supabase)):
+    res = sb.table("upload_history").select("*").eq("id", history_id).limit(1).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="History not found")
+    if res.data[0]["status"] != "failed":
+        raise HTTPException(status_code=400, detail="Only failed uploads can be retried")
+    sb.table("upload_history").update({"status": "pending", "error_message": None}).eq("id", history_id).execute()
     return {"message": "Retry started", "history_id": history_id}
