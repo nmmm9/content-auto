@@ -3,10 +3,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import router
 from app.api.redirect import router as redirect_router
-from app.core.database import engine, Base
-
-# Create database tables
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="콘텐츠 자동 업로드 시스템",
