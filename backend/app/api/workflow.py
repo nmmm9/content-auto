@@ -1,8 +1,10 @@
 import logging
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+from supabase import Client
 
 from app.services import youtube_info, video_analyzer
+from app.core.database import get_supabase
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -106,3 +108,37 @@ async def transform_content(request: TransformRequest):
     except Exception as e:
         logger.exception("Unexpected error in transform_content")
         raise HTTPException(status_code=500, detail=f"변환 오류: {str(e)[:200]}")
+
+
+class SaveRequest(BaseModel):
+    video_info: dict
+    analysis: dict
+    results: dict
+
+
+@router.post("/save")
+def save_workflow(body: SaveRequest, sb: Client = Depends(get_supabase)):
+    """변환 결과를 contents 에 draft 로 저장한다."""
+    generated = {
+        platform: payload.get("data")
+        for platform, payload in body.results.items()
+        if isinstance(payload, dict) and payload.get("status") == "success"
+    }
+
+    row = {
+        "title": body.video_info.get("title") or "제목 없음",
+        "description": body.analysis.get("summary", ""),
+        "tags": body.analysis.get("keywords", []),
+        "thumbnail_path": body.video_info.get("thumbnail_url"),
+        "status": "draft",
+        "workflow_data": {
+            "video_info": body.video_info,
+            "analysis": body.analysis,
+            "generated": generated,
+        },
+    }
+
+    res = sb.table("contents").insert(row).execute()
+    if not res.data:
+        raise HTTPException(status_code=500, detail="Failed to save content")
+    return {"content_id": res.data[0]["id"], "status": "draft"}
