@@ -195,7 +195,7 @@ export default function Calendar() {
         const { data: dbContents } = await supabase
           .from('contents')
           .select('*')
-          .eq('status', 'completed')
+          .in('status', ['scheduled', 'completed'])
           .not('scheduled_at', 'is', null)
           .order('scheduled_at', { ascending: true })
 
@@ -225,7 +225,11 @@ export default function Calendar() {
         const expanded: CalendarContent[] = []
         dbContents.forEach(row => {
           const pMetrics = row.metrics as Record<string, Record<string, number>> | null
-          const platforms = platformMap[row.id] || []
+          let platforms = platformMap[row.id] || []
+          if (platforms.length === 0) {
+            const generated = (row.workflow_data as { generated?: Record<string, unknown> } | null | undefined)?.generated
+            if (generated) platforms = Object.keys(generated)
+          }
 
           if (platforms.length === 0) {
             // 플랫폼 없는 콘텐츠는 그대로
