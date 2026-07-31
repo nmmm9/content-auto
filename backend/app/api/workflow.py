@@ -4,6 +4,11 @@ from pydantic import BaseModel
 from supabase import Client
 
 from app.services import youtube_info, video_analyzer
+from app.services.video_analyzer import (
+    DEFAULT_BRAND_VOICE,
+    PLATFORM_PROMPTS,
+    TEMPLATE_VARIABLES,
+)
 from app.core.database import get_supabase
 
 logger = logging.getLogger(__name__)
@@ -34,6 +39,10 @@ class TransformRequest(BaseModel):
     video_info: dict
     platforms: list[str]
     model: str = "gemini-2.5-flash"
+    youtube_url: str = ""
+    brand_voice: str = ""
+    # {platform: {"system": ..., "user": ...}} — 사용자가 편집한 프롬프트 (없으면 기본값)
+    custom_prompts: dict[str, dict] | None = None
 
 
 class TransformResponse(BaseModel):
@@ -79,14 +88,23 @@ async def analyze_video(request: AnalyzeRequest):
         raise HTTPException(status_code=500, detail=f"서버 오류: {str(e)[:200]}")
 
 
+@router.get("/prompts")
+def get_prompts():
+    """플랫폼별 기본 변환 프롬프트를 반환합니다 (프론트 검토/수정 UI용)."""
+    return {
+        "brand_voice": DEFAULT_BRAND_VOICE,
+        "platforms": {
+            key: {"system": cfg["system"], "user": cfg["user"]}
+            for key, cfg in PLATFORM_PROMPTS.items()
+        },
+        "variables": TEMPLATE_VARIABLES,
+    }
+
+
 @router.post("/transform", response_model=TransformResponse)
 async def transform_content(request: TransformRequest):
     """분석 결과를 각 플랫폼에 맞게 변환합니다."""
-    valid_platforms = [
-        "youtube_shorts", "naver_blog", "facebook",
-        "instagram", "instagram_reels", "threads",
-        "linkedin", "living_sequence_lab",
-    ]
+    valid_platforms = list(PLATFORM_PROMPTS.keys())
 
     # 플랫폼 유효성 검사
     for p in request.platforms:
@@ -98,10 +116,17 @@ async def transform_content(request: TransformRequest):
 
     try:
         video_title = request.video_info.get("title", "")
+        video_id = request.video_info.get("video_id", "")
+        video_url = request.youtube_url or (
+            f"https://youtu.be/{video_id}" if video_id else ""
+        )
         results = await video_analyzer.transform_all_platforms(
             analysis=request.analysis,
             platforms=request.platforms,
             video_title=video_title,
+            video_url=video_url,
+            brand_voice=request.brand_voice,
+            custom_prompts=request.custom_prompts,
             model=request.model,
         )
         return TransformResponse(results=results)

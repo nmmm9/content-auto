@@ -22,6 +22,7 @@ import PlatformNode, { type PlatformNodeData } from '../components/workflow/Plat
 import ResultNode from '../components/workflow/ResultNode'
 import TemplateNode from '../components/workflow/TemplateNode'
 import EditModal from '../components/workflow/EditModal'
+import PromptReviewModal, { type PromptData, type PromptDefaults } from '../components/workflow/PromptReviewModal'
 
 import { Play, RotateCcw, Zap, CheckCircle, XCircle, Sparkles, Target, Eye, Film, MessageSquare, Lightbulb, TrendingUp, Users, Hash, Volume2, Palette, X, Map } from 'lucide-react'
 
@@ -244,7 +245,7 @@ function WorkflowInner() {
   const [pendingApprovals, setPendingApprovals] = useState<string[]>([])
   const [completedCount, setCompletedCount] = useState(0)
   const [failedCount, setFailedCount] = useState(0)
-  const [, setYoutubeUrl] = useState<string | null>(null)
+  const [youtubeUrl, setYoutubeUrl] = useState<string | null>(null)
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null)
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash')
@@ -267,6 +268,12 @@ function WorkflowInner() {
   const [analysisModalOpen, setAnalysisModalOpen] = useState(false)
   const [analysisTab, setAnalysisTab] = useState<'overview' | 'detail' | 'strategy'>('overview')
   const [showMiniMap, setShowMiniMap] = useState(true)
+
+  // 프롬프트 검토 모달
+  const [promptModalOpen, setPromptModalOpen] = useState(false)
+  const [promptDefaults, setPromptDefaults] = useState<PromptDefaults | null>(null)
+  const [customPrompts, setCustomPrompts] = useState<Record<string, PromptData>>({})
+  const [brandVoice, setBrandVoice] = useState('')
 
   // 동적 자동 레이아웃 (노드 크기 측정 기반)
   const { fitView, getNodes } = useReactFlow()
@@ -634,7 +641,10 @@ function WorkflowInner() {
   }, [editingNodeId, editingContent])
 
   // 워크플로우 실행 (실제 API 호출)
-  const runWorkflow = useCallback(async () => {
+  const runWorkflow = useCallback(async (
+    promptOverrides?: Record<string, PromptData>,
+    brandVoiceOverride?: string,
+  ) => {
     if (isRunning || !analysisResult || !videoInfo) return
     setIsRunning(true)
     setCompletedCount(0)
@@ -672,6 +682,8 @@ function WorkflowInner() {
     let transformResults: Record<string, { status: string; data?: Record<string, unknown>; error?: string }> = {}
 
     try {
+      const activePrompts = promptOverrides ?? customPrompts
+      const activeBrandVoice = brandVoiceOverride ?? brandVoice
       const res = await fetch(`${API_BASE}/workflow/transform`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -680,6 +692,9 @@ function WorkflowInner() {
           video_info: videoInfo,
           platforms: derivedPlatformIds.map((id) => platformKeys[id]),
           model: selectedModel,
+          youtube_url: youtubeUrl || '',
+          brand_voice: activeBrandVoice,
+          custom_prompts: Object.keys(activePrompts).length > 0 ? activePrompts : null,
         }),
       })
 
@@ -759,7 +774,35 @@ function WorkflowInner() {
     }
 
     setIsRunning(false)
-  }, [isRunning, analysisResult, videoInfo, setNodes, setEdges, updateResultNode])
+  }, [isRunning, analysisResult, videoInfo, selectedModel, youtubeUrl, customPrompts, brandVoice, setNodes, setEdges, updateResultNode])
+
+  // 보내기 → 프롬프트 검토 모달 열기 (기본 프롬프트 lazy fetch)
+  const openPromptReview = useCallback(async () => {
+    if (isRunning || !analysisResult || !videoInfo) return
+    let defaults = promptDefaults
+    if (!defaults) {
+      try {
+        const res = await fetch(`${API_BASE}/workflow/prompts`)
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        defaults = await res.json()
+        setPromptDefaults(defaults)
+      } catch (err) {
+        console.error('Failed to load prompts, running with defaults:', err)
+        // 프롬프트 조회 실패 시 검토 없이 기본 프롬프트로 바로 실행
+        runWorkflow({}, '')
+        return
+      }
+    }
+    setPromptModalOpen(true)
+  }, [isRunning, analysisResult, videoInfo, promptDefaults, runWorkflow])
+
+  // 프롬프트 확정 → 변환 실행
+  const handlePromptConfirm = useCallback((prompts: Record<string, PromptData>, voice: string) => {
+    setCustomPrompts(prompts)
+    setBrandVoice(voice)
+    setPromptModalOpen(false)
+    runWorkflow(prompts, voice)
+  }, [runWorkflow])
 
   // 전체 승인
   const approveAll = useCallback(async () => {
@@ -814,6 +857,8 @@ function WorkflowInner() {
     setSelectedModel('gemini-2.5-flash')
     setSaveStatus('idle')
     setLastResults({})
+    setCustomPrompts({})
+    setBrandVoice('')
   }, [setNodes, setEdges])
 
   const miniMapNodeColor = useCallback((node: Node) => {
@@ -894,7 +939,7 @@ function WorkflowInner() {
             초기화
           </button>
           <button
-            onClick={runWorkflow}
+            onClick={openPromptReview}
             disabled={isRunning || currentPhase === 'approval' || !analysisResult}
             className={`flex items-center gap-2 px-5 py-2 text-sm font-bold rounded transition-colors ${isRunning || currentPhase === 'approval' || !analysisResult
               ? 'bg-paper-beige text-ash-gray cursor-not-allowed'
@@ -967,6 +1012,19 @@ function WorkflowInner() {
         content={editingContent}
         videoThumbnail={videoInfo?.thumbnail_url}
       />
+
+      {/* Prompt Review Modal */}
+      {promptDefaults && (
+        <PromptReviewModal
+          isOpen={promptModalOpen}
+          onClose={() => setPromptModalOpen(false)}
+          onConfirm={handlePromptConfirm}
+          platforms={derivedPlatformIds.map((id) => ({ key: platformKeys[id], name: platformNames[id] }))}
+          defaults={promptDefaults}
+          initialPrompts={customPrompts}
+          initialBrandVoice={brandVoice}
+        />
+      )}
 
       {/* Analysis Result Modal */}
       {analysisModalOpen && analysisResult && (
