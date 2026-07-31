@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, Youtube, FileText, Facebook, Instagram } from 'lucide-react'
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api'
+const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
 interface Template {
   id: number

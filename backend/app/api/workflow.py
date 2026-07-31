@@ -101,9 +101,49 @@ def get_prompts():
     }
 
 
+class TransformOneRequest(BaseModel):
+    analysis: dict
+    video_info: dict
+    platform: str
+    model: str = "gpt-5-mini"
+    youtube_url: str = ""
+    brand_voice: str = ""
+    custom_prompt: dict | None = None  # {"system": ..., "user": ...}
+
+
+@router.post("/transform-one")
+async def transform_one(request: TransformOneRequest):
+    """플랫폼 1개만 변환합니다. 프론트가 플랫폼별로 병렬 호출 —
+    서버리스 타임아웃 회피 + 노드별 실시간 진행 + 개별 재시도용."""
+    if request.platform not in PLATFORM_PROMPTS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"지원하지 않는 플랫폼: {request.platform}",
+        )
+
+    video_id = request.video_info.get("video_id", "")
+    video_url = request.youtube_url or (
+        f"https://youtu.be/{video_id}" if video_id else ""
+    )
+    try:
+        result = await video_analyzer.transform_for_platform(
+            analysis=request.analysis,
+            platform=request.platform,
+            video_title=request.video_info.get("title", ""),
+            video_url=video_url,
+            brand_voice=request.brand_voice,
+            custom_prompt=request.custom_prompt,
+            model=request.model,
+        )
+        return {"platform": request.platform, "status": "success", "data": result}
+    except Exception as e:
+        logger.exception(f"Transform failed for {request.platform}")
+        return {"platform": request.platform, "status": "error", "error": str(e)[:300]}
+
+
 @router.post("/transform", response_model=TransformResponse)
 async def transform_content(request: TransformRequest):
-    """분석 결과를 각 플랫폼에 맞게 변환합니다."""
+    """분석 결과를 각 플랫폼에 맞게 변환합니다 (일괄 — 구버전 호환용)."""
     valid_platforms = list(PLATFORM_PROMPTS.keys())
 
     # 플랫폼 유효성 검사

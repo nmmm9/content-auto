@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Youtube, FileText, Facebook, Instagram, CheckCircle, XCircle, ExternalLink, Clapperboard, Film, AtSign, Linkedin, FlaskConical } from 'lucide-react'
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api'
+const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
 interface PlatformConnection {
   id: number
@@ -103,7 +103,7 @@ export default function Settings() {
 
   const fetchConnections = async () => {
     try {
-      const response = await fetch(`${API_BASE}/platforms/`)
+      const response = await fetch(`${API_BASE}/platforms`)
       if (response.ok) {
         const data = await response.json()
         setConnections(data)

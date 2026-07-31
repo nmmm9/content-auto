@@ -1,0 +1,27 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { getSupabase } from '../_lib/clients'
+
+const SUPPORTED_PLATFORMS = [
+  'youtube', 'naver_blog', 'facebook', 'instagram', 'linkedin', 'living_sequence_lab',
+]
+
+const COLUMNS = 'id, platform, is_connected, account_name, account_id'
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'GET') return res.status(405).json({ detail: 'Method not allowed' })
+
+  const sb = getSupabase()
+  let { data, error } = await sb.from('platform_connections').select(COLUMNS)
+  if (error) return res.status(500).json({ detail: error.message })
+
+  const existing = new Set((data ?? []).map((row) => row.platform))
+  const missing = SUPPORTED_PLATFORMS.filter((p) => !existing.has(p))
+  if (missing.length > 0) {
+    await sb
+      .from('platform_connections')
+      .insert(missing.map((p) => ({ platform: p, is_connected: false })))
+    const refetch = await sb.from('platform_connections').select(COLUMNS)
+    data = refetch.data
+  }
+  return res.status(200).json(data ?? [])
+}

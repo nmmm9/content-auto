@@ -62,7 +62,7 @@ const platformKeys: Record<string, string> = {
   'living-sequence-lab': 'living_sequence_lab',
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api'
+const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
 interface VideoInfo {
   video_id: string
@@ -697,47 +697,70 @@ function WorkflowInner() {
       })
     )
 
-    let transformResults: Record<string, { status: string; data?: Record<string, unknown>; error?: string }> = {}
+    // 플랫폼별 병렬 변환 — 완료되는 노드부터 실시간 반영
+    const activePrompts = promptOverrides ?? customPrompts
+    const activeBrandVoice = brandVoiceOverride ?? brandVoice
+    const transformResults: Record<string, { status: string; data?: Record<string, unknown>; error?: string }> = {}
 
-    try {
-      const activePrompts = promptOverrides ?? customPrompts
-      const activeBrandVoice = brandVoiceOverride ?? brandVoice
-      const res = await fetch(`${API_BASE}/workflow/transform`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          analysis: analysisResult,
-          video_info: videoInfo,
-          platforms: derivedPlatformIds.map((id) => platformKeys[id]),
-          model: selectedModel,
-          youtube_url: youtubeUrl || '',
-          brand_voice: activeBrandVoice,
-          custom_prompts: Object.keys(activePrompts).length > 0 ? activePrompts : null,
-        }),
+    setNodes((nds) =>
+      nds.map((n) => {
+        if (derivedPlatformIds.includes(n.id)) {
+          return { ...n, data: { ...n.data, status: 'processing', nodeId: n.id } }
+        }
+        return n
       })
+    )
 
-      if (!res.ok) {
-        throw new Error(`Transform API failed: ${res.status}`)
-      }
-
-      const data = await res.json()
-      transformResults = data.results
-      setLastResults(transformResults)
-    } catch (err) {
-      // API 실패 시 에러 표시
-      setNodes((nds) =>
-        nds.map((n) => {
-          if (n.id === 'ai-transform') {
-            return { ...n, data: { ...n.data, status: 'idle' } }
+    await Promise.all(
+      derivedPlatformIds.map(async (id) => {
+        const key = platformKeys[id]
+        try {
+          const res = await fetch(`${API_BASE}/workflow/transform-one`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              analysis: analysisResult,
+              video_info: videoInfo,
+              platform: key,
+              model: selectedModel,
+              youtube_url: youtubeUrl || '',
+              brand_voice: activeBrandVoice,
+              custom_prompt: activePrompts[key] ?? null,
+            }),
+          })
+          const data = await res.json()
+          if (!res.ok || data.status !== 'success') {
+            throw new Error(data.error || data.detail || `HTTP ${res.status}`)
           }
-          return n
-        })
-      )
-      setIsRunning(false)
-      setCurrentPhase('ready')
-      console.error('Transform failed:', err)
-      return
-    }
+          transformResults[key] = { status: 'success', data: data.data }
+        } catch (err) {
+          transformResults[key] = {
+            status: 'error',
+            error: err instanceof Error ? err.message : String(err),
+          }
+        }
+
+        const result = transformResults[key]
+        setNodes((nds) =>
+          nds.map((n) => {
+            if (n.id === id) {
+              return {
+                ...n,
+                data: {
+                  ...n.data,
+                  status: result.status === 'success' ? 'waiting_approval' : 'failed',
+                  generatedContent: result.status === 'success' ? result.data : undefined,
+                  message: result.status === 'error' ? result.error : undefined,
+                  nodeId: n.id,
+                },
+              }
+            }
+            return n
+          })
+        )
+      })
+    )
+    setLastResults(transformResults)
 
     setNodes((nds) =>
       nds.map((n) => {
@@ -749,30 +772,6 @@ function WorkflowInner() {
       eds.map((e) => {
         if (e.source === 'ai-transform') return { ...e, animated: true, style: { ...e.style, stroke: '#0c0c0c' } }
         return e
-      })
-    )
-    await delay(500)
-
-    // Phase 3: 승인 대기 - API 결과를 각 노드에 반영
-    setNodes((nds) =>
-      nds.map((n) => {
-        if (derivedPlatformIds.includes(n.id)) {
-          const platformKey = platformKeys[n.id]
-          const result = transformResults[platformKey]
-          const content = result?.status === 'success' ? result.data : undefined
-
-          return {
-            ...n,
-            data: {
-              ...n.data,
-              status: result?.status === 'success' ? 'waiting_approval' : 'failed',
-              generatedContent: content || undefined,
-              message: result?.status === 'error' ? result.error : undefined,
-              nodeId: n.id,
-            },
-          }
-        }
-        return n
       })
     )
     setCurrentPhase('approval')
