@@ -6,7 +6,11 @@
     }
   },
   "rewrites": [
-    { "source": "/t/:code", "destination": "/api/t/:code" },
+    { "source": "/t/:code", "destination": "/api/track?code=:code" },
+    { "source": "/api/t/:code", "destination": "/api/track?code=:code" },
+    { "source": "/api/contents/:id/schedule", "destination": "/api/contents/schedule?id=:id" },
+    { "source": "/api/platforms/:platform/disconnect", "destination": "/api/platforms/disconnect?platform=:platform" },
+    { "source": "/api/upload/:contentId", "destination": "/api/upload?contentId=:contentId" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
