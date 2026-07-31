@@ -23,7 +23,7 @@ def get_client() -> genai.Client:
     return _client
 
 
-DEFAULT_MODEL = "gemini-2.5-flash"
+DEFAULT_MODEL = "gemini-3.5-flash"
 
 
 def _parse_retry_delay(error_msg: str) -> float:
