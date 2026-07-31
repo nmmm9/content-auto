@@ -37,65 +37,65 @@ const platformConfig: Record<string, {
   youtube: {
     name: 'YouTube',
     icon: Youtube,
-    gradient: 'from-red-500 to-red-600',
-    iconBg: 'bg-red-100',
+    gradient: 'bg-paper-ink',
+    iconBg: 'bg-paper-beige',
     iconColor: 'text-red-600',
   },
   youtube_shorts: {
     name: 'YouTube Shorts',
     icon: Clapperboard,
-    gradient: 'from-orange-400 to-orange-500',
-    iconBg: 'bg-orange-100',
-    iconColor: 'text-orange-600',
+    gradient: 'bg-paper-ink',
+    iconBg: 'bg-paper-beige',
+    iconColor: 'text-red-600',
   },
   naver_blog: {
     name: '네이버 블로그',
     icon: FileText,
-    gradient: 'from-green-500 to-green-600',
-    iconBg: 'bg-green-100',
+    gradient: 'bg-paper-ink',
+    iconBg: 'bg-paper-beige',
     iconColor: 'text-green-600',
   },
   facebook: {
     name: 'Facebook',
     icon: Facebook,
-    gradient: 'from-blue-500 to-blue-600',
-    iconBg: 'bg-blue-100',
+    gradient: 'bg-paper-ink',
+    iconBg: 'bg-paper-beige',
     iconColor: 'text-blue-600',
   },
   instagram: {
     name: 'Instagram',
     icon: Instagram,
-    gradient: 'from-pink-500 to-purple-600',
-    iconBg: 'bg-pink-100',
+    gradient: 'bg-paper-ink',
+    iconBg: 'bg-paper-beige',
     iconColor: 'text-pink-600',
   },
   instagram_reels: {
     name: 'Instagram Reels',
     icon: Film,
-    gradient: 'from-purple-500 to-pink-500',
-    iconBg: 'bg-purple-100',
-    iconColor: 'text-purple-600',
+    gradient: 'bg-paper-ink',
+    iconBg: 'bg-paper-beige',
+    iconColor: 'text-pink-600',
   },
   threads: {
     name: 'Threads',
     icon: AtSign,
-    gradient: 'from-gray-700 to-gray-900',
-    iconBg: 'bg-gray-100',
-    iconColor: 'text-gray-800',
+    gradient: 'bg-paper-ink',
+    iconBg: 'bg-paper-beige',
+    iconColor: 'text-ink',
   },
   linkedin: {
     name: 'LinkedIn',
     icon: Linkedin,
-    gradient: 'from-blue-600 to-blue-800',
-    iconBg: 'bg-blue-100',
+    gradient: 'bg-paper-ink',
+    iconBg: 'bg-paper-beige',
     iconColor: 'text-blue-700',
   },
   living_sequence_lab: {
     name: 'Living Sequence Lab',
     icon: FlaskConical,
-    gradient: 'from-emerald-500 to-teal-600',
-    iconBg: 'bg-emerald-100',
-    iconColor: 'text-emerald-600',
+    gradient: 'bg-paper-ink',
+    iconBg: 'bg-paper-beige',
+    iconColor: 'text-ink',
   },
 }
 
@@ -134,55 +134,55 @@ export default function PlatformNode({ id, data }: NodeProps) {
   }
 
   const statusInfo: Record<string, { icon: React.ReactNode; text: string; color: string }> = {
-    idle: { icon: <Clock size={14} className="text-gray-400" />, text: 'URL을 입력하세요', color: 'text-gray-500' },
-    ready: { icon: <CheckCircle size={14} className="text-green-500" />, text: '준비 완료', color: 'text-green-600' },
-    pending: { icon: <Clock size={14} className="text-yellow-500" />, text: '준비 중', color: 'text-yellow-600' },
-    waiting_approval: { icon: <UserCheck size={14} className="text-amber-500" />, text: '승인 대기', color: 'text-amber-600' },
-    uploading: { icon: <Loader2 size={14} className="text-blue-500 animate-spin" />, text: '처리 중', color: 'text-blue-600' },
-    success: { icon: <CheckCircle size={14} className="text-green-500" />, text: '완료', color: 'text-green-600' },
-    failed: { icon: <XCircle size={14} className="text-red-500" />, text: '실패', color: 'text-red-600' },
+    idle: { icon: <Clock size={14} className="text-ash-gray" />, text: 'URL을 입력하세요', color: 'text-muted-gray' },
+    ready: { icon: <CheckCircle size={14} className="text-success" />, text: '준비 완료', color: 'text-success' },
+    pending: { icon: <Clock size={14} className="text-muted-gray" />, text: '준비 중', color: 'text-muted-gray' },
+    waiting_approval: { icon: <UserCheck size={14} className="text-ink" />, text: '승인 대기', color: 'text-ink' },
+    uploading: { icon: <Loader2 size={14} className="text-ink animate-spin" />, text: '처리 중', color: 'text-charcoal' },
+    success: { icon: <CheckCircle size={14} className="text-success" />, text: '완료', color: 'text-success' },
+    failed: { icon: <XCircle size={14} className="text-danger" />, text: '실패', color: 'text-danger' },
   }
 
   const currentStatus = statusInfo[d.status || 'idle'] || statusInfo.idle
 
   const borderByStatus: Record<string, string> = {
-    idle: 'border-gray-200',
-    ready: 'border-green-400 shadow-green-100',
-    pending: 'border-yellow-300',
-    waiting_approval: 'border-amber-400 shadow-amber-100',
-    uploading: 'border-blue-400 shadow-blue-100',
-    success: 'border-green-400 shadow-green-100',
-    failed: 'border-red-400 shadow-red-100',
+    idle: 'border-paper-gray',
+    ready: 'border-success',
+    pending: 'border-paper-gray',
+    waiting_approval: 'border-paper-ink',
+    uploading: 'border-paper-ink',
+    success: 'border-success',
+    failed: 'border-danger',
   }
 
   return (
     <div
       onClick={handleNodeClick}
-      className={`px-5 py-4 rounded-xl border-2 shadow-lg bg-white overflow-hidden ${borderByStatus[d.status || 'idle'] || 'border-gray-200'} ${d.isMain ? 'ring-2 ring-red-500 ring-offset-2' : ''} ${d.isMain && d.analysisResult && (d.status === 'ready' || d.status === 'success') ? 'cursor-pointer hover:shadow-xl transition-shadow' : ''}`}
+      className={`px-5 py-4 rounded border-2 bg-paper-white overflow-hidden ${borderByStatus[d.status || 'idle'] || 'border-paper-gray'} ${d.isMain ? 'ring-1 ring-paper-ink ring-offset-2' : ''} ${d.isMain && d.analysisResult && (d.status === 'ready' || d.status === 'success') ? 'cursor-pointer hover:bg-paper-beige transition-colors' : ''}`}
     >
-      <Handle type="target" position={Position.Left} className="!w-3 !h-3 !bg-gray-400 !border-2 !border-white" />
+      <Handle type="target" position={Position.Left} className="!w-3 !h-3 !bg-paper-ink !border-2 !border-paper-white" />
 
       {/* Main Badge */}
       {d.isMain && (
-        <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full">
+        <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-paper-ink text-paper-white text-[10px] font-bold rounded-none">
           메인
         </div>
       )}
 
       {/* Waiting Approval Badge */}
       {d.status === 'waiting_approval' && (
-        <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-amber-500 text-white text-[10px] font-bold rounded-full animate-pulse">
+        <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-paper-ink text-paper-white text-[10px] font-bold rounded-none animate-pulse">
           승인 필요
         </div>
       )}
 
       {/* Header */}
       <div className="flex items-center gap-3 mb-3">
-        <div className={`w-9 h-9 ${config.iconBg} rounded-lg flex items-center justify-center ${config.iconColor}`}>
+        <div className={`w-9 h-9 ${config.iconBg} rounded flex items-center justify-center ${config.iconColor}`}>
           <Icon size={20} />
         </div>
         <div>
-          <div className="font-bold text-gray-900 text-sm">{config.name}</div>
+          <div className="font-bold text-ink text-sm">{config.name}</div>
           <div className={`flex items-center gap-1 text-xs ${currentStatus.color}`}>
             {currentStatus.icon}
             <span>{currentStatus.text}</span>
@@ -195,19 +195,19 @@ export default function PlatformNode({ id, data }: NodeProps) {
         <div className="mb-2">
           <div className="flex gap-1.5">
             <div className="flex-1 relative">
-              <Link size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Link size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-ash-gray" />
               <input
                 type="text"
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleUrlSubmit(e as unknown as React.MouseEvent) }}
                 placeholder="YouTube URL 붙여넣기"
-                className="w-full pl-7 pr-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent nowheel nodrag"
+                className="w-full pl-7 pr-2 py-1.5 text-xs border border-paper-gray rounded focus:ring-1 focus:ring-paper-ink focus:border-paper-ink nowheel nodrag"
               />
             </div>
             <button
               onClick={handleUrlSubmit}
-              className="px-2 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition nowheel nodrag"
+              className="px-2 py-1.5 bg-paper-ink text-paper-white rounded hover:bg-charcoal transition nowheel nodrag"
             >
               <ArrowRight size={14} />
             </button>
@@ -219,22 +219,22 @@ export default function PlatformNode({ id, data }: NodeProps) {
       {d.isMain && d.status === 'pending' && d.analysisSteps && (
         <div className="mb-3">
           {/* Progress Bar */}
-          <div className="w-full bg-gray-200 rounded-full h-1.5 mb-3">
+          <div className="w-full bg-paper-beige rounded-none h-1.5 mb-3">
             <div
-              className="bg-gradient-to-r from-red-500 to-orange-500 h-1.5 rounded-full transition-all duration-1000 ease-out"
+              className="bg-paper-ink h-1.5 rounded-none transition-all duration-1000 ease-out"
               style={{ width: `${d.progress || 0}%` }}
             />
           </div>
           {/* Steps */}
           <div className="space-y-1.5">
             {d.analysisSteps.map((step, i) => (
-              <div key={i} className={`flex items-center gap-2 text-xs ${step.active ? 'text-red-600 font-semibold' : step.done ? 'text-green-600' : 'text-gray-400'}`}>
+              <div key={i} className={`flex items-center gap-2 text-xs ${step.active ? 'text-ink font-semibold' : step.done ? 'text-success' : 'text-ash-gray'}`}>
                 {step.done ? (
-                  <CheckCircle size={12} className="text-green-500 flex-shrink-0" />
+                  <CheckCircle size={12} className="text-success flex-shrink-0" />
                 ) : step.active ? (
-                  <Loader2 size={12} className="animate-spin text-red-500 flex-shrink-0" />
+                  <Loader2 size={12} className="animate-spin text-ink flex-shrink-0" />
                 ) : (
-                  <Clock size={12} className="text-gray-300 flex-shrink-0" />
+                  <Clock size={12} className="text-ash-gray flex-shrink-0" />
                 )}
                 <span>{step.message.replace(/^\d\/\d /, '')}</span>
               </div>
@@ -245,22 +245,22 @@ export default function PlatformNode({ id, data }: NodeProps) {
 
       {/* YouTube Video Preview (after URL submitted) */}
       {d.isMain && d.videoTitle && d.status !== 'idle' && (
-        <div className="mb-3 rounded-lg overflow-hidden border border-red-200">
+        <div className="mb-3 rounded overflow-hidden border border-paper-gray">
           {d.videoThumbnail && (
             <img
               src={d.videoThumbnail}
               alt="thumbnail"
-              className="w-full h-[120px] object-cover bg-gray-100"
+              className="w-full h-[120px] object-cover bg-paper-beige"
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
             />
           )}
-          <div className="p-2 bg-red-50">
-            <div className="font-semibold text-gray-900 text-xs leading-tight line-clamp-2">{d.videoTitle}</div>
+          <div className="p-2 bg-paper-ivory">
+            <div className="font-semibold text-ink text-xs leading-tight line-clamp-2">{d.videoTitle}</div>
             {d.channelName && (
-              <div className="text-[10px] text-gray-500 mt-1">{d.channelName}</div>
+              <div className="text-[10px] text-muted-gray mt-1">{d.channelName}</div>
             )}
             {d.youtubeUrl && (
-              <div className="text-[10px] text-red-400 truncate mt-0.5">{d.youtubeUrl}</div>
+              <div className="text-[10px] text-ash-gray truncate mt-0.5">{d.youtubeUrl}</div>
             )}
           </div>
         </div>
@@ -268,17 +268,17 @@ export default function PlatformNode({ id, data }: NodeProps) {
 
       {/* Generated Content Preview (when waiting approval) */}
       {d.status === 'waiting_approval' && d.generatedContent && (
-        <div className="mb-3 p-2 bg-gray-50 rounded-lg text-xs overflow-hidden max-h-[100px]">
+        <div className="mb-3 p-2 bg-paper-beige rounded text-xs overflow-hidden max-h-[100px]">
           {d.generatedContent.title && (
-            <div className="font-medium text-gray-900 line-clamp-1">{d.generatedContent.title}</div>
+            <div className="font-medium text-ink line-clamp-1">{d.generatedContent.title}</div>
           )}
           {(d.generatedContent.caption || d.generatedContent.content || d.generatedContent.description) && (
-            <div className="text-gray-600 line-clamp-2 mt-1">
+            <div className="text-charcoal line-clamp-2 mt-1">
               {d.generatedContent.caption || d.generatedContent.content || d.generatedContent.description}
             </div>
           )}
           {(d.generatedContent.hashtags || d.generatedContent.tags || []).length > 0 && (
-            <div className="text-blue-500 line-clamp-1 mt-1">
+            <div className="text-muted-gray line-clamp-1 mt-1">
               {(d.generatedContent.hashtags || d.generatedContent.tags || []).slice(0, 3).join(' ')}
             </div>
           )}
@@ -290,20 +290,20 @@ export default function PlatformNode({ id, data }: NodeProps) {
         <div className="flex gap-2 mb-2">
           <button
             onClick={handleApprove}
-            className="flex-1 py-1.5 px-2 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 flex items-center justify-center gap-1"
+            className="flex-1 py-1.5 px-2 bg-lemon text-ink text-xs font-medium rounded hover:opacity-80 flex items-center justify-center gap-1"
           >
             <CheckCircle size={12} />
             승인
           </button>
           <button
             onClick={handleEdit}
-            className="py-1.5 px-2 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 flex items-center justify-center"
+            className="py-1.5 px-2 bg-paper-ink text-paper-white text-xs font-medium rounded hover:bg-charcoal flex items-center justify-center"
           >
             <Edit3 size={12} />
           </button>
           <button
             onClick={handleReject}
-            className="py-1.5 px-2 bg-gray-400 text-white text-xs font-medium rounded-lg hover:bg-gray-500 flex items-center justify-center"
+            className="py-1.5 px-2 border border-paper-gray text-muted-gray text-xs font-medium rounded hover:bg-paper-beige flex items-center justify-center"
           >
             <XCircle size={12} />
           </button>
@@ -313,19 +313,19 @@ export default function PlatformNode({ id, data }: NodeProps) {
       {/* Progress Bar */}
       {d.status === 'uploading' && d.progress !== undefined && (
         <div className="mb-2">
-          <div className="w-full bg-gray-200 rounded-full h-1.5">
+          <div className="w-full bg-paper-beige rounded-none h-1.5">
             <div
-              className={`bg-gradient-to-r ${config.gradient} h-1.5 rounded-full transition-all duration-500`}
+              className={`${config.gradient} h-1.5 rounded-none transition-all duration-500`}
               style={{ width: `${d.progress}%` }}
             />
           </div>
-          <div className="text-xs text-gray-500 mt-1 text-right">{d.progress}%</div>
+          <div className="text-xs text-muted-gray mt-1 text-right">{d.progress}%</div>
         </div>
       )}
 
       {/* Message */}
       {d.message && d.status !== 'waiting_approval' && (
-        <div className={`text-xs mt-1 ${d.status === 'failed' ? 'text-red-500' : 'text-gray-500'}`}>
+        <div className={`text-xs mt-1 ${d.status === 'failed' ? 'text-danger' : 'text-muted-gray'}`}>
           {d.message}
         </div>
       )}
@@ -336,13 +336,13 @@ export default function PlatformNode({ id, data }: NodeProps) {
           href={d.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-blue-500 hover:underline mt-1 block"
+          className="text-xs text-ink hover:underline mt-1 block"
         >
           게시물 보기
         </a>
       )}
 
-      <Handle type="source" position={Position.Right} className="!w-3 !h-3 !bg-gray-400 !border-2 !border-white" />
+      <Handle type="source" position={Position.Right} className="!w-3 !h-3 !bg-paper-ink !border-2 !border-paper-white" />
     </div>
   )
 }

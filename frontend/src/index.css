@@ -1,8 +1,69 @@
-@import "tailwindcss";
+/* LS 디자인 토큰 — 리빙시퀀스 공통 무드 (NEW 레포 docs/landing-figma/_tokens.md 기준)
+   종이 질감 아이보리/화이트 바탕 + 잉크 블랙 모노톤, 각형(radius 0~4px),
+   얇은 회색 보더, 포인트는 레몬 옐로우 하나만. */
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wdth,wght@75..100,400..700&display=swap');
+@import 'tailwindcss';
+
+/* Freesentation — 한글 전용 폰트 (CDN: jsdelivr) */
+@font-face {
+  font-family: 'Freesentation';
+  font-weight: 400;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/gh/Freesentation/freesentation/woff2/Freesentation-4Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Freesentation';
+  font-weight: 500;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/gh/Freesentation/freesentation/woff2/Freesentation-5Medium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Freesentation';
+  font-weight: 600;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/gh/Freesentation/freesentation/woff2/Freesentation-6SemiBold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Freesentation';
+  font-weight: 700;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/gh/Freesentation/freesentation/woff2/Freesentation-7Bold.woff2') format('woff2');
+}
+
+@theme {
+  /* Base — 종이 계열 */
+  --color-paper-ink: #0c0c0c;
+  --color-paper-white: #fffefb;
+  --color-paper-ivory: #f7f5f1;
+  --color-paper-beige: #efece3;
+  --color-paper-gray: #dbdbdb;
+  /* Text 4단계 */
+  --color-ink: #0c0c0c;
+  --color-charcoal: #3f3f3f;
+  --color-muted-gray: #7d7d7d;
+  --color-ash-gray: #9e9e9e;
+  /* Accent */
+  --color-lemon: #e7f24a;
+  --color-mist: #d2dafa;
+  /* 상태 */
+  --color-danger: #f44d22;
+  --color-success: #3f6b3f;
+  /* 폰트 */
+  --font-sans: 'Freesentation', 'Noto Sans KR', sans-serif;
+}
+
+/* 영문 라벨 전용 — Instrument Sans SemiCondensed (wdth 75) */
+.font-instrument-cond {
+  font-family: 'Instrument Sans', sans-serif;
+  font-stretch: 75%;
+}
 
 body {
   margin: 0;
   min-height: 100vh;
+  background: #f7f5f1;
+  color: #0c0c0c;
+  font-family: 'Freesentation', 'Noto Sans KR', sans-serif;
 }
 
 #root {

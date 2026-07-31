@@ -14,10 +14,10 @@ export default function StatusFilter({ selectedFilter, statusCounts, onFilterCha
     <div className="flex items-center gap-1.5 flex-wrap">
       <button
         onClick={() => onFilterChange('all')}
-        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
+        className={`px-3 py-1.5 rounded-none border text-xs font-semibold transition-all duration-200 ${
           selectedFilter === 'all'
-            ? 'bg-gray-900 text-white shadow-sm'
-            : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+            ? 'bg-paper-ink border-paper-ink text-paper-white'
+            : 'bg-paper-white border-paper-gray text-muted-gray hover:bg-paper-beige'
         }`}
       >
         전체 {statusCounts.all > 0 && <span className="ml-1 opacity-70">{statusCounts.all}</span>}
@@ -30,10 +30,10 @@ export default function StatusFilter({ selectedFilter, statusCounts, onFilterCha
           <button
             key={s}
             onClick={() => onFilterChange(s)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-none border text-xs font-semibold transition-all duration-200 ${
               isActive
-                ? `${config.bg} ${config.text} ring-1 ring-current/20`
-                : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                ? `${config.bg} ${config.text} border-current`
+                : 'bg-paper-white border-paper-gray text-muted-gray hover:bg-paper-beige'
             }`}
           >
             <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />

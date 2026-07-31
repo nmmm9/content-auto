@@ -88,67 +88,67 @@ function formatSelectedDate(dateStr: string): string {
 // 플랫폼별 핵심 지표 정의
 const PLATFORM_METRICS: Record<string, { key: string; label: string; icon: typeof Eye; color: string; bg: string; gradient: string; format?: 'time' | 'pct' }[]> = {
   youtube: [
-    { key: 'views', label: '조회수', icon: Eye, color: 'text-blue-600', bg: 'bg-blue-500/10', gradient: 'from-blue-500 to-cyan-400' },
-    { key: 'watch_time', label: '시청 시간', icon: Clock, color: 'text-purple-600', bg: 'bg-purple-500/10', gradient: 'from-purple-500 to-violet-400', format: 'time' },
-    { key: 'avg_duration', label: '평균 시청 지속시간', icon: Timer, color: 'text-indigo-600', bg: 'bg-indigo-500/10', gradient: 'from-indigo-500 to-blue-400', format: 'time' },
-    { key: 'ctr', label: 'CTR', icon: MousePointerClick, color: 'text-amber-600', bg: 'bg-amber-500/10', gradient: 'from-amber-500 to-yellow-400', format: 'pct' },
-    { key: 'impressions', label: '노출수', icon: TrendingUp, color: 'text-teal-600', bg: 'bg-teal-500/10', gradient: 'from-teal-500 to-emerald-400' },
-    { key: 'subscribers', label: '구독자 증감', icon: UserPlus, color: 'text-rose-600', bg: 'bg-rose-500/10', gradient: 'from-rose-500 to-pink-400' },
+    { key: 'views', label: '조회수', icon: Eye, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'watch_time', label: '시청 시간', icon: Clock, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink', format: 'time' },
+    { key: 'avg_duration', label: '평균 시청 지속시간', icon: Timer, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink', format: 'time' },
+    { key: 'ctr', label: 'CTR', icon: MousePointerClick, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink', format: 'pct' },
+    { key: 'impressions', label: '노출수', icon: TrendingUp, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'subscribers', label: '구독자 증감', icon: UserPlus, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
   ],
   youtube_shorts: [
-    { key: 'views', label: '조회수', icon: Eye, color: 'text-blue-600', bg: 'bg-blue-500/10', gradient: 'from-blue-500 to-cyan-400' },
-    { key: 'likes', label: '좋아요', icon: Heart, color: 'text-rose-600', bg: 'bg-rose-500/10', gradient: 'from-rose-500 to-pink-400' },
-    { key: 'avg_duration', label: '평균 시청시간', icon: Timer, color: 'text-indigo-600', bg: 'bg-indigo-500/10', gradient: 'from-indigo-500 to-blue-400', format: 'time' },
-    { key: 'comments', label: '댓글', icon: MessageCircle, color: 'text-amber-600', bg: 'bg-amber-500/10', gradient: 'from-amber-500 to-yellow-400' },
-    { key: 'shares', label: '공유', icon: Share2, color: 'text-emerald-600', bg: 'bg-emerald-500/10', gradient: 'from-emerald-500 to-green-400' },
+    { key: 'views', label: '조회수', icon: Eye, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'likes', label: '좋아요', icon: Heart, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'avg_duration', label: '평균 시청시간', icon: Timer, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink', format: 'time' },
+    { key: 'comments', label: '댓글', icon: MessageCircle, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'shares', label: '공유', icon: Share2, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
   ],
   naver_blog: [
-    { key: 'views', label: '조회수', icon: Eye, color: 'text-blue-600', bg: 'bg-blue-500/10', gradient: 'from-blue-500 to-cyan-400' },
-    { key: 'likes', label: '공감', icon: Heart, color: 'text-rose-600', bg: 'bg-rose-500/10', gradient: 'from-rose-500 to-pink-400' },
-    { key: 'comments', label: '댓글', icon: MessageCircle, color: 'text-amber-600', bg: 'bg-amber-500/10', gradient: 'from-amber-500 to-yellow-400' },
-    { key: 'search_visits', label: '검색 유입', icon: Search, color: 'text-green-600', bg: 'bg-green-500/10', gradient: 'from-green-500 to-emerald-400' },
-    { key: 'neighbor_add', label: '이웃 추가', icon: UserPlus, color: 'text-violet-600', bg: 'bg-violet-500/10', gradient: 'from-violet-500 to-purple-400' },
+    { key: 'views', label: '조회수', icon: Eye, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'likes', label: '공감', icon: Heart, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'comments', label: '댓글', icon: MessageCircle, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'search_visits', label: '검색 유입', icon: Search, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'neighbor_add', label: '이웃 추가', icon: UserPlus, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
   ],
   instagram: [
-    { key: 'reach', label: '도달', icon: Users, color: 'text-blue-600', bg: 'bg-blue-500/10', gradient: 'from-blue-500 to-cyan-400' },
-    { key: 'impressions', label: '노출', icon: Eye, color: 'text-purple-600', bg: 'bg-purple-500/10', gradient: 'from-purple-500 to-violet-400' },
-    { key: 'likes', label: '좋아요', icon: Heart, color: 'text-rose-600', bg: 'bg-rose-500/10', gradient: 'from-rose-500 to-pink-400' },
-    { key: 'saves', label: '저장', icon: Bookmark, color: 'text-amber-600', bg: 'bg-amber-500/10', gradient: 'from-amber-500 to-yellow-400' },
-    { key: 'profile_visits', label: '프로필 방문', icon: UserPlus, color: 'text-emerald-600', bg: 'bg-emerald-500/10', gradient: 'from-emerald-500 to-green-400' },
+    { key: 'reach', label: '도달', icon: Users, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'impressions', label: '노출', icon: Eye, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'likes', label: '좋아요', icon: Heart, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'saves', label: '저장', icon: Bookmark, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'profile_visits', label: '프로필 방문', icon: UserPlus, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
   ],
   instagram_reels: [
-    { key: 'plays', label: '재생수', icon: Eye, color: 'text-blue-600', bg: 'bg-blue-500/10', gradient: 'from-blue-500 to-cyan-400' },
-    { key: 'reach', label: '도달', icon: Users, color: 'text-purple-600', bg: 'bg-purple-500/10', gradient: 'from-purple-500 to-violet-400' },
-    { key: 'likes', label: '좋아요', icon: Heart, color: 'text-rose-600', bg: 'bg-rose-500/10', gradient: 'from-rose-500 to-pink-400' },
-    { key: 'saves', label: '저장', icon: Bookmark, color: 'text-amber-600', bg: 'bg-amber-500/10', gradient: 'from-amber-500 to-yellow-400' },
-    { key: 'shares', label: '공유', icon: Share2, color: 'text-emerald-600', bg: 'bg-emerald-500/10', gradient: 'from-emerald-500 to-green-400' },
+    { key: 'plays', label: '재생수', icon: Eye, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'reach', label: '도달', icon: Users, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'likes', label: '좋아요', icon: Heart, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'saves', label: '저장', icon: Bookmark, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'shares', label: '공유', icon: Share2, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
   ],
   facebook: [
-    { key: 'reach', label: '도달', icon: Users, color: 'text-blue-600', bg: 'bg-blue-500/10', gradient: 'from-blue-500 to-cyan-400' },
-    { key: 'engagement', label: '참여', icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-500/10', gradient: 'from-purple-500 to-violet-400' },
-    { key: 'likes', label: '좋아요', icon: Heart, color: 'text-rose-600', bg: 'bg-rose-500/10', gradient: 'from-rose-500 to-pink-400' },
-    { key: 'shares', label: '공유', icon: Share2, color: 'text-emerald-600', bg: 'bg-emerald-500/10', gradient: 'from-emerald-500 to-green-400' },
-    { key: 'comments', label: '댓글', icon: MessageCircle, color: 'text-amber-600', bg: 'bg-amber-500/10', gradient: 'from-amber-500 to-yellow-400' },
+    { key: 'reach', label: '도달', icon: Users, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'engagement', label: '참여', icon: TrendingUp, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'likes', label: '좋아요', icon: Heart, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'shares', label: '공유', icon: Share2, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'comments', label: '댓글', icon: MessageCircle, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
   ],
   threads: [
-    { key: 'views', label: '조회수', icon: Eye, color: 'text-blue-600', bg: 'bg-blue-500/10', gradient: 'from-blue-500 to-cyan-400' },
-    { key: 'likes', label: '좋아요', icon: Heart, color: 'text-rose-600', bg: 'bg-rose-500/10', gradient: 'from-rose-500 to-pink-400' },
-    { key: 'replies', label: '답글', icon: MessageCircle, color: 'text-amber-600', bg: 'bg-amber-500/10', gradient: 'from-amber-500 to-yellow-400' },
-    { key: 'reposts', label: '리포스트', icon: Repeat2, color: 'text-emerald-600', bg: 'bg-emerald-500/10', gradient: 'from-emerald-500 to-green-400' },
-    { key: 'quotes', label: '인용', icon: Share2, color: 'text-violet-600', bg: 'bg-violet-500/10', gradient: 'from-violet-500 to-purple-400' },
+    { key: 'views', label: '조회수', icon: Eye, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'likes', label: '좋아요', icon: Heart, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'replies', label: '답글', icon: MessageCircle, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'reposts', label: '리포스트', icon: Repeat2, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'quotes', label: '인용', icon: Share2, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
   ],
   linkedin: [
-    { key: 'impressions', label: '노출', icon: Eye, color: 'text-blue-600', bg: 'bg-blue-500/10', gradient: 'from-blue-500 to-cyan-400' },
-    { key: 'likes', label: '좋아요', icon: Heart, color: 'text-rose-600', bg: 'bg-rose-500/10', gradient: 'from-rose-500 to-pink-400' },
-    { key: 'comments', label: '댓글', icon: MessageCircle, color: 'text-amber-600', bg: 'bg-amber-500/10', gradient: 'from-amber-500 to-yellow-400' },
-    { key: 'shares', label: '공유', icon: Share2, color: 'text-emerald-600', bg: 'bg-emerald-500/10', gradient: 'from-emerald-500 to-green-400' },
-    { key: 'clicks', label: '클릭', icon: MousePointerClick, color: 'text-violet-600', bg: 'bg-violet-500/10', gradient: 'from-violet-500 to-purple-400' },
+    { key: 'impressions', label: '노출', icon: Eye, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'likes', label: '좋아요', icon: Heart, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'comments', label: '댓글', icon: MessageCircle, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'shares', label: '공유', icon: Share2, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'clicks', label: '클릭', icon: MousePointerClick, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
   ],
   living_sequence_lab: [
-    { key: 'views', label: '조회수', icon: Eye, color: 'text-blue-600', bg: 'bg-blue-500/10', gradient: 'from-blue-500 to-cyan-400' },
-    { key: 'likes', label: '좋아요', icon: Heart, color: 'text-rose-600', bg: 'bg-rose-500/10', gradient: 'from-rose-500 to-pink-400' },
-    { key: 'comments', label: '댓글', icon: MessageCircle, color: 'text-amber-600', bg: 'bg-amber-500/10', gradient: 'from-amber-500 to-yellow-400' },
-    { key: 'shares', label: '공유', icon: Share2, color: 'text-emerald-600', bg: 'bg-emerald-500/10', gradient: 'from-emerald-500 to-green-400' },
+    { key: 'views', label: '조회수', icon: Eye, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'likes', label: '좋아요', icon: Heart, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'comments', label: '댓글', icon: MessageCircle, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
+    { key: 'shares', label: '공유', icon: Share2, color: 'text-ink', bg: 'bg-paper-beige', gradient: 'bg-paper-ink' },
   ],
 }
 
@@ -319,7 +319,7 @@ export default function Calendar() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 rounded-full border-2 border-indigo-200 border-t-indigo-600 animate-spin"></div>
+        <div className="w-8 h-8 rounded-full border-2 border-paper-gray border-t-paper-ink animate-spin"></div>
       </div>
     )
   }
@@ -327,13 +327,13 @@ export default function Calendar() {
   return (
     <div className="h-[calc(100vh-73px)] flex flex-col animate-in fade-in duration-500">
       {/* 헤더 */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-slate-200/60 bg-white/70 backdrop-blur-md shadow-sm z-10">
+      <div className="flex items-center justify-between px-6 py-3 border-b border-paper-gray bg-paper-white z-10">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center shadow-inner">
-              <CalendarDays size={20} className="text-indigo-600" strokeWidth={2.5} />
+            <div className="w-9 h-9 rounded bg-paper-ink flex items-center justify-center">
+              <CalendarDays size={20} className="text-paper-white" strokeWidth={2.5} />
             </div>
-            <h2 className="text-lg font-extrabold tracking-tight text-slate-900">컨텐츠 캘린더</h2>
+            <h2 className="text-lg font-extrabold tracking-tight text-ink">컨텐츠 캘린더</h2>
           </div>
 
           {/* 캘린더 네비게이션 */}
@@ -388,17 +388,17 @@ export default function Calendar() {
             }
 
             return (
-              <div ref={metricsRef} className="border-t-2 border-blue-100 bg-gradient-to-b from-slate-50 to-white px-8 py-8">
+              <div ref={metricsRef} className="border-t border-paper-gray bg-paper-ivory px-8 py-8">
                 {/* 헤더 */}
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shadow-md">
-                    <BarChart3 size={20} className="text-white" />
+                  <div className="w-10 h-10 rounded bg-paper-ink flex items-center justify-center">
+                    <BarChart3 size={20} className="text-paper-white" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">{selectedContent.title}</h3>
+                    <h3 className="text-lg font-bold text-ink">{selectedContent.title}</h3>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-white bg-gray-800 px-2.5 py-0.5 rounded-full font-medium">{platformLabel[platform]}</span>
-                      <span className="text-xs text-gray-400">{selectedContent.scheduled_date}</span>
+                      <span className="text-xs text-paper-white bg-paper-ink px-2.5 py-0.5 rounded-none font-medium font-instrument-cond">{platformLabel[platform]}</span>
+                      <span className="text-xs text-ash-gray">{selectedContent.scheduled_date}</span>
                     </div>
                   </div>
                 </div>
@@ -411,38 +411,38 @@ export default function Calendar() {
                     const diff = avgVal > 0 ? Math.round(((value - avgVal) / avgVal) * 100) : 0
                     const isSpecial = format === 'time' || format === 'pct'
                     return (
-                      <div key={key} className="relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
+                      <div key={key} className="relative overflow-hidden rounded border border-paper-gray bg-paper-white p-5">
                         <div className="flex items-center justify-between mb-3">
-                          <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center`}>
+                          <div className={`w-10 h-10 rounded ${bg} flex items-center justify-center`}>
                             <Icon size={20} className={color} />
                           </div>
-                          <span className="text-xs font-semibold text-gray-400">{label}</span>
+                          <span className="text-xs font-semibold text-muted-gray">{label}</span>
                         </div>
                         <div className={`text-2xl font-extrabold ${color} mb-2`}>{formatMetricValue(value, format)}</div>
                         {/* 평균 대비 */}
                         <div className="flex items-center gap-1.5 mb-3">
                           {diff > 0 ? (
-                            <div className="flex items-center gap-0.5 bg-emerald-50 px-2 py-0.5 rounded-full">
-                              <ArrowUpRight size={14} className="text-emerald-600" />
-                              <span className="text-xs font-bold text-emerald-600">+{diff}%</span>
+                            <div className="flex items-center gap-0.5 border border-success px-2 py-0.5 rounded-none">
+                              <ArrowUpRight size={14} className="text-success" />
+                              <span className="text-xs font-bold text-success">+{diff}%</span>
                             </div>
                           ) : diff < 0 ? (
-                            <div className="flex items-center gap-0.5 bg-red-50 px-2 py-0.5 rounded-full">
-                              <ArrowDownRight size={14} className="text-red-600" />
-                              <span className="text-xs font-bold text-red-600">{diff}%</span>
+                            <div className="flex items-center gap-0.5 border border-danger px-2 py-0.5 rounded-none">
+                              <ArrowDownRight size={14} className="text-danger" />
+                              <span className="text-xs font-bold text-danger">{diff}%</span>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-0.5 bg-gray-100 px-2 py-0.5 rounded-full">
-                              <Minus size={14} className="text-gray-500" />
-                              <span className="text-xs font-bold text-gray-500">0%</span>
+                            <div className="flex items-center gap-0.5 border border-paper-gray px-2 py-0.5 rounded-none">
+                              <Minus size={14} className="text-muted-gray" />
+                              <span className="text-xs font-bold text-muted-gray">0%</span>
                             </div>
                           )}
-                          <span className="text-[10px] text-gray-400">vs 플랫폼 평균</span>
+                          <span className="text-[10px] text-ash-gray">vs 플랫폼 평균</span>
                         </div>
                         {!isSpecial && (
-                          <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="w-full h-2.5 bg-paper-beige rounded-none overflow-hidden">
                             <div
-                              className={`h-full rounded-full bg-gradient-to-r ${gradient} transition-all duration-700 ease-out`}
+                              className={`h-full rounded-none ${gradient} transition-all duration-700 ease-out`}
                               style={{ width: `${Math.max(8, (value / maxVal) * 100)}%` }}
                             />
                           </div>
@@ -455,12 +455,12 @@ export default function Calendar() {
                 {/* 시각적 비교 분석 */}
                 <div className="grid grid-cols-2 gap-6">
                   {/* 레이더 차트: 현재 vs 평균 */}
-                  <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                  <div className="bg-paper-white rounded p-6 border border-paper-gray">
                     <div className="flex items-center gap-2.5 mb-5">
-                      <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                        <BarChart3 size={16} className="text-blue-500" />
+                      <div className="w-8 h-8 rounded bg-paper-beige flex items-center justify-center">
+                        <BarChart3 size={16} className="text-ink" />
                       </div>
-                      <span className="text-sm font-bold text-gray-700">지표 분포 (vs 평균)</span>
+                      <span className="text-sm font-bold text-charcoal">지표 분포 (vs 평균)</span>
                     </div>
                     <svg viewBox="0 0 300 300" className="w-full max-w-[340px] mx-auto">
                       {/* 그리드 */}
@@ -471,7 +471,7 @@ export default function Calendar() {
                             const angle = (i * 2 * Math.PI / metricDefs.length) - Math.PI / 2
                             return `${150 + Math.cos(angle) * 105 * level},${150 + Math.sin(angle) * 105 * level}`
                           }).join(' ')}
-                          fill={level === 1 ? 'none' : 'none'} stroke="#f0f0f0" strokeWidth="1"
+                          fill={level === 1 ? 'none' : 'none'} stroke="#efece3" strokeWidth="1"
                         />
                       ))}
                       {/* 축 */}
@@ -480,7 +480,7 @@ export default function Calendar() {
                         return (
                           <line key={i} x1="150" y1="150"
                             x2={150 + Math.cos(angle) * 105} y2={150 + Math.sin(angle) * 105}
-                            stroke="#f0f0f0" strokeWidth="1" />
+                            stroke="#efece3" strokeWidth="1" />
                         )
                       })}
                       {/* 평균 다각형 */}
@@ -493,7 +493,7 @@ export default function Calendar() {
                           const n = avg2 / maxV
                           return `${150 + Math.cos(angle) * 105 * n},${150 + Math.sin(angle) * 105 * n}`
                         }).join(' ')}
-                        fill="rgba(156, 163, 175, 0.08)" stroke="#d1d5db" strokeWidth="1.5" strokeDasharray="5 3"
+                        fill="rgba(125, 125, 125, 0.08)" stroke="#9e9e9e" strokeWidth="1.5" strokeDasharray="5 3"
                       />
                       {/* 현재 다각형 */}
                       <polygon
@@ -505,7 +505,7 @@ export default function Calendar() {
                           const n = curVal / maxV
                           return `${150 + Math.cos(angle) * 105 * n},${150 + Math.sin(angle) * 105 * n}`
                         }).join(' ')}
-                        fill="rgba(59, 130, 246, 0.12)" stroke="#3b82f6" strokeWidth="2.5"
+                        fill="rgba(12, 12, 12, 0.08)" stroke="#0c0c0c" strokeWidth="2.5"
                       />
                       {/* 현재 꼭짓점 */}
                       {metricDefs.map((def, i) => {
@@ -518,7 +518,7 @@ export default function Calendar() {
                           <circle key={i}
                             cx={150 + Math.cos(angle) * 105 * n}
                             cy={150 + Math.sin(angle) * 105 * n}
-                            r="4.5" fill="#3b82f6" stroke="white" strokeWidth="2" />
+                            r="4.5" fill="#0c0c0c" stroke="#fffefb" strokeWidth="2" />
                         )
                       })}
                       {/* 라벨 */}
@@ -529,7 +529,7 @@ export default function Calendar() {
                         const y = 150 + Math.sin(angle) * labelR
                         return (
                           <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="middle"
-                            style={{ fontSize: '11px', fontWeight: 600, fill: '#6b7280' }}>
+                            style={{ fontSize: '11px', fontWeight: 600, fill: '#7d7d7d' }}>
                             {def.label.length > 6 ? def.label.slice(0, 5) + '..' : def.label}
                           </text>
                         )
@@ -537,24 +537,24 @@ export default function Calendar() {
                     </svg>
                     <div className="flex items-center justify-center gap-6 mt-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-3.5 h-3.5 rounded-full bg-blue-500 shadow-sm" />
-                        <span className="text-xs text-gray-500 font-medium">현재 콘텐츠</span>
+                        <div className="w-3.5 h-3.5 rounded-full bg-paper-ink" />
+                        <span className="text-xs text-muted-gray font-medium">현재 콘텐츠</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="w-3.5 h-3.5 rounded-full bg-gray-300 border border-dashed border-gray-400" />
-                        <span className="text-xs text-gray-500 font-medium">플랫폼 평균</span>
+                        <div className="w-3.5 h-3.5 rounded-full bg-paper-gray border border-dashed border-ash-gray" />
+                        <span className="text-xs text-muted-gray font-medium">플랫폼 평균</span>
                       </div>
                     </div>
                   </div>
 
                   {/* 도넛 링 비교 */}
                   {ranked.length >= 2 ? (
-                    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                    <div className="bg-paper-white rounded p-6 border border-paper-gray">
                       <div className="flex items-center gap-2.5 mb-5">
-                        <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                          <TrendingUp size={16} className="text-gray-500" />
+                        <div className="w-8 h-8 rounded bg-paper-beige flex items-center justify-center">
+                          <TrendingUp size={16} className="text-muted-gray" />
                         </div>
-                        <span className="text-sm font-bold text-gray-700">{platformLabel[platform]} {metricDefs[0].label} 순위</span>
+                        <span className="text-sm font-bold text-charcoal">{platformLabel[platform]} {metricDefs[0].label} 순위</span>
                       </div>
                       <div className="space-y-3">
                         {ranked.map((c, idx) => {
@@ -565,35 +565,35 @@ export default function Calendar() {
                           const circ = 2 * Math.PI * ringR
                           const ringOffset = circ - (pct / 100) * circ
                           return (
-                            <div key={c.id} className={`flex items-center gap-4 p-3.5 rounded-xl transition ${isCurrent ? 'bg-blue-50 border border-blue-200 shadow-sm' : 'bg-gray-50/70'}`}>
+                            <div key={c.id} className={`flex items-center gap-4 p-3.5 rounded transition ${isCurrent ? 'bg-paper-beige border border-paper-ink' : 'bg-paper-ivory'}`}>
                               <div className="relative shrink-0">
                                 <svg viewBox="0 0 64 64" className="w-14 h-14">
-                                  <circle cx="32" cy="32" r={ringR} fill="none" stroke="#f3f4f6" strokeWidth="5" />
+                                  <circle cx="32" cy="32" r={ringR} fill="none" stroke="#efece3" strokeWidth="5" />
                                   <circle cx="32" cy="32" r={ringR} fill="none"
-                                    stroke={isCurrent ? '#3b82f6' : '#d1d5db'}
+                                    stroke={isCurrent ? '#0c0c0c' : '#dbdbdb'}
                                     strokeWidth="5" strokeLinecap="round"
                                     strokeDasharray={circ} strokeDashoffset={ringOffset}
                                     transform="rotate(-90 32 32)"
                                     className="transition-all duration-700" />
                                   <text x="32" y="32" textAnchor="middle" dominantBaseline="middle"
-                                    style={{ fontSize: '12px', fontWeight: 700, fill: isCurrent ? '#2563eb' : '#9ca3af' }}>
+                                    style={{ fontSize: '12px', fontWeight: 700, fill: isCurrent ? '#0c0c0c' : '#9e9e9e' }}>
                                     {Math.round(pct)}%
                                   </text>
                                 </svg>
-                                <div className={`absolute -top-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm
-                                  ${idx === 0 ? 'bg-amber-400 text-white' : idx === 1 ? 'bg-gray-300 text-gray-600' : 'bg-gray-200 text-gray-500'}`}>
+                                <div className={`absolute -top-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold
+                                  ${idx === 0 ? 'bg-paper-ink text-paper-white' : idx === 1 ? 'bg-paper-gray text-charcoal' : 'bg-paper-beige text-muted-gray'}`}>
                                   {idx + 1}
                                 </div>
                               </div>
                               <div className="flex-1 min-w-0">
-                                <span className={`text-sm block truncate ${isCurrent ? 'font-bold text-gray-900' : 'text-gray-500'}`}>{c.title}</span>
-                                <span className={`text-lg font-mono ${isCurrent ? 'font-extrabold text-blue-600' : 'text-gray-400'}`}>
+                                <span className={`text-sm block truncate ${isCurrent ? 'font-bold text-ink' : 'text-muted-gray'}`}>{c.title}</span>
+                                <span className={`text-lg font-mono ${isCurrent ? 'font-extrabold text-ink' : 'text-ash-gray'}`}>
                                   {formatMetricValue(v, metricDefs[0].format)}
                                 </span>
                               </div>
                               {isCurrent && (
-                                <div className="shrink-0 px-2.5 py-1 bg-blue-100 rounded-full">
-                                  <span className="text-[10px] font-bold text-blue-600">현재</span>
+                                <div className="shrink-0 px-2.5 py-1 border border-paper-ink bg-paper-white rounded-none">
+                                  <span className="text-[10px] font-bold text-ink">현재</span>
                                 </div>
                               )}
                             </div>
@@ -602,8 +602,8 @@ export default function Calendar() {
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-center justify-center">
-                      <p className="text-sm text-gray-400">비교할 다른 콘텐츠가 없습니다</p>
+                    <div className="bg-paper-white rounded p-6 border border-paper-gray flex items-center justify-center">
+                      <p className="text-sm text-ash-gray">비교할 다른 콘텐츠가 없습니다</p>
                     </div>
                   )}
                 </div>
@@ -635,23 +635,23 @@ export default function Calendar() {
                   const areaPath = `${linePath} L${points[points.length - 1].x},${PT + cH} L${points[0].x},${PT + cH} Z`
 
                   return (
-                    <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mt-6">
+                    <div className="bg-paper-white rounded p-4 border border-paper-gray mt-6">
                       {/* 헤더 */}
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
-                            <TrendingUp size={14} className="text-white" />
+                          <div className="w-7 h-7 rounded bg-paper-ink flex items-center justify-center">
+                            <TrendingUp size={14} className="text-paper-white" />
                           </div>
-                          <span className="text-xs font-bold text-gray-700">{platformLabel[platform]} {pDef.label} 추이</span>
+                          <span className="text-xs font-bold text-charcoal">{platformLabel[platform]} {pDef.label} 추이</span>
                         </div>
                         {changeRate !== 0 && (
-                          <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${changeRate > 0 ? 'bg-emerald-50' : 'bg-red-50'
+                          <div className={`flex items-center gap-1 px-2 py-1 rounded-none border ${changeRate > 0 ? 'border-success' : 'border-danger'
                             }`}>
                             {changeRate > 0
-                              ? <ArrowUpRight size={12} className="text-emerald-600" />
-                              : <ArrowDownRight size={12} className="text-red-600" />
+                              ? <ArrowUpRight size={12} className="text-success" />
+                              : <ArrowDownRight size={12} className="text-danger" />
                             }
-                            <span className={`text-xs font-bold ${changeRate > 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                            <span className={`text-xs font-bold ${changeRate > 0 ? 'text-success' : 'text-danger'}`}>
                               {changeRate > 0 ? '+' : ''}{changeRate}%
                             </span>
                           </div>
@@ -660,13 +660,6 @@ export default function Calendar() {
 
                       {/* 라인 차트 */}
                       <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-xl mx-auto block">
-                        <defs>
-                          <linearGradient id="trendAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.12" />
-                            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.01" />
-                          </linearGradient>
-                        </defs>
-
                         {/* 수평 그리드 */}
                         {[0, 0.5, 1].map(pct => {
                           const gy = PT + cH * (1 - pct)
@@ -674,9 +667,9 @@ export default function Calendar() {
                           return (
                             <g key={pct}>
                               <line x1={PL} y1={gy} x2={W - PR} y2={gy}
-                                stroke={pct === 0 ? '#e5e7eb' : '#f5f5f5'} strokeWidth="1" />
+                                stroke={pct === 0 ? '#dbdbdb' : '#efece3'} strokeWidth="1" />
                               <text x={PL - 6} y={gy} textAnchor="end" dominantBaseline="middle"
-                                style={{ fontSize: '8px', fill: '#b0b0b0' }}>
+                                style={{ fontSize: '8px', fill: '#9e9e9e' }}>
                                 {formatMetricValue(gv, pDef.format)}
                               </text>
                             </g>
@@ -684,37 +677,37 @@ export default function Calendar() {
                         })}
 
                         {/* 면적 */}
-                        <path d={areaPath} fill="url(#trendAreaGrad)" />
+                        <path d={areaPath} fill="rgba(12, 12, 12, 0.05)" />
 
                         {/* 선 */}
-                        <path d={linePath} fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+                        <path d={linePath} fill="none" stroke="#0c0c0c" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
 
                         {/* 점 + 라벨 */}
                         {points.map((p, i) => {
                           const isCur = p.c.id === selectedContent.id
                           return (
                             <g key={i}>
-                              {isCur && <circle cx={p.x} cy={p.y} r="7" fill="#3b82f6" opacity="0.12" />}
+                              {isCur && <circle cx={p.x} cy={p.y} r="7" fill="#0c0c0c" opacity="0.12" />}
                               <circle cx={p.x} cy={p.y} r={isCur ? 4 : 3}
-                                fill={isCur ? '#3b82f6' : 'white'} stroke="#3b82f6" strokeWidth="1.5" />
+                                fill={isCur ? '#0c0c0c' : '#fffefb'} stroke="#0c0c0c" strokeWidth="1.5" />
                               {/* 값 (현재만) */}
                               {isCur && (
                                 <>
-                                  <rect x={p.x - 22} y={p.y - 22} width="44" height="14" rx="4" fill="#3b82f6" />
+                                  <rect x={p.x - 22} y={p.y - 22} width="44" height="14" rx="4" fill="#0c0c0c" />
                                   <text x={p.x} y={p.y - 13} textAnchor="middle"
-                                    style={{ fontSize: '8px', fontWeight: 700, fill: 'white' }}>
+                                    style={{ fontSize: '8px', fontWeight: 700, fill: '#fffefb' }}>
                                     {formatMetricValue(p.v, pDef.format)}
                                   </text>
-                                  <polygon points={`${p.x - 3},${p.y - 8} ${p.x + 3},${p.y - 8} ${p.x},${p.y - 4}`} fill="#3b82f6" />
+                                  <polygon points={`${p.x - 3},${p.y - 8} ${p.x + 3},${p.y - 8} ${p.x},${p.y - 4}`} fill="#0c0c0c" />
                                 </>
                               )}
                               {/* X축 */}
                               <text x={p.x} y={H - 10} textAnchor="middle"
-                                style={{ fontSize: '7px', fontWeight: isCur ? 700 : 400, fill: isCur ? '#3b82f6' : '#aaa' }}>
+                                style={{ fontSize: '7px', fontWeight: isCur ? 700 : 400, fill: isCur ? '#0c0c0c' : '#7d7d7d' }}>
                                 {p.c.scheduled_date.slice(5)}
                               </text>
                               <text x={p.x} y={H - 2} textAnchor="middle"
-                                style={{ fontSize: '6px', fill: isCur ? '#3b82f6' : '#ccc' }}>
+                                style={{ fontSize: '6px', fill: isCur ? '#0c0c0c' : '#9e9e9e' }}>
                                 {p.c.title.length > 6 ? p.c.title.slice(0, 5) + '..' : p.c.title}
                               </text>
                             </g>
@@ -730,18 +723,18 @@ export default function Calendar() {
         </div>
 
         {/* 상세 패널 */}
-        <div className="w-[400px] border-l border-slate-200/60 bg-slate-50 flex flex-col overflow-hidden shadow-sm relative z-0">
+        <div className="w-[400px] border-l border-paper-gray bg-paper-ivory flex flex-col overflow-hidden relative z-0">
           {selectedDate && (
             <>
               {/* 패널 헤더 */}
-              <div className="flex items-center px-6 py-5 border-b border-slate-200/60 bg-white">
+              <div className="flex items-center px-6 py-5 border-b border-paper-gray bg-paper-white">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo-50 rounded-lg shadow-inner flex items-center justify-center">
-                    <CalendarClock size={20} className="text-indigo-600" strokeWidth={2.5} />
+                  <div className="p-2 bg-paper-beige rounded flex items-center justify-center">
+                    <CalendarClock size={20} className="text-ink" strokeWidth={2.5} />
                   </div>
                   <div>
-                    <div className="font-bold text-slate-900 text-base">{formatSelectedDate(selectedDate)}</div>
-                    <div className="text-xs font-semibold text-slate-500 mt-0.5">
+                    <div className="font-bold text-ink text-base">{formatSelectedDate(selectedDate)}</div>
+                    <div className="text-xs font-semibold text-muted-gray mt-0.5">
                       {selectedDayContents.length > 0
                         ? `${selectedDayContents.length}개 콘텐츠`
                         : '업로드된 콘텐츠 없음'}
@@ -767,19 +760,19 @@ export default function Calendar() {
                   <div className="flex flex-col items-center justify-center h-full text-center px-4">
                     {contents.length === 0 ? (
                       <>
-                        <div className="w-16 h-16 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl flex items-center justify-center mb-4 shadow-inner">
-                          <CalendarDays size={28} className="text-indigo-300" />
+                        <div className="w-16 h-16 bg-paper-beige rounded flex items-center justify-center mb-4">
+                          <CalendarDays size={28} className="text-ash-gray" />
                         </div>
-                        <p className="text-sm font-semibold text-gray-500 mb-1.5">아직 업로드된 콘텐츠가 없습니다</p>
-                        <p className="text-xs text-gray-400 leading-relaxed">콘텐츠를 업로드하면<br/>캘린더에 자동으로 표시됩니다</p>
+                        <p className="text-sm font-semibold text-muted-gray mb-1.5">아직 업로드된 콘텐츠가 없습니다</p>
+                        <p className="text-xs text-ash-gray leading-relaxed">콘텐츠를 업로드하면<br/>캘린더에 자동으로 표시됩니다</p>
                       </>
                     ) : (
                       <>
-                        <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center mb-3">
-                          <Inbox size={24} className="text-gray-300" />
+                        <div className="w-14 h-14 bg-paper-beige rounded flex items-center justify-center mb-3">
+                          <Inbox size={24} className="text-ash-gray" />
                         </div>
-                        <p className="text-sm font-medium text-gray-400 mb-1">콘텐츠가 없습니다</p>
-                        <p className="text-xs text-gray-300">이 날짜에 업로드된 콘텐츠가 없습니다</p>
+                        <p className="text-sm font-medium text-muted-gray mb-1">콘텐츠가 없습니다</p>
+                        <p className="text-xs text-ash-gray">이 날짜에 업로드된 콘텐츠가 없습니다</p>
                       </>
                     )}
                   </div>

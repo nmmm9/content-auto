@@ -25,15 +25,15 @@ interface EditModalProps {
 
 function YouTubeShortsPreview({ content, thumbnail }: { content: GeneratedContent; thumbnail?: string }) {
   return (
-    <div className="w-[220px] mx-auto bg-black rounded-2xl overflow-hidden shadow-xl border border-gray-700 relative" style={{ height: 390 }}>
+    <div className="w-[220px] mx-auto bg-black rounded-2xl overflow-hidden border border-gray-700 relative" style={{ height: 390 }}>
       {/* 영상 영역 */}
       <div className="absolute inset-0">
         {thumbnail ? (
           <img src={thumbnail} alt="" className="w-full h-full object-cover opacity-80" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-b from-gray-800 to-gray-900" />
+          <div className="w-full h-full bg-gray-900" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-black/30" />
       </div>
       {/* 우측 액션 버튼 */}
       <div className="absolute right-2 bottom-24 flex flex-col items-center gap-4">
@@ -74,7 +74,7 @@ function YouTubeShortsPreview({ content, thumbnail }: { content: GeneratedConten
 function NaverBlogPreview({ content }: { content: GeneratedContent }) {
   const blogContent = content.content || content.description || ''
   return (
-    <div className="w-full max-w-[320px] mx-auto bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
+    <div className="w-full max-w-[320px] mx-auto bg-white rounded-lg overflow-hidden border border-gray-200">
       {/* 네이버 헤더 */}
       <div className="bg-[#03C75A] px-3 py-2 flex items-center gap-2">
         <span className="text-white font-bold text-xs">N</span>
@@ -114,7 +114,7 @@ function NaverBlogPreview({ content }: { content: GeneratedContent }) {
 
 function FacebookPreview({ content }: { content: GeneratedContent }) {
   return (
-    <div className="w-full max-w-[320px] mx-auto bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
+    <div className="w-full max-w-[320px] mx-auto bg-white rounded-lg overflow-hidden border border-gray-200">
       {/* 프로필 */}
       <div className="px-3 py-2.5 flex items-center gap-2">
         <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
@@ -165,10 +165,10 @@ function FacebookPreview({ content }: { content: GeneratedContent }) {
 
 function InstagramPreview({ content, thumbnail }: { content: GeneratedContent; thumbnail?: string }) {
   return (
-    <div className="w-full max-w-[280px] mx-auto bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
+    <div className="w-full max-w-[280px] mx-auto bg-white rounded-lg overflow-hidden border border-gray-200">
       {/* 프로필 */}
       <div className="px-3 py-2 flex items-center gap-2">
-        <div className="w-7 h-7 bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 rounded-full p-[2px]">
+        <div className="w-7 h-7 bg-pink-500 rounded-full p-[2px]">
           <div className="w-full h-full bg-white rounded-full flex items-center justify-center">
             <Instagram size={10} className="text-pink-500" />
           </div>
@@ -182,7 +182,7 @@ function InstagramPreview({ content, thumbnail }: { content: GeneratedContent; t
         {thumbnail ? (
           <img src={thumbnail} alt="" className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
             <Instagram size={32} className="text-gray-400" />
           </div>
         )}
@@ -216,15 +216,15 @@ function InstagramPreview({ content, thumbnail }: { content: GeneratedContent; t
 
 function InstagramReelsPreview({ content, thumbnail }: { content: GeneratedContent; thumbnail?: string }) {
   return (
-    <div className="w-[220px] mx-auto bg-black rounded-2xl overflow-hidden shadow-xl border border-gray-700 relative" style={{ height: 390 }}>
+    <div className="w-[220px] mx-auto bg-black rounded-2xl overflow-hidden border border-gray-700 relative" style={{ height: 390 }}>
       {/* 영상 영역 */}
       <div className="absolute inset-0">
         {thumbnail ? (
           <img src={thumbnail} alt="" className="w-full h-full object-cover opacity-80" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-b from-purple-900 to-pink-900" />
+          <div className="w-full h-full bg-gray-900" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-black/30" />
       </div>
       {/* 우측 액션 */}
       <div className="absolute right-2 bottom-20 flex flex-col items-center gap-4">
@@ -238,7 +238,7 @@ function InstagramReelsPreview({ content, thumbnail }: { content: GeneratedConte
       {/* 하단 정보 */}
       <div className="absolute bottom-0 left-0 right-0 p-3">
         <div className="flex items-center gap-1.5 mb-1.5">
-          <div className="w-5 h-5 bg-gradient-to-br from-purple-600 to-pink-500 rounded-full" />
+          <div className="w-5 h-5 bg-pink-500 rounded-full" />
           <span className="text-[10px] text-white font-medium">username</span>
         </div>
         <p className="text-white text-[10px] leading-snug line-clamp-2 mb-1">
@@ -262,7 +262,7 @@ function InstagramReelsPreview({ content, thumbnail }: { content: GeneratedConte
 
 function ThreadsPreview({ content }: { content: GeneratedContent }) {
   return (
-    <div className="w-full max-w-[320px] mx-auto bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
+    <div className="w-full max-w-[320px] mx-auto bg-white rounded-lg overflow-hidden border border-gray-200">
       {/* 헤더 */}
       <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-center">
         <AtSign size={18} className="text-gray-900" />
@@ -321,14 +321,14 @@ const platformIcons: Record<string, typeof Youtube> = {
 }
 
 const platformColors: Record<string, string> = {
-  youtube_shorts: 'from-orange-500 to-red-500',
-  naver_blog: 'from-green-500 to-green-600',
-  facebook: 'from-blue-500 to-blue-600',
-  instagram: 'from-purple-500 via-pink-500 to-orange-400',
-  instagram_reels: 'from-purple-600 to-pink-500',
-  threads: 'from-gray-800 to-gray-900',
-  linkedin: 'from-blue-600 to-blue-800',
-  living_sequence_lab: 'from-emerald-500 to-teal-600',
+  youtube_shorts: 'bg-paper-ink',
+  naver_blog: 'bg-paper-ink',
+  facebook: 'bg-paper-ink',
+  instagram: 'bg-paper-ink',
+  instagram_reels: 'bg-paper-ink',
+  threads: 'bg-paper-ink',
+  linkedin: 'bg-paper-ink',
+  living_sequence_lab: 'bg-paper-ink',
 }
 
 // ── 메인 컴포넌트 ──
@@ -355,7 +355,7 @@ export default function EditModal({
   if (!isOpen) return null
 
   const Icon = platformIcons[platform] || Youtube
-  const gradient = platformColors[platform] || 'from-gray-500 to-gray-600'
+  const gradient = platformColors[platform] || 'bg-paper-ink'
 
   const handleSave = () => {
     const parsedTags = hashtagInput
@@ -452,19 +452,19 @@ export default function EditModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
 
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-[900px] max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="relative bg-paper-white rounded border border-paper-gray w-full max-w-[900px] max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className={`flex items-center gap-3 px-5 py-3 bg-gradient-to-r ${gradient}`}>
-          <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-            <Icon size={16} className="text-white" />
+        <div className={`flex items-center gap-3 px-5 py-3 ${gradient}`}>
+          <div className="w-8 h-8 bg-paper-white/10 rounded flex items-center justify-center">
+            <Icon size={16} className="text-paper-white" />
           </div>
           <div className="flex-1">
-            <h3 className="text-sm font-bold text-white">{platformName}</h3>
-            <p className="text-[10px] text-white/60">콘텐츠 미리보기 & 수정</p>
+            <h3 className="text-sm font-bold text-paper-white">{platformName}</h3>
+            <p className="text-[10px] text-paper-white/60">콘텐츠 미리보기 & 수정</p>
           </div>
-          <button onClick={onClose} className="text-white/60 hover:text-white transition-colors p-1">
+          <button onClick={onClose} className="text-paper-white/60 hover:text-paper-white transition-colors p-1">
             <X size={16} />
           </button>
         </div>
@@ -472,9 +472,9 @@ export default function EditModal({
         {/* Body: Preview + Edit */}
         <div className="flex flex-1 overflow-hidden">
           {/* 좌측: 미리보기 */}
-          <div className="w-[380px] flex-shrink-0 bg-gray-100 p-5 overflow-y-auto flex items-start justify-center border-r border-gray-200">
+          <div className="w-[380px] flex-shrink-0 bg-paper-beige p-5 overflow-y-auto flex items-start justify-center border-r border-paper-gray">
             <div className="sticky top-0">
-              <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-3 text-center">미리보기</div>
+              <div className="text-[10px] font-semibold text-ash-gray uppercase tracking-wider mb-3 text-center">미리보기</div>
               {renderPreview()}
             </div>
           </div>
@@ -486,21 +486,21 @@ export default function EditModal({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between px-5 py-3 border-t border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between px-5 py-3 border-t border-paper-gray bg-paper-ivory">
               <button
                 onClick={onRegenerate}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-ink hover:bg-paper-beige rounded transition"
               >
                 <Sparkles size={14} />
                 AI 재생성
               </button>
               <div className="flex items-center gap-2">
-                <button onClick={onClose} className="px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-200 rounded-lg transition">
+                <button onClick={onClose} className="px-3 py-1.5 text-xs text-charcoal hover:bg-paper-beige rounded transition">
                   취소
                 </button>
                 <button
                   onClick={handleSave}
-                  className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white rounded-lg bg-gradient-to-r ${gradient} hover:shadow-md transition`}
+                  className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-ink rounded bg-lemon hover:opacity-80 transition"
                 >
                   <Save size={14} />
                   저장
@@ -525,14 +525,14 @@ function Field({ label, value, onChange, rows, maxLength }: {
 }) {
   return (
     <div>
-      <label className="block text-xs font-semibold text-gray-600 mb-1.5">{label}</label>
+      <label className="block text-xs font-semibold text-charcoal mb-1.5">{label}</label>
       {rows ? (
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
           rows={rows}
           maxLength={maxLength}
-          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white"
+          className="w-full px-3 py-2 text-sm border border-paper-gray rounded focus:ring-1 focus:ring-paper-ink focus:border-paper-ink resize-none bg-paper-white"
           placeholder={`${label}을 입력하세요`}
         />
       ) : (
@@ -541,11 +541,11 @@ function Field({ label, value, onChange, rows, maxLength }: {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           maxLength={maxLength}
-          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+          className="w-full px-3 py-2 text-sm border border-paper-gray rounded focus:ring-1 focus:ring-paper-ink focus:border-paper-ink bg-paper-white"
           placeholder={`${label}을 입력하세요`}
         />
       )}
-      <div className="text-[10px] text-gray-400 mt-0.5 text-right">
+      <div className="text-[10px] text-ash-gray mt-0.5 text-right">
         {value.length}자{maxLength && ` / ${maxLength}`}
       </div>
     </div>
@@ -560,15 +560,15 @@ function TagField({ value, onChange, label = '해시태그' }: {
   const count = value.split(/[\s,]+/).filter(t => t.length > 0).length
   return (
     <div>
-      <label className="block text-xs font-semibold text-gray-600 mb-1.5">{label}</label>
+      <label className="block text-xs font-semibold text-charcoal mb-1.5">{label}</label>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={2}
-        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none font-mono bg-white"
+        className="w-full px-3 py-2 text-sm border border-paper-gray rounded focus:ring-1 focus:ring-paper-ink focus:border-paper-ink resize-none font-mono bg-paper-white"
         placeholder="#태그1 #태그2 #태그3"
       />
-      <div className="text-[10px] text-gray-400 mt-0.5">공백/쉼표로 구분 · {count}개</div>
+      <div className="text-[10px] text-ash-gray mt-0.5">공백/쉼표로 구분 · {count}개</div>
     </div>
   )
 }

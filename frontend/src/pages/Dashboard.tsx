@@ -143,17 +143,17 @@ export default function Dashboard() {
   }
 
   const statusIcons: Record<string, { icon: React.ReactNode; text: string; bg: string }> = {
-    completed: { icon: <CheckCircle size={14} className="text-emerald-600" strokeWidth={2.5} />, text: 'text-emerald-600', bg: 'bg-emerald-100/50' },
-    pending: { icon: <Clock size={14} className="text-amber-500" strokeWidth={2.5} />, text: 'text-amber-600', bg: 'bg-amber-100/50' },
-    draft: { icon: <Clock size={14} className="text-slate-400" strokeWidth={2.5} />, text: 'text-slate-500', bg: 'bg-slate-100/80' },
-    failed: { icon: <AlertCircle size={14} className="text-rose-500" strokeWidth={2.5} />, text: 'text-rose-600', bg: 'bg-rose-100/50' },
-    uploading: { icon: <CloudLightning size={14} className="text-blue-500" strokeWidth={2.5} />, text: 'text-blue-600', bg: 'bg-blue-100/50' },
+    completed: { icon: <CheckCircle size={14} className="text-success" strokeWidth={2.5} />, text: 'text-success', bg: 'bg-paper-white' },
+    pending: { icon: <Clock size={14} className="text-muted-gray" strokeWidth={2.5} />, text: 'text-muted-gray', bg: 'bg-paper-white' },
+    draft: { icon: <Clock size={14} className="text-ash-gray" strokeWidth={2.5} />, text: 'text-muted-gray', bg: 'bg-paper-white' },
+    failed: { icon: <AlertCircle size={14} className="text-danger" strokeWidth={2.5} />, text: 'text-danger', bg: 'bg-paper-white' },
+    uploading: { icon: <CloudLightning size={14} className="text-ink" strokeWidth={2.5} />, text: 'text-ink', bg: 'bg-paper-white' },
   }
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 rounded-full border-2 border-indigo-200 border-t-indigo-600 animate-spin"></div>
+        <div className="w-8 h-8 rounded-full border-2 border-paper-gray border-t-paper-ink animate-spin"></div>
       </div>
     )
   }
@@ -161,71 +161,71 @@ export default function Dashboard() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900">대시보드 개요</h2>
-        <div className="flex items-center gap-2 text-sm text-slate-500 bg-white px-4 py-2 rounded-full border border-slate-200/60 shadow-sm">
-          <Activity size={16} className="text-emerald-500 animate-pulse" />
+        <h2 className="text-2xl font-bold tracking-tight text-ink">대시보드 개요</h2>
+        <div className="flex items-center gap-2 text-sm text-muted-gray bg-paper-white px-4 py-2 rounded border border-paper-gray">
+          <Activity size={16} className="text-success animate-pulse" />
           시스템 정상 작동 중
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+        <div className="bg-paper-white p-6 rounded border border-paper-gray transition-colors relative overflow-hidden group">
           <div className="absolute -right-4 -bottom-4 p-4 opacity-5 group-hover:scale-110 group-hover:opacity-10 transition-all duration-500">
-            <LayoutDashboard size={100} className="text-indigo-600" />
+            <LayoutDashboard size={100} className="text-ink" />
           </div>
           <div className="flex items-center gap-4 relative z-10">
-            <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center shadow-inner">
-              <FileText size={24} className="text-indigo-600" strokeWidth={2} />
+            <div className="w-12 h-12 rounded bg-paper-beige flex items-center justify-center">
+              <FileText size={24} className="text-ink" strokeWidth={2} />
             </div>
             <div>
-              <div className="text-sm font-medium text-slate-500">전체 콘텐츠</div>
-              <div className="text-3xl font-extrabold text-slate-900 mt-0.5">{stats.total}</div>
+              <div className="text-sm font-medium text-muted-gray">전체 콘텐츠</div>
+              <div className="text-3xl font-extrabold text-ink mt-0.5">{stats.total}</div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+        <div className="bg-paper-white p-6 rounded border border-paper-gray transition-colors relative overflow-hidden group">
           <div className="absolute -right-4 -bottom-4 p-4 opacity-5 group-hover:scale-110 group-hover:opacity-10 transition-all duration-500">
-            <CheckCircle size={100} className="text-emerald-600" />
+            <CheckCircle size={100} className="text-success" />
           </div>
           <div className="flex items-center gap-4 relative z-10">
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center shadow-inner">
-              <CheckCircle size={24} className="text-emerald-600" strokeWidth={2} />
+            <div className="w-12 h-12 rounded bg-paper-beige flex items-center justify-center">
+              <CheckCircle size={24} className="text-success" strokeWidth={2} />
             </div>
             <div>
-              <div className="text-sm font-medium text-slate-500">업로드 완료</div>
-              <div className="text-3xl font-extrabold text-slate-900 mt-0.5">{stats.completed}</div>
+              <div className="text-sm font-medium text-muted-gray">업로드 완료</div>
+              <div className="text-3xl font-extrabold text-ink mt-0.5">{stats.completed}</div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+        <div className="bg-paper-white p-6 rounded border border-paper-gray transition-colors relative overflow-hidden group">
           <div className="absolute -right-4 -bottom-4 p-4 opacity-5 group-hover:scale-110 group-hover:opacity-10 transition-all duration-500">
-            <Clock size={100} className="text-amber-600" />
+            <Clock size={100} className="text-muted-gray" />
           </div>
           <div className="flex items-center gap-4 relative z-10">
-            <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center shadow-inner">
-              <Clock size={24} className="text-amber-600" strokeWidth={2} />
+            <div className="w-12 h-12 rounded bg-paper-beige flex items-center justify-center">
+              <Clock size={24} className="text-muted-gray" strokeWidth={2} />
             </div>
             <div>
-              <div className="text-sm font-medium text-slate-500">대기 중</div>
-              <div className="text-3xl font-extrabold text-slate-900 mt-0.5">{stats.pending}</div>
+              <div className="text-sm font-medium text-muted-gray">대기 중</div>
+              <div className="text-3xl font-extrabold text-ink mt-0.5">{stats.pending}</div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+        <div className="bg-paper-white p-6 rounded border border-paper-gray transition-colors relative overflow-hidden group">
           <div className="absolute -right-4 -bottom-4 p-4 opacity-5 group-hover:scale-110 group-hover:opacity-10 transition-all duration-500">
-            <AlertCircle size={100} className="text-rose-600" />
+            <AlertCircle size={100} className="text-danger" />
           </div>
           <div className="flex items-center gap-4 relative z-10">
-            <div className="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center shadow-inner">
-              <AlertCircle size={24} className="text-rose-600" strokeWidth={2} />
+            <div className="w-12 h-12 rounded bg-paper-beige flex items-center justify-center">
+              <AlertCircle size={24} className="text-danger" strokeWidth={2} />
             </div>
             <div>
-              <div className="text-sm font-medium text-slate-500">실패</div>
-              <div className="text-3xl font-extrabold text-slate-900 mt-0.5">{stats.failed}</div>
+              <div className="text-sm font-medium text-muted-gray">실패</div>
+              <div className="text-3xl font-extrabold text-ink mt-0.5">{stats.failed}</div>
             </div>
           </div>
         </div>
@@ -233,9 +233,9 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Platform Status */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col">
-          <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-            <CloudLightning className="text-indigo-500" size={20} />
+        <div className="bg-paper-white p-6 rounded border border-paper-gray flex flex-col">
+          <h3 className="text-lg font-bold text-ink mb-6 flex items-center gap-2">
+            <CloudLightning className="text-ink" size={20} />
             플랫폼 연동 상태
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
@@ -244,20 +244,20 @@ export default function Dashboard() {
               return (
                 <div
                   key={platform.platform}
-                  className={`p-4 rounded-xl border transition-colors ${platform.is_connected
-                      ? 'border-emerald-100 bg-emerald-50/50 hover:bg-emerald-50'
-                      : 'border-slate-100 bg-slate-50/50 hover:bg-slate-50'
+                  className={`p-4 rounded border transition-colors ${platform.is_connected
+                      ? 'border-paper-gray bg-paper-white hover:bg-paper-beige'
+                      : 'border-paper-beige bg-paper-ivory hover:bg-paper-beige'
                     }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${platform.is_connected ? 'bg-white text-emerald-600 shadow-sm' : 'bg-slate-100 text-slate-400'}`}>
+                    <div className={`p-2 rounded ${platform.is_connected ? 'bg-paper-beige text-success' : 'bg-paper-beige text-ash-gray'}`}>
                       {info?.icon}
                     </div>
                     <div>
-                      <div className="font-semibold text-slate-900 text-sm">{info?.name}</div>
-                      <div className={`text-xs mt-0.5 font-medium flex items-center gap-1 ${platform.is_connected ? 'text-emerald-600' : 'text-slate-400'}`}>
-                        {platform.is_connected && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>}
-                        {!platform.is_connected && <div className="w-1.5 h-1.5 rounded-full bg-slate-400"></div>}
+                      <div className="font-semibold text-ink text-sm">{info?.name}</div>
+                      <div className={`text-xs mt-0.5 font-medium flex items-center gap-1 ${platform.is_connected ? 'text-success' : 'text-ash-gray'}`}>
+                        {platform.is_connected && <div className="w-1.5 h-1.5 rounded-none bg-success"></div>}
+                        {!platform.is_connected && <div className="w-1.5 h-1.5 rounded-none bg-ash-gray"></div>}
                         {platform.is_connected ? '연동 활성화됨' : '미연동 상태'}
                       </div>
                     </div>
@@ -269,9 +269,9 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Uploads */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col">
-          <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-            <Activity className="text-indigo-500" size={20} />
+        <div className="bg-paper-white p-6 rounded border border-paper-gray flex flex-col">
+          <h3 className="text-lg font-bold text-ink mb-6 flex items-center gap-2">
+            <Activity className="text-ink" size={20} />
             최근 업로드 내역
           </h3>
           {recentContents.length > 0 ? (
@@ -281,22 +281,22 @@ export default function Dashboard() {
                 return (
                   <div
                     key={content.id}
-                    className="flex justify-between p-4 bg-slate-50/80 rounded-xl hover:bg-slate-100/80 transition-colors border border-slate-100/50 group"
+                    className="flex justify-between p-4 bg-paper-ivory rounded hover:bg-paper-beige transition-colors border border-paper-beige group"
                   >
                     <div className="flex items-center gap-4">
-                      <div className={`flex items-center justify-center w-8 h-8 rounded-full ${statusInfo.bg} shadow-sm group-hover:scale-110 transition-transform`}>
+                      <div className={`flex items-center justify-center w-8 h-8 rounded border border-paper-gray ${statusInfo.bg} group-hover:scale-110 transition-transform`}>
                         {statusInfo.icon}
                       </div>
                       <div>
-                        <div className="font-semibold text-slate-900">{content.title}</div>
-                        <div className="text-sm text-slate-500 mt-0.5 font-medium">
+                        <div className="font-semibold text-ink">{content.title}</div>
+                        <div className="text-sm text-muted-gray mt-0.5 font-medium">
                           {new Date(content.created_at).toLocaleDateString('ko-KR', {
                             year: 'numeric', month: 'long', day: 'numeric'
                           })}
                         </div>
                       </div>
                     </div>
-                    <div className={`text-xs font-bold px-3 py-1.5 rounded-full self-start ${statusInfo.bg} ${statusInfo.text}`}>
+                    <div className={`text-xs font-bold px-3 py-1.5 rounded-none border border-paper-gray self-start ${statusInfo.bg} ${statusInfo.text}`}>
                       {content.status === 'completed' ? '업로드 완료' :
                         content.status === 'failed' ? '실패' :
                           content.status === 'uploading' ? '업로드 중' : '대기중'}
@@ -306,34 +306,34 @@ export default function Dashboard() {
               })}
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center py-12 text-slate-400">
-              <div className="w-16 h-16 mb-4 rounded-full bg-slate-50 flex items-center justify-center">
-                <FileText size={32} className="text-slate-300" />
+            <div className="flex-1 flex flex-col items-center justify-center py-12 text-ash-gray">
+              <div className="w-16 h-16 mb-4 rounded bg-paper-beige flex items-center justify-center">
+                <FileText size={32} className="text-ash-gray" />
               </div>
-              <p className="font-medium text-slate-500">아직 등록된 콘텐츠가 없습니다</p>
-              <p className="text-sm mt-1 text-slate-400">업로드 메뉴에서 새 콘텐츠를 추가해보세요.</p>
+              <p className="font-medium text-muted-gray">아직 등록된 콘텐츠가 없습니다</p>
+              <p className="text-sm mt-1 text-ash-gray">업로드 메뉴에서 새 콘텐츠를 추가해보세요.</p>
             </div>
           )}
         </div>
       </div>
 
       {drafts.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
-          <h2 className="text-sm font-bold text-slate-700 mb-3">예약 대기 드래프트</h2>
+        <div className="bg-paper-white rounded border border-paper-gray p-5">
+          <h2 className="text-sm font-bold text-charcoal mb-3">예약 대기 드래프트</h2>
           <div className="space-y-2">
             {drafts.map((d) => (
-              <div key={d.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50">
-                <span className="flex-1 truncate text-sm text-slate-700">{d.title}</span>
+              <div key={d.id} className="flex items-center gap-3 p-2 rounded hover:bg-paper-beige">
+                <span className="flex-1 truncate text-sm text-charcoal">{d.title}</span>
                 <input
                   type="date"
                   value={scheduleDates[d.id] || ''}
                   onChange={(e) => setScheduleDates((prev) => ({ ...prev, [d.id]: e.target.value }))}
-                  className="text-xs border border-slate-200 rounded-lg px-2 py-1"
+                  className="text-xs border border-paper-gray rounded px-2 py-1"
                 />
                 <button
                   onClick={() => handleSchedule(d.id)}
                   disabled={!scheduleDates[d.id]}
-                  className="text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 rounded-lg px-3 py-1"
+                  className="text-xs font-bold text-ink bg-lemon hover:bg-lemon/80 disabled:opacity-40 rounded px-3 py-1"
                 >
                   예약
                 </button>
@@ -352,14 +352,14 @@ export default function Dashboard() {
           <>
             {/* 링크 분석 헤더 */}
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <BarChart3 size={20} className="text-violet-500" />
+              <h3 className="text-lg font-bold text-ink flex items-center gap-2">
+                <BarChart3 size={20} className="text-ink" />
                 링크 분석
               </h3>
-              <div className="flex items-center bg-white rounded-xl border border-slate-200/60 shadow-sm overflow-hidden">
+              <div className="flex items-center bg-paper-white rounded border border-paper-gray overflow-hidden">
                 {[7, 30, 90].map(d => (
                   <button key={d} onClick={() => setAnalyticsDays(d)}
-                    className={`px-3 py-1.5 text-xs font-semibold transition-all ${analyticsDays === d ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>
+                    className={`px-3 py-1.5 text-xs font-semibold transition-all ${analyticsDays === d ? 'bg-paper-ink text-paper-white' : 'text-muted-gray hover:bg-paper-beige'}`}>
                     {d}일
                   </button>
                 ))}
@@ -369,19 +369,19 @@ export default function Dashboard() {
             {/* 링크 분석 요약 카드 */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { label: '총 클릭', value: analytics.total_clicks, icon: MousePointerClick, bg: 'bg-indigo-50', text: 'text-indigo-600' },
-                { label: '트래킹 링크', value: analytics.total_links, icon: Link2, bg: 'bg-violet-50', text: 'text-violet-600' },
-                { label: '오늘 클릭', value: analytics.today_clicks, icon: TrendingUp, bg: 'bg-amber-50', text: 'text-amber-600' },
-                { label: '평균 클릭/링크', value: analytics.avg_clicks_per_link, icon: BarChart3, bg: 'bg-emerald-50', text: 'text-emerald-600' },
+                { label: '총 클릭', value: analytics.total_clicks, icon: MousePointerClick, bg: 'bg-paper-beige', text: 'text-ink' },
+                { label: '트래킹 링크', value: analytics.total_links, icon: Link2, bg: 'bg-paper-beige', text: 'text-ink' },
+                { label: '오늘 클릭', value: analytics.today_clicks, icon: TrendingUp, bg: 'bg-paper-beige', text: 'text-ink' },
+                { label: '평균 클릭/링크', value: analytics.avg_clicks_per_link, icon: BarChart3, bg: 'bg-paper-beige', text: 'text-ink' },
               ].map(card => (
-                <div key={card.label} className="bg-white p-4 rounded-2xl border border-slate-200/60 shadow-sm">
+                <div key={card.label} className="bg-paper-white p-4 rounded border border-paper-gray">
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl ${card.bg} flex items-center justify-center shadow-inner`}>
+                    <div className={`w-10 h-10 rounded ${card.bg} flex items-center justify-center`}>
                       <card.icon size={20} className={card.text} strokeWidth={2} />
                     </div>
                     <div>
-                      <div className="text-xs font-medium text-slate-500">{card.label}</div>
-                      <div className="text-2xl font-extrabold text-slate-900">
+                      <div className="text-xs font-medium text-muted-gray">{card.label}</div>
+                      <div className="text-2xl font-extrabold text-ink">
                         {typeof card.value === 'number' && card.value % 1 !== 0 ? card.value.toFixed(1) : card.value.toLocaleString()}
                       </div>
                     </div>
@@ -393,43 +393,43 @@ export default function Dashboard() {
             {/* 차트 2열 */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* 플랫폼별 클릭 */}
-              <div className="bg-white rounded-2xl p-6 border border-slate-200/60 shadow-sm">
-                <h4 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
-                  <BarChart3 size={14} className="text-violet-500" />
+              <div className="bg-paper-white rounded p-6 border border-paper-gray">
+                <h4 className="text-sm font-bold text-charcoal mb-4 flex items-center gap-2">
+                  <BarChart3 size={14} className="text-ink" />
                   플랫폼별 클릭 수
                 </h4>
                 {analytics.platform_breakdown.length > 0 ? (
                   <div className="space-y-2.5">
                     {analytics.platform_breakdown.map(p => {
                       const barWidth = (p.total_clicks / maxPlatformClicks) * 100
-                      const color = trackingPlatformColor[p.platform] || '#6366f1'
+                      const color = trackingPlatformColor[p.platform] || '#0c0c0c'
                       return (
                         <div key={p.platform} className="flex items-center gap-2.5">
-                          <div className="w-20 text-[11px] font-semibold text-slate-600 text-right shrink-0">
+                          <div className="w-20 text-[11px] font-semibold text-charcoal text-right shrink-0">
                             {trackingPlatformLabel[p.platform] || p.platform}
                           </div>
-                          <div className="flex-1 bg-slate-100 rounded-full h-6 overflow-hidden">
-                            <div className="h-full rounded-full transition-all duration-700 ease-out flex items-center"
+                          <div className="flex-1 bg-paper-beige rounded-none h-6 overflow-hidden">
+                            <div className="h-full rounded-none transition-all duration-700 ease-out flex items-center"
                               style={{ width: `${Math.max(barWidth, 3)}%`, backgroundColor: color }}>
-                              <span className="text-[10px] font-bold text-white ml-2 whitespace-nowrap drop-shadow-sm">
+                              <span className="text-[10px] font-bold text-paper-white ml-2 whitespace-nowrap">
                                 {p.total_clicks.toLocaleString()}
                               </span>
                             </div>
                           </div>
-                          <div className="w-10 text-[11px] font-bold text-slate-400 text-right shrink-0">{p.percentage}%</div>
+                          <div className="w-10 text-[11px] font-bold text-ash-gray text-right shrink-0">{p.percentage}%</div>
                         </div>
                       )
                     })}
                   </div>
                 ) : (
-                  <div className="text-sm text-slate-400 text-center py-8">클릭 데이터가 없습니다</div>
+                  <div className="text-sm text-ash-gray text-center py-8">클릭 데이터가 없습니다</div>
                 )}
               </div>
 
               {/* 일별 클릭 추이 */}
-              <div className="bg-white rounded-2xl p-6 border border-slate-200/60 shadow-sm">
-                <h4 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
-                  <TrendingUp size={14} className="text-emerald-500" />
+              <div className="bg-paper-white rounded p-6 border border-paper-gray">
+                <h4 className="text-sm font-bold text-charcoal mb-4 flex items-center gap-2">
+                  <TrendingUp size={14} className="text-ink" />
                   일별 클릭 추이
                 </h4>
                 {analytics.daily_trend.length >= 2 ? (() => {
@@ -446,42 +446,42 @@ export default function Dashboard() {
                     <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-xl mx-auto block">
                       <defs>
                         <linearGradient id="dashTrendFill" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#6366f1" stopOpacity="0.25" />
-                          <stop offset="100%" stopColor="#6366f1" stopOpacity="0.02" />
+                          <stop offset="0%" stopColor="#0c0c0c" stopOpacity="0.15" />
+                          <stop offset="100%" stopColor="#0c0c0c" stopOpacity="0.02" />
                         </linearGradient>
                       </defs>
                       {[0, 0.5, 1].map(pct => {
                         const y = PT + chartH * (1 - pct)
                         return (
                           <g key={pct}>
-                            <line x1={PL} y1={y} x2={W - PR} y2={y} stroke="#e5e7eb" strokeWidth="0.5" />
+                            <line x1={PL} y1={y} x2={W - PR} y2={y} stroke="#dbdbdb" strokeWidth="0.5" />
                             <text x={PL - 5} y={y} textAnchor="end" dominantBaseline="middle"
-                              style={{ fontSize: '8px', fill: '#94a3b8' }}>{Math.round(maxVal * pct)}</text>
+                              style={{ fontSize: '8px', fill: '#9e9e9e' }}>{Math.round(maxVal * pct)}</text>
                           </g>
                         )
                       })}
                       <path d={areaPath} fill="url(#dashTrendFill)" />
-                      <path d={linePath} fill="none" stroke="#6366f1" strokeWidth="1.8" strokeLinejoin="round" />
+                      <path d={linePath} fill="none" stroke="#0c0c0c" strokeWidth="1.8" strokeLinejoin="round" />
                       {points.map((p, i) => (
                         <circle key={i} cx={getX(i)} cy={getY(p.click_count)} r="2.5"
-                          fill="white" stroke="#6366f1" strokeWidth="1.2" />
+                          fill="#fffefb" stroke="#0c0c0c" strokeWidth="1.2" />
                       ))}
                       {[0, Math.floor(points.length / 2), points.length - 1].map(idx => (
                         <text key={idx} x={getX(idx)} y={H - 5} textAnchor="middle"
-                          style={{ fontSize: '8px', fill: '#94a3b8' }}>{points[idx].date.slice(5)}</text>
+                          style={{ fontSize: '8px', fill: '#9e9e9e' }}>{points[idx].date.slice(5)}</text>
                       ))}
                     </svg>
                   )
                 })() : (
-                  <div className="text-sm text-slate-400 text-center py-8">추이 데이터가 부족합니다</div>
+                  <div className="text-sm text-ash-gray text-center py-8">추이 데이터가 부족합니다</div>
                 )}
               </div>
             </div>
 
             {/* 콘텐츠 클릭 랭킹 */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-200/60 shadow-sm">
-              <h4 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
-                <Crown size={14} className="text-amber-500" />
+            <div className="bg-paper-white rounded p-6 border border-paper-gray">
+              <h4 className="text-sm font-bold text-charcoal mb-4 flex items-center gap-2">
+                <Crown size={14} className="text-ink" />
                 콘텐츠별 클릭 랭킹
               </h4>
               {analytics.top_content.length > 0 ? (
@@ -489,39 +489,39 @@ export default function Dashboard() {
                   {analytics.top_content.map((item, idx) => {
                     const barWidth = (item.total_clicks / maxContentClicks) * 100
                     const RankIcon = idx === 0 ? Crown : idx === 1 ? Medal : idx === 2 ? Award : null
-                    const rankColor = idx === 0 ? 'text-amber-500' : idx === 1 ? 'text-slate-400' : idx === 2 ? 'text-orange-400' : 'text-slate-300'
+                    const rankColor = idx === 0 ? 'text-ink' : idx === 1 ? 'text-charcoal' : idx === 2 ? 'text-muted-gray' : 'text-ash-gray'
                     return (
                       <div key={item.content_id} className="flex items-center gap-2.5 py-2">
                         <div className="w-7 shrink-0 flex justify-center">
-                          {RankIcon ? <RankIcon size={16} className={rankColor} /> : <span className="text-[11px] font-bold text-slate-400">{idx + 1}</span>}
+                          {RankIcon ? <RankIcon size={16} className={rankColor} /> : <span className="text-[11px] font-bold text-ash-gray">{idx + 1}</span>}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 mb-1">
-                            <span className="text-xs font-semibold text-slate-800 truncate">{item.content_title}</span>
+                            <span className="text-xs font-semibold text-ink truncate">{item.content_title}</span>
                             <div className="flex gap-0.5 shrink-0">
                               {item.platforms.map(p => (
-                                <span key={p} className="text-[9px] px-1 py-0.5 rounded-full font-semibold"
-                                  style={{ backgroundColor: `${trackingPlatformColor[p] || '#6366f1'}15`, color: trackingPlatformColor[p] || '#6366f1' }}>
+                                <span key={p} className="text-[9px] px-1 py-0.5 rounded-none font-semibold"
+                                  style={{ backgroundColor: `${trackingPlatformColor[p] || '#0c0c0c'}15`, color: trackingPlatformColor[p] || '#0c0c0c' }}>
                                   {trackingPlatformLabel[p] || p}
                                 </span>
                               ))}
                             </div>
                           </div>
-                          <div className="bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                            <div className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-700"
+                          <div className="bg-paper-beige rounded-none h-1.5 overflow-hidden">
+                            <div className="h-full rounded-none bg-paper-ink transition-all duration-700"
                               style={{ width: `${barWidth}%` }} />
                           </div>
                         </div>
                         <div className="w-14 text-right shrink-0">
-                          <span className="text-xs font-bold text-slate-700">{item.total_clicks.toLocaleString()}</span>
-                          <span className="text-[9px] text-slate-400 ml-0.5">클릭</span>
+                          <span className="text-xs font-bold text-charcoal">{item.total_clicks.toLocaleString()}</span>
+                          <span className="text-[9px] text-ash-gray ml-0.5">클릭</span>
                         </div>
                       </div>
                     )
                   })}
                 </div>
               ) : (
-                <div className="text-sm text-slate-400 text-center py-8">클릭 데이터가 없습니다</div>
+                <div className="text-sm text-ash-gray text-center py-8">클릭 데이터가 없습니다</div>
               )}
             </div>
           </>
@@ -538,20 +538,20 @@ export default function Dashboard() {
         const platforms = [...new Set(trackingLinks.map(l => l.platform))]
 
         return (
-          <div className="bg-white rounded-2xl p-6 border border-slate-200/60 shadow-sm">
+          <div className="bg-paper-white rounded p-6 border border-paper-gray">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                <Link2 size={14} className="text-indigo-500" />
+              <h4 className="text-sm font-bold text-charcoal flex items-center gap-2">
+                <Link2 size={14} className="text-ink" />
                 전체 트래킹 링크 비교
-                <span className="text-[10px] font-medium text-slate-400 ml-1">
+                <span className="text-[10px] font-medium text-ash-gray ml-1">
                   {displayed.length}{filtered.length > 30 ? ` / ${filtered.length}` : ''}개
                 </span>
               </h4>
-              <div className="flex items-center gap-1 bg-slate-50 rounded-xl p-1 border border-slate-100">
+              <div className="flex items-center gap-1 bg-paper-ivory rounded p-1 border border-paper-beige">
                 <button
                   onClick={() => setLinkFilter('all')}
-                  className={`px-2.5 py-1 text-[10px] font-semibold rounded-lg transition-all ${
-                    linkFilter === 'all' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                  className={`px-2.5 py-1 text-[10px] font-semibold rounded transition-all ${
+                    linkFilter === 'all' ? 'bg-paper-white text-ink border border-paper-gray' : 'text-ash-gray hover:text-charcoal'
                   }`}
                 >
                   전체
@@ -560,8 +560,8 @@ export default function Dashboard() {
                   <button
                     key={p}
                     onClick={() => setLinkFilter(linkFilter === p ? 'all' : p)}
-                    className={`px-2.5 py-1 text-[10px] font-semibold rounded-lg transition-all whitespace-nowrap ${
-                      linkFilter === p ? 'bg-white shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                    className={`px-2.5 py-1 text-[10px] font-semibold rounded transition-all whitespace-nowrap ${
+                      linkFilter === p ? 'bg-paper-white border border-paper-gray' : 'text-ash-gray hover:text-charcoal'
                     }`}
                     style={linkFilter === p ? { color: trackingPlatformColor[p] } : undefined}
                   >
@@ -573,25 +573,25 @@ export default function Dashboard() {
             <div className="space-y-2">
               {displayed.map((link, idx) => {
                 const barWidth = (link.click_count / maxClicks) * 100
-                const color = trackingPlatformColor[link.platform] || '#6366f1'
+                const color = trackingPlatformColor[link.platform] || '#0c0c0c'
                 return (
                   <div key={link.id} className="flex items-center gap-2.5 group">
                     <div className="w-5 shrink-0 text-center">
-                      <span className="text-[10px] font-bold text-slate-400">{idx + 1}</span>
+                      <span className="text-[10px] font-bold text-ash-gray">{idx + 1}</span>
                     </div>
                     <div className="w-24 shrink-0">
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap"
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-none whitespace-nowrap"
                         style={{ backgroundColor: `${color}15`, color }}>
                         {trackingPlatformLabel[link.platform] || link.platform}
                       </span>
                     </div>
-                    <div className="w-28 shrink-0 text-[11px] font-medium text-slate-600 truncate">
+                    <div className="w-28 shrink-0 text-[11px] font-medium text-charcoal truncate">
                       {contentNames[link.content_id] || `콘텐츠 #${link.content_id}`}
                     </div>
-                    <div className="flex-1 bg-slate-100 rounded-full h-5 overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-700 ease-out flex items-center"
+                    <div className="flex-1 bg-paper-beige rounded-none h-5 overflow-hidden">
+                      <div className="h-full rounded-none transition-all duration-700 ease-out flex items-center"
                         style={{ width: `${Math.max(barWidth, 4)}%`, backgroundColor: color }}>
-                        <span className="text-[9px] font-bold text-white ml-2 whitespace-nowrap drop-shadow-sm">
+                        <span className="text-[9px] font-bold text-paper-white ml-2 whitespace-nowrap">
                           {link.click_count.toLocaleString()}
                         </span>
                       </div>

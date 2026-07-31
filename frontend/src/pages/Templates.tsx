@@ -14,10 +14,10 @@ interface Template {
 }
 
 const platformInfo: Record<string, { name: string; icon: typeof Youtube; color: string }> = {
-  youtube: { name: 'YouTube', icon: Youtube, color: 'text-red-500' },
-  naver_blog: { name: '네이버 블로그', icon: FileText, color: 'text-green-500' },
-  facebook: { name: 'Facebook', icon: Facebook, color: 'text-blue-500' },
-  instagram: { name: 'Instagram', icon: Instagram, color: 'text-pink-500' },
+  youtube: { name: 'YouTube', icon: Youtube, color: 'text-ink' },
+  naver_blog: { name: '네이버 블로그', icon: FileText, color: 'text-ink' },
+  facebook: { name: 'Facebook', icon: Facebook, color: 'text-ink' },
+  instagram: { name: 'Instagram', icon: Instagram, color: 'text-ink' },
 }
 
 export default function Templates() {
@@ -122,10 +122,10 @@ export default function Templates() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">템플릿 관리</h2>
+        <h2 className="text-2xl font-bold text-ink">템플릿 관리</h2>
         <button
           onClick={() => openModal()}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="flex items-center gap-2 px-4 py-2 bg-lemon text-ink rounded hover:bg-lemon/80"
         >
           <Plus size={16} />
           새 템플릿
@@ -133,13 +133,13 @@ export default function Templates() {
       </div>
 
       {/* Variable Info */}
-      <div className="bg-blue-50 p-4 rounded-lg">
-        <h3 className="font-medium text-blue-900 mb-2">사용 가능한 변수</h3>
-        <div className="text-sm text-blue-700 space-x-4">
-          <code className="bg-blue-100 px-2 py-1 rounded">{'{{title}}'}</code>
-          <code className="bg-blue-100 px-2 py-1 rounded">{'{{description}}'}</code>
-          <code className="bg-blue-100 px-2 py-1 rounded">{'{{tags}}'}</code>
-          <code className="bg-blue-100 px-2 py-1 rounded">{'{{youtube_url}}'}</code>
+      <div className="bg-paper-beige p-4 rounded border border-paper-gray">
+        <h3 className="font-medium text-ink mb-2">사용 가능한 변수</h3>
+        <div className="text-sm text-charcoal space-x-4">
+          <code className="bg-paper-white border border-paper-gray px-2 py-1 rounded-none">{'{{title}}'}</code>
+          <code className="bg-paper-white border border-paper-gray px-2 py-1 rounded-none">{'{{description}}'}</code>
+          <code className="bg-paper-white border border-paper-gray px-2 py-1 rounded-none">{'{{tags}}'}</code>
+          <code className="bg-paper-white border border-paper-gray px-2 py-1 rounded-none">{'{{youtube_url}}'}</code>
         </div>
       </div>
 
@@ -152,31 +152,31 @@ export default function Templates() {
           return (
             <div
               key={template.id}
-              className="bg-white p-6 rounded-lg border border-gray-200"
+              className="bg-paper-white p-6 rounded border border-paper-gray"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <Icon size={24} className={platform?.color || 'text-gray-500'} />
+                  <Icon size={24} className={platform?.color || 'text-muted-gray'} />
                   <div>
-                    <h3 className="font-semibold text-gray-900">{template.name}</h3>
-                    <p className="text-sm text-gray-500">{platform?.name}</p>
+                    <h3 className="font-semibold text-ink">{template.name}</h3>
+                    <p className="text-sm text-muted-gray">{platform?.name}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   {template.is_default && (
-                    <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">
+                    <span className="px-2 py-1 border border-success text-success text-xs rounded-none">
                       기본
                     </span>
                   )}
                   <button
                     onClick={() => openModal(template)}
-                    className="p-1 text-gray-400 hover:text-blue-600"
+                    className="p-1 text-ash-gray hover:text-ink"
                   >
                     <Edit2 size={16} />
                   </button>
                   <button
                     onClick={() => handleDelete(template.id)}
-                    className="p-1 text-gray-400 hover:text-red-600"
+                    className="p-1 text-ash-gray hover:text-danger"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -185,12 +185,12 @@ export default function Templates() {
 
               <div className="space-y-2 text-sm">
                 <div>
-                  <span className="text-gray-500">제목: </span>
-                  <code className="text-gray-700">{template.title_template}</code>
+                  <span className="text-muted-gray">제목: </span>
+                  <code className="text-charcoal">{template.title_template}</code>
                 </div>
                 <div>
-                  <span className="text-gray-500">설명: </span>
-                  <code className="text-gray-700 line-clamp-2">{template.description_template}</code>
+                  <span className="text-muted-gray">설명: </span>
+                  <code className="text-charcoal line-clamp-2">{template.description_template}</code>
                 </div>
               </div>
             </div>
@@ -199,7 +199,7 @@ export default function Templates() {
       </div>
 
       {templates.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-muted-gray">
           템플릿이 없습니다. 새 템플릿을 추가해주세요.
         </div>
       )}
@@ -207,14 +207,14 @@ export default function Templates() {
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="bg-paper-white rounded border border-paper-gray p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold text-ink mb-4">
               {editingTemplate ? '템플릿 수정' : '새 템플릿'}
             </h3>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-charcoal mb-1">
                   템플릿 이름
                 </label>
                 <input
@@ -222,18 +222,18 @@ export default function Templates() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  className="w-full px-3 py-2 border border-paper-gray rounded"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-charcoal mb-1">
                   플랫폼
                 </label>
                 <select
                   value={formData.platform}
                   onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  className="w-full px-3 py-2 border border-paper-gray rounded"
                   disabled={!!editingTemplate}
                 >
                   {Object.entries(platformInfo).map(([key, info]) => (
@@ -243,38 +243,38 @@ export default function Templates() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-charcoal mb-1">
                   제목 템플릿
                 </label>
                 <input
                   type="text"
                   value={formData.title_template}
                   onChange={(e) => setFormData({ ...formData, title_template: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  className="w-full px-3 py-2 border border-paper-gray rounded"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-charcoal mb-1">
                   설명 템플릿
                 </label>
                 <textarea
                   value={formData.description_template}
                   onChange={(e) => setFormData({ ...formData, description_template: e.target.value })}
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  className="w-full px-3 py-2 border border-paper-gray rounded"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-charcoal mb-1">
                   태그 템플릿
                 </label>
                 <input
                   type="text"
                   value={formData.tags_template}
                   onChange={(e) => setFormData({ ...formData, tags_template: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  className="w-full px-3 py-2 border border-paper-gray rounded"
                 />
               </div>
 
@@ -284,9 +284,9 @@ export default function Templates() {
                   id="is_default"
                   checked={formData.is_default}
                   onChange={(e) => setFormData({ ...formData, is_default: e.target.checked })}
-                  className="rounded"
+                  className="rounded-none"
                 />
-                <label htmlFor="is_default" className="text-sm text-gray-700">
+                <label htmlFor="is_default" className="text-sm text-charcoal">
                   기본 템플릿으로 설정
                 </label>
               </div>
@@ -295,13 +295,13 @@ export default function Templates() {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  className="flex-1 px-4 py-2 border border-paper-gray text-charcoal rounded hover:bg-paper-beige"
                 >
                   취소
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="flex-1 px-4 py-2 bg-paper-ink text-paper-white rounded hover:bg-charcoal"
                 >
                   저장
                 </button>

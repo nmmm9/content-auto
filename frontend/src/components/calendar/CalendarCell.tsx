@@ -15,20 +15,20 @@ export default function CalendarCell({ day, onDateClick, onContentClick }: Calen
   return (
     <div
       onClick={() => onDateClick(dateStr)}
-      className={`min-h-[100px] p-1.5 border-b border-r border-gray-200 cursor-pointer transition hover:bg-gray-50 ${
-        !day.isCurrentMonth ? 'bg-gray-50/50' : 'bg-white'
+      className={`min-h-[100px] p-1.5 border-b border-r border-paper-gray cursor-pointer transition hover:bg-paper-beige ${
+        !day.isCurrentMonth ? 'bg-paper-ivory' : 'bg-paper-white'
       }`}
     >
       <div className={`text-xs font-medium mb-1 ${
         day.isToday
-          ? 'w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center'
+          ? 'w-6 h-6 bg-paper-ink text-paper-white rounded-full flex items-center justify-center'
           : !day.isCurrentMonth
-            ? 'text-gray-300 pl-1'
+            ? 'text-ash-gray pl-1'
             : day.date.getDay() === 0
-              ? 'text-red-400 pl-1'
+              ? 'text-danger pl-1'
               : day.date.getDay() === 6
-                ? 'text-blue-400 pl-1'
-                : 'text-gray-500 pl-1'
+                ? 'text-charcoal pl-1'
+                : 'text-muted-gray pl-1'
       }`}>
         {day.date.getDate()}
       </div>
@@ -42,7 +42,7 @@ export default function CalendarCell({ day, onDateClick, onContentClick }: Calen
           />
         ))}
         {day.contents.length > MAX_VISIBLE && (
-          <div className="text-[10px] text-gray-400 pl-2 font-medium">
+          <div className="text-[10px] text-ash-gray pl-2 font-medium">
             +{day.contents.length - MAX_VISIBLE}개 더보기
           </div>
         )}
