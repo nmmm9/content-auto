@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import re
-from app.services import gemini_client
+from app.services import gemini_client, openai_client
 
 logger = logging.getLogger(__name__)
 
@@ -426,9 +426,9 @@ async def transform_for_platform(
     video_url: str = "",
     brand_voice: str = "",
     custom_prompt: dict | None = None,
-    model: str = gemini_client.DEFAULT_MODEL,
+    model: str = openai_client.DEFAULT_MODEL,
 ) -> dict:
-    """분석 결과를 특정 플랫폼용 콘텐츠로 변환.
+    """분석 결과를 특정 플랫폼용 콘텐츠로 변환 (OpenAI GPT).
 
     custom_prompt: {"system": ..., "user": ...} — 사용자가 편집한 프롬프트.
     누락된 키는 기본 프롬프트를 사용한다.
@@ -436,6 +436,10 @@ async def transform_for_platform(
     prompt_config = PLATFORM_PROMPTS.get(platform)
     if not prompt_config:
         raise ValueError(f"Unknown platform: {platform}")
+
+    # 구버전 프론트가 Gemini 모델명을 보내는 경우 OpenAI 기본 모델로 대체
+    if not model or model.startswith("gemini"):
+        model = openai_client.DEFAULT_MODEL
 
     system_template = prompt_config["system"]
     user_template = prompt_config["user"]
@@ -445,7 +449,7 @@ async def transform_for_platform(
 
     format_data = _build_format_data(analysis, video_title, video_url, brand_voice)
 
-    result = await gemini_client.generate_content(
+    result = await openai_client.generate_content(
         prompt=_render(user_template, format_data),
         system_instruction=_render(system_template, format_data),
         model=model,
@@ -460,14 +464,14 @@ async def transform_all_platforms(
     video_url: str = "",
     brand_voice: str = "",
     custom_prompts: dict[str, dict] | None = None,
-    model: str = gemini_client.DEFAULT_MODEL,
+    model: str = openai_client.DEFAULT_MODEL,
 ) -> dict[str, dict]:
     """모든 플랫폼에 대해 변환 (rate limit 방지 딜레이 포함)"""
     results = {}
     for i, platform in enumerate(platforms):
-        # 두 번째 호출부터 딜레이 (rate limit 방지)
+        # 두 번째 호출부터 짧은 딜레이 (rate limit 방지)
         if i > 0:
-            await asyncio.sleep(3)
+            await asyncio.sleep(1)
         try:
             result = await transform_for_platform(
                 analysis,

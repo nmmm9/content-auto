@@ -27,10 +27,10 @@ class Settings(BaseSettings):
     META_APP_ID: Optional[str] = None
     META_APP_SECRET: Optional[str] = None
 
-    # OpenAI (deprecated - Gemini로 교체)
+    # OpenAI (플랫폼 변환용 GPT)
     OPENAI_API_KEY: Optional[str] = None
 
-    # Gemini
+    # Gemini (영상 분석용)
     GEMINI_API_KEY: Optional[str] = None
 
     # Tracking

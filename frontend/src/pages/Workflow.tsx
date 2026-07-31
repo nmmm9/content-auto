@@ -118,7 +118,8 @@ const createInitialNodes = (): Node[] => [
     data: {
       label: 'AI 변환',
       status: 'idle',
-      model: 'gemini-2.5-flash',
+      model: 'gpt-5-mini',
+      analysisModel: 'gemini-3.5-flash',
     },
   },
   {
@@ -248,7 +249,8 @@ function WorkflowInner() {
   const [youtubeUrl, setYoutubeUrl] = useState<string | null>(null)
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null)
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
-  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash')
+  const [selectedModel, setSelectedModel] = useState('gpt-5-mini')
+  const [selectedAnalysisModel, setSelectedAnalysisModel] = useState('gemini-3.5-flash')
   const [lastResults, setLastResults] = useState<Record<string, { status: string; data?: Record<string, unknown>; error?: string }>>({})
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
@@ -529,7 +531,7 @@ function WorkflowInner() {
       const res = await fetch(`${API_BASE}/workflow/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ youtube_url: url, model: selectedModel }),
+        body: JSON.stringify({ youtube_url: url, model: selectedAnalysisModel }),
       })
 
       // 타이머 정리
@@ -566,15 +568,28 @@ function WorkflowInner() {
       } as Partial<PlatformNodeData>)
       setYoutubeUrl(null)
     }
-  }, [setNodes, selectedModel, updateMainNode])
+  }, [setNodes, selectedAnalysisModel, updateMainNode])
 
-  // 모델 변경 처리
+  // 변환(GPT) 모델 변경 처리
   const handleModelChange = useCallback((model: string) => {
     setSelectedModel(model)
     setNodes((nds) =>
       nds.map((n) => {
         if (n.id === 'ai-transform') {
           return { ...n, data: { ...n.data, model } }
+        }
+        return n
+      })
+    )
+  }, [setNodes])
+
+  // 분석(Gemini) 모델 변경 처리
+  const handleAnalysisModelChange = useCallback((model: string) => {
+    setSelectedAnalysisModel(model)
+    setNodes((nds) =>
+      nds.map((n) => {
+        if (n.id === 'ai-transform') {
+          return { ...n, data: { ...n.data, analysisModel: model } }
         }
         return n
       })
@@ -588,6 +603,7 @@ function WorkflowInner() {
     const onEdit = (data: unknown) => handleEdit(data as string)
     const onYoutubeUrl = (data: unknown) => handleYoutubeUrl(data as string)
     const onModelChange = (data: unknown) => handleModelChange(data as string)
+    const onAnalysisModelChange = (data: unknown) => handleAnalysisModelChange(data as string)
     const onShowAnalysis = () => { setAnalysisTab('overview'); setAnalysisModalOpen(true) }
 
     eventBus.on('approve', onApprove)
@@ -595,6 +611,7 @@ function WorkflowInner() {
     eventBus.on('edit', onEdit)
     eventBus.on('youtube-url', onYoutubeUrl)
     eventBus.on('model-change', onModelChange)
+    eventBus.on('analysis-model-change', onAnalysisModelChange)
     eventBus.on('show-analysis', onShowAnalysis)
 
     return () => {
@@ -603,9 +620,10 @@ function WorkflowInner() {
       eventBus.off('edit', onEdit)
       eventBus.off('youtube-url', onYoutubeUrl)
       eventBus.off('model-change', onModelChange)
+      eventBus.off('analysis-model-change', onAnalysisModelChange)
       eventBus.off('show-analysis', onShowAnalysis)
     }
-  }, [handleApprove, handleReject, handleEdit, handleYoutubeUrl, handleModelChange])
+  }, [handleApprove, handleReject, handleEdit, handleYoutubeUrl, handleModelChange, handleAnalysisModelChange])
 
   // 수정 저장
   const handleSaveEdit = useCallback((content: typeof editingContent) => {
@@ -854,7 +872,8 @@ function WorkflowInner() {
     setYoutubeUrl(null)
     setVideoInfo(null)
     setAnalysisResult(null)
-    setSelectedModel('gemini-2.5-flash')
+    setSelectedModel('gpt-5-mini')
+    setSelectedAnalysisModel('gemini-3.5-flash')
     setSaveStatus('idle')
     setLastResults({})
     setCustomPrompts({})

@@ -6,20 +6,73 @@ interface TemplateNodeData {
   templateName?: string
   status?: 'idle' | 'processing' | 'done'
   model?: string
+  analysisModel?: string
 }
 
-const MODEL_OPTIONS = [
-  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', tag: '무료', tagColor: 'border border-paper-gray text-success' },
-  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', tag: '무료(제한)', tagColor: 'border border-paper-gray text-charcoal' },
+// 영상 분석 (Gemini — YouTube URL 직접 이해는 Gemini만 가능)
+const ANALYSIS_MODEL_OPTIONS = [
+  { id: 'gemini-3.5-flash', name: 'Gemini 3.5 Flash', tag: '무료', tagColor: 'border border-paper-gray text-success' },
+  { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash-Lite', tag: '무료·경량', tagColor: 'border border-paper-gray text-charcoal' },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', tag: '10월 종료', tagColor: 'border border-paper-gray text-danger' },
   { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro', tag: '유료', tagColor: 'border border-paper-gray text-muted-gray' },
 ]
+
+// 플랫폼 변환 (OpenAI GPT)
+const TRANSFORM_MODEL_OPTIONS = [
+  { id: 'gpt-5-mini', name: 'GPT-5 Mini', tag: '기본', tagColor: 'border border-paper-gray text-success' },
+  { id: 'gpt-5', name: 'GPT-5', tag: '고품질', tagColor: 'border border-paper-gray text-charcoal' },
+  { id: 'gpt-4.1-mini', name: 'GPT-4.1 Mini', tag: '빠름·저렴', tagColor: 'border border-paper-gray text-muted-gray' },
+]
+
+function ModelSelect({
+  label,
+  value,
+  options,
+  editable,
+  onChange,
+}: {
+  label: string
+  value: string
+  options: typeof ANALYSIS_MODEL_OPTIONS
+  editable: boolean
+  onChange: (v: string) => void
+}) {
+  const selected = options.find((m) => m.id === value) || options[0]
+  return (
+    <div className="mb-2">
+      <div className="text-[9px] font-bold text-ash-gray uppercase tracking-wider mb-1">{label}</div>
+      {editable ? (
+        <div className="relative">
+          <select
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full appearance-none pl-2 pr-7 py-1.5 text-xs border border-paper-gray rounded bg-paper-white focus:ring-1 focus:ring-paper-ink focus:border-paper-ink cursor-pointer nowheel nodrag"
+          >
+            {options.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name} ({m.tag})
+              </option>
+            ))}
+          </select>
+          <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-gray pointer-events-none" />
+        </div>
+      ) : (
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-charcoal">{selected.name}</span>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-none ${selected.tagColor}`}>
+            {selected.tag}
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function TemplateNode({ data }: NodeProps) {
   const d = data as unknown as TemplateNodeData
   const status = d.status || 'idle'
-  const currentModel = d.model || 'gemini-2.5-flash'
-
-  const selectedOption = MODEL_OPTIONS.find((m) => m.id === currentModel) || MODEL_OPTIONS[0]
+  const transformModel = d.model || 'gpt-5-mini'
+  const analysisModel = d.analysisModel || 'gemini-3.5-flash'
 
   const statusStyles = {
     idle: 'border-paper-gray bg-paper-white',
@@ -27,10 +80,9 @@ export default function TemplateNode({ data }: NodeProps) {
     done: 'border-success bg-paper-white',
   }
 
-  const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newModel = e.target.value
+  const emit = (event: string, value: string) => {
     if (window.workflowEvents) {
-      window.workflowEvents.emit('model-change', newModel)
+      window.workflowEvents.emit(event, value)
     }
   }
 
@@ -50,33 +102,23 @@ export default function TemplateNode({ data }: NodeProps) {
       </div>
 
       <div className="font-bold text-ink text-sm mb-2">
-        {status === 'processing' ? 'Gemini 변환 중...' : 'Gemini 콘텐츠 변환'}
+        {status === 'processing' ? 'GPT 변환 중...' : 'AI 콘텐츠 변환'}
       </div>
 
-      {/* 모델 선택기 */}
-      {status === 'idle' ? (
-        <div className="relative mb-2">
-          <select
-            value={currentModel}
-            onChange={handleModelChange}
-            className="w-full appearance-none pl-2 pr-7 py-1.5 text-xs border border-paper-gray rounded bg-paper-white focus:ring-1 focus:ring-paper-ink focus:border-paper-ink cursor-pointer nowheel nodrag"
-          >
-            {MODEL_OPTIONS.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name} ({m.tag})
-              </option>
-            ))}
-          </select>
-          <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-gray pointer-events-none" />
-        </div>
-      ) : (
-        <div className="flex items-center gap-1.5 mb-2">
-          <span className="text-xs text-charcoal">{selectedOption.name}</span>
-          <span className={`text-[10px] px-1.5 py-0.5 rounded-none ${selectedOption.tagColor}`}>
-            {selectedOption.tag}
-          </span>
-        </div>
-      )}
+      <ModelSelect
+        label="영상 분석 · Gemini"
+        value={analysisModel}
+        options={ANALYSIS_MODEL_OPTIONS}
+        editable={status === 'idle'}
+        onChange={(v) => emit('analysis-model-change', v)}
+      />
+      <ModelSelect
+        label="플랫폼 변환 · GPT"
+        value={transformModel}
+        options={TRANSFORM_MODEL_OPTIONS}
+        editable={status === 'idle'}
+        onChange={(v) => emit('model-change', v)}
+      />
 
       <div className="flex flex-wrap gap-1">
         <span className="px-1.5 py-0.5 border border-paper-gray text-charcoal text-[10px] rounded-none">

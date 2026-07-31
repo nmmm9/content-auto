@@ -19,7 +19,7 @@ router = APIRouter()
 
 class AnalyzeRequest(BaseModel):
     youtube_url: str
-    model: str = "gemini-2.5-flash"
+    model: str = "gemini-3.5-flash"
 
 
 class VideoInfo(BaseModel):
@@ -38,7 +38,7 @@ class TransformRequest(BaseModel):
     analysis: dict
     video_info: dict
     platforms: list[str]
-    model: str = "gemini-2.5-flash"
+    model: str = "gpt-5-mini"  # 변환은 OpenAI GPT (영상 분석은 Gemini)
     youtube_url: str = ""
     brand_voice: str = ""
     # {platform: {"system": ..., "user": ...}} — 사용자가 편집한 프롬프트 (없으면 기본값)
