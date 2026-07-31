@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { PLATFORM_PROMPTS, buildFormatData, render } from '../_lib/prompts'
-import { generateContent, OPENAI_DEFAULT_MODEL } from '../_lib/clients'
+import { PLATFORM_PROMPTS, buildFormatData, render } from '../_lib/prompts.js'
+import { generateContent, OPENAI_DEFAULT_MODEL } from '../_lib/clients.js'
 
 interface TransformOneBody {
   analysis?: Record<string, unknown>

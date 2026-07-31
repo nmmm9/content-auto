@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getSupabase } from '../_lib/clients'
+import { getSupabase } from '../_lib/clients.js'
 
 const DESTINATION_URL = process.env.TRACKING_DESTINATION_URL || 'https://your-site.com'
 

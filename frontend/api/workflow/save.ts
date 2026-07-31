@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getSupabase } from '../_lib/clients'
+import { getSupabase } from '../_lib/clients.js'
 
 interface SaveBody {
   video_info?: Record<string, unknown>
