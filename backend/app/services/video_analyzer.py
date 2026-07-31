@@ -27,19 +27,22 @@ ANALYSIS_PROMPT = """당신은 유튜브 영상 콘텐츠 분석 전문가입니
   "key_points": ["핵심 포인트1", "핵심 포인트2", ...],
   "scenes": ["타임스탬프와 함께 주요 장면 설명1", "주요 장면 설명2", ...],
   "audio_summary": "출연자의 핵심 발언/나레이션 내용을 가능한 한 상세하게 정리. 중요한 발언은 직접 인용 포함. 음성이 없으면 '음성 없음'",
-  "recommended_style": "이 영상을 SNS 글로 재가공할 때 추천하는 글쓰기 톤 (예: '친근한 반말체로 꿀팁 공유', '전문적인 존댓말로 정보 전달')",
+  "on_screen_text": "화면에 표시되는 자막/텍스트를 나온 순서대로 전부 기록. 무음 영상에서는 이 자막이 콘텐츠의 핵심 메시지다. 없으면 '없음'",
+  "visual_style": "시각 스타일 상세 묘사 — 컬러 팔레트, 소재/질감, 조명, 카메라 워크, 공간 연출, 편집 리듬. 무드 중심 영상일수록 구체적으로",
+  "recommended_style": "이 영상을 SNS 글로 재가공할 때 추천하는 글쓰기 톤 (예: '친근한 반말체로 꿀팁 공유', '전문적인 존댓말로 정보 전달', '절제된 감성 카피')",
   "viral_hook": "이 영상에서 SNS에서 주목받을 수 있는 핵심 포인트/반전/명장면 (한 문장)",
-  "content_type": "영상 유형 (예: 'vlog', 'tutorial', 'review', 'entertainment', 'news', 'shorts' 등)"
+  "content_type": "영상 유형 (예: 'vlog', 'tutorial', 'review', 'entertainment', 'news', 'shorts', 'moodfilm' 등)"
 }
 
 ## 작성 규칙
 - 모든 필드는 한국어로 작성
 - summary: 글자수 제한 없이 충분히 상세하게
-- detailed_summary: 영상 전체를 시간순으로 빠짐없이 정리 (최소 500자)
+- detailed_summary: 영상 전체를 시간순으로 빠짐없이 정리. 긴 영상은 최소 500자, 숏폼/무드 영상은 분량을 억지로 채우지 말고 장면 단위로 밀도 있게
 - keywords: 검색에 잘 걸리는 키워드 15~20개 (일반 키워드 + 롱테일 키워드 혼합)
 - key_points: 영상의 핵심 메시지를 빠짐없이 모두 나열 (개수 제한 없음)
-- scenes: 주요 장면 5~10개 (가능하면 대략적인 시간대 포함, 장면 설명을 구체적으로)
-- audio_summary: 핵심 발언을 최대한 상세하게, 직접 인용 적극 활용"""
+- scenes: 주요 장면 나열 (가능하면 대략적인 시간대 포함, 장면 설명을 구체적으로. 숏폼은 장면 수가 적어도 됨)
+- audio_summary: 핵심 발언을 최대한 상세하게, 직접 인용 적극 활용
+- 무음/자막 중심 영상(무드필름 등): audio_summary는 '음성 없음'으로 두고, on_screen_text와 visual_style에 집중"""
 
 
 # ── 공통 규칙 ──
@@ -61,18 +64,32 @@ GROUNDING_RULES = """
 _CONTEXT_BLOCK = """## 원본 영상 분석
 - 원본 영상: {video_title}
 - 영상 링크: {video_url}
+- 영상 유형: {content_type}
 - 주제: {topic}
 - 요약: {summary}
 - 상세 내용: {detailed_summary}
 - 키워드: {keywords}
 - 분위기: {mood}
+- 시각 스타일: {visual_style}
+- 화면 자막: {on_screen_text}
 - 타겟: {target_audience}
 - 추천 문체: {recommended_style}
 - 바이럴 포인트: {viral_hook}
 - 핵심 포인트:
-{key_points}"""
+{key_points}
+
+## 콘텐츠 유형 적응 (중요)
+분석 내용을 보고 영상의 성격을 판단해 작성 방식을 조절한다:
+- 정보 중심 영상 (과정·팁·수치·설명이 풍부): 아래 작성 지침의 구조대로 정보를 정리한다
+- 무드/감성 중심 영상 (무음 무드필름·시네마틱 등 정보가 적은 콘텐츠):
+  - 정보 나열 대신 영상의 시각적 무드·스타일·감정선을 언어로 옮기는 카피를 쓴다 (시각 스타일·화면 자막 필드 적극 활용)
+  - 화면 자막이 있으면 그 문구의 톤과 세계관을 이어받는다
+  - 무음 영상이면 소리·음악·빗소리 등 청각 묘사를 하지 않는다 (영상에 없는 감각을 만들지 않기)
+  - 분량 하한을 채우려고 없는 정보를 만들지 않는다 — 짧고 밀도 있게 쓰는 것이 낫다"""
 
 _CONTEXT_BLOCK_LONG = _CONTEXT_BLOCK + """
+
+## 추가 컨텍스트
 - 주요 장면:
 {scenes}
 - 오디오/나레이션 내용: {audio_summary}"""
@@ -139,7 +156,7 @@ PLATFORM_PROMPTS = {
 1. title (25~35자)
    - 메인 키워드를 앞쪽에 배치하고, 검색자가 얻어갈 것을 명시
    - 좋은 예: "46평 구축 아파트 리모델링 전후, 구조 변경 포인트 정리"
-2. content (1,800~2,500자)
+2. content (정보 중심 영상: 1,800~2,500자 / 무드 중심 영상: 800~1,200자의 스타일 에세이 — 억지로 늘리지 않기)
    - 도입 (1~2문단): 검색해서 들어온 독자의 상황에 공감 + 이 글에서 답할 내용 예고
    - [영상 삽입] 표시 1곳 (도입 직후 권장) — 이 위치에 원본 영상({video_url})이 들어간다
    - 본문: 소제목(##) 3~5개. 각 소제목은 핵심 포인트 하나를 다루고, 키워드 변형을 자연스럽게 포함
@@ -317,7 +334,7 @@ PLATFORM_PROMPTS = {
 
 ## 작성 지침
 1. title (30~50자): 핵심 키워드 포함, 검색 의도에 답하는 제목. 낚시성 문구 금지
-2. content (2,000자 이상)
+2. content (정보 중심 영상: 2,000자 이상 / 무드 중심 영상: 800~1,500자 — 스타일·연출 해설 중심의 브랜드 에세이로, 억지로 늘리지 않기)
    - 도입 (1~2문단): 이 주제가 왜 중요한지, 독자가 이 글에서 얻을 것
    - 본문: 소제목(##) 3~5개로 구조화. 각 섹션은 분석의 핵심 포인트·장면·발언을 근거로 전개
    - [이미지 삽입] 표시 2~3곳
@@ -345,6 +362,8 @@ TEMPLATE_VARIABLES = {
     "key_points": "핵심 포인트 목록",
     "scenes": "주요 장면 목록",
     "audio_summary": "발언/나레이션 정리",
+    "on_screen_text": "화면 자막 전문",
+    "visual_style": "시각 스타일 묘사",
     "recommended_style": "추천 글쓰기 톤",
     "viral_hook": "바이럴 포인트",
     "content_type": "영상 유형",
@@ -380,6 +399,8 @@ def _build_format_data(
         "key_points": "\n".join(f"- {p}" for p in analysis.get("key_points", [])),
         "scenes": "\n".join(f"- {s}" for s in analysis.get("scenes", [])),
         "audio_summary": analysis.get("audio_summary", ""),
+        "on_screen_text": analysis.get("on_screen_text", "없음"),
+        "visual_style": analysis.get("visual_style", ""),
         "recommended_style": analysis.get("recommended_style", ""),
         "viral_hook": analysis.get("viral_hook", ""),
         "content_type": analysis.get("content_type", ""),
