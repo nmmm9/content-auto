@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { ANALYSIS_PROMPT } from '../_lib/prompts'
-import { analyzeYoutubeUrl, GEMINI_DEFAULT_MODEL } from '../_lib/clients'
+import { ANALYSIS_PROMPT } from '../_lib/prompts.js'
+import { analyzeYoutubeUrl, GEMINI_DEFAULT_MODEL } from '../_lib/clients.js'
 
 const VIDEO_ID_PATTERN = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([^&\n?#]+)/
 

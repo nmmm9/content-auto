@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getSupabase } from '../_lib/clients'
+import { getSupabase } from '../_lib/clients.js'
 
 const FALLBACK_URL = process.env.TRACKING_DESTINATION_URL || 'https://your-site.com'
 

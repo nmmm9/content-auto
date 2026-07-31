@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getSupabase } from '../_lib/clients'
+import { getSupabase } from '../_lib/clients.js'
 
 const SUPPORTED_PLATFORMS = [
   'youtube', 'naver_blog', 'facebook', 'instagram', 'linkedin', 'living_sequence_lab',
