@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { Youtube, FileText, Facebook, Instagram, CheckCircle, Clock, AlertCircle, Clapperboard, Film, AtSign, LayoutDashboard, CloudLightning, Activity, BarChart3, MousePointerClick, Link2, TrendingUp, Crown, Medal, Award, Linkedin, FlaskConical, Megaphone, ArrowRight, Music2 } from 'lucide-react'
+import { Youtube, FileText, Facebook, Instagram, CheckCircle, Clock, AlertCircle, Clapperboard, Film, AtSign, LayoutDashboard, CloudLightning, Activity, BarChart3, MousePointerClick, Link2, TrendingUp, Crown, Medal, Award, Linkedin, FlaskConical, Megaphone, ArrowRight, Music2, CloudDownload } from 'lucide-react'
 import { api } from '../services/api'
 import type { AnalyticsSummary } from '../types'
 
@@ -89,6 +89,7 @@ export default function Dashboard() {
   const [contentNames, setContentNames] = useState<Record<number, string>>({})
   const [linkFilter, setLinkFilter] = useState<'all' | string>('all')
   const [postsSummary, setPostsSummary] = useState<PostsSummary | null>(null)
+  const [collecting, setCollecting] = useState(false)
 
   // 통합 분석 API 한 번으로 대시보드 데이터 전체 로드 (service_role 서버 집계)
   const fetchData = useCallback(async () => {
@@ -119,6 +120,25 @@ export default function Dashboard() {
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  // 전 플랫폼 즉시 수집 (매일 06:00 크론을 수동 트리거)
+  const collectNow = async () => {
+    if (collecting) return
+    setCollecting(true)
+    try {
+      const res = await fetch(`${API_BASE}/cron/collect`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const r = await res.json()
+      const synced = Object.values(r.synced ?? {}).reduce((a: number, b) => a + Number(b), 0)
+      alert(`수집 완료 — 수치 갱신 ${r.collected}건${synced > 0 ? `, 새 게시물 ${synced}건 등록` : ''}${r.failed?.length ? `, 실패 ${r.failed.length}건` : ''}`)
+      fetchData()
+    } catch (err) {
+      console.error('collect failed:', err)
+      alert('수집에 실패했습니다')
+    } finally {
+      setCollecting(false)
+    }
+  }
 
   const handleSchedule = async (id: number) => {
     const date = scheduleDates[id]
@@ -363,9 +383,19 @@ export default function Dashboard() {
                 <BarChart3 size={20} className="text-ink" />
                 게시글 성과
               </h3>
-              <Link to="/posts" className="flex items-center gap-1 text-xs font-semibold text-charcoal hover:text-ink bg-paper-white px-3 py-1.5 rounded border border-paper-gray hover:bg-paper-beige">
-                전체 보기 · 수치 입력 <ArrowRight size={13} />
-              </Link>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={collectNow}
+                  disabled={collecting}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-paper-white bg-paper-ink rounded hover:bg-charcoal disabled:opacity-60"
+                >
+                  <CloudDownload size={13} className={collecting ? 'animate-bounce' : ''} />
+                  {collecting ? '수집 중…' : '지금 수집'}
+                </button>
+                <Link to="/posts" className="flex items-center gap-1 text-xs font-semibold text-charcoal hover:text-ink bg-paper-white px-3 py-1.5 rounded border border-paper-gray hover:bg-paper-beige">
+                  전체 보기 · 수치 입력 <ArrowRight size={13} />
+                </Link>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
