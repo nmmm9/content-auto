@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { Youtube, FileText, Facebook, Instagram, CheckCircle, Clock, AlertCircle, Clapperboard, Film, AtSign, LayoutDashboard, CloudLightning, Activity, BarChart3, MousePointerClick, Link2, TrendingUp, Crown, Medal, Award, Linkedin, FlaskConical, Megaphone, ArrowRight } from 'lucide-react'
+import { Youtube, FileText, Facebook, Instagram, CheckCircle, Clock, AlertCircle, Clapperboard, Film, AtSign, LayoutDashboard, CloudLightning, Activity, BarChart3, MousePointerClick, Link2, TrendingUp, Crown, Medal, Award, Linkedin, FlaskConical, Megaphone, ArrowRight, Music2 } from 'lucide-react'
 import { api } from '../services/api'
 import type { AnalyticsSummary } from '../types'
 
@@ -125,6 +125,7 @@ export default function Dashboard() {
     instagram: { icon: <Instagram size={22} />, name: 'Instagram' },
     instagram_reels: { icon: <Film size={22} />, name: 'Instagram Reels' },
     threads: { icon: <AtSign size={22} />, name: 'Threads' },
+    tiktok: { icon: <Music2 size={22} />, name: 'TikTok' },
     linkedin: { icon: <Linkedin size={22} />, name: 'LinkedIn' },
     living_sequence_lab: { icon: <FlaskConical size={22} />, name: 'Living Sequence Lab' },
   }
