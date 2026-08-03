@@ -49,6 +49,8 @@ function platformChannelUrl(conn: PlatformConnection): string | null {
       return conn.account_id ? `https://www.facebook.com/${conn.account_id}` : null
     case 'tiktok':
       return name ? `https://www.tiktok.com/@${name}` : null
+    case 'naver_blog':
+      return name ? `https://blog.naver.com/${name}` : null
     default:
       return null
   }

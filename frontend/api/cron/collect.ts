@@ -82,6 +82,79 @@ async function collectFacebook(externalId: string, token: string): Promise<Colle
   return { views, likes, comments, shares, raw: json }
 }
 
+// ── 네이버 블로그 (로그인 불필요 — RSS·공개 공감 API·페이지 HTML) ──
+
+function decodeXml(s: string): string {
+  return s
+    .replace(/<!\[CDATA\[|\]\]>/g, '')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&')
+    .trim()
+}
+
+const naverLogNo = (url: string) =>
+  (String(url).match(/blog\.naver\.com\/[^/?#]+\/(\d+)/) ?? [])[1]
+
+/** 새 네이버 글 자동 등록 (RSS) */
+async function syncNaverPosts(sb: Supabase, blogId: string): Promise<number> {
+  const res = await fetch(`https://rss.blog.naver.com/${blogId}.xml`)
+  if (!res.ok) throw new Error(`naver RSS HTTP ${res.status}`)
+  const xml = await res.text()
+  const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].map((m) => m[1])
+  const rssPosts = items
+    .map((item) => ({
+      title: decodeXml((item.match(/<title>([\s\S]*?)<\/title>/) ?? [])[1] ?? ''),
+      link: decodeXml((item.match(/<link>([\s\S]*?)<\/link>/) ?? [])[1] ?? ''),
+      pubDate: ((item.match(/<pubDate>([\s\S]*?)<\/pubDate>/) ?? [])[1] ?? '').trim(),
+    }))
+    .filter((p) => naverLogNo(p.link))
+
+  const { data: existing } = await sb.from('posts').select('external_id').eq('platform', 'naver_blog')
+  const known = new Set((existing ?? []).map((e) => e.external_id))
+  const fresh = rssPosts.filter((p) => !known.has(naverLogNo(p.link)))
+  if (fresh.length === 0) return 0
+
+  const { error } = await sb.from('posts').insert(
+    fresh.map((p) => ({
+      platform: 'naver_blog',
+      external_id: naverLogNo(p.link),
+      post_url: p.link,
+      title: p.title.slice(0, 60),
+      posted_at: p.pubDate ? new Date(p.pubDate).toISOString() : new Date().toISOString(),
+    }))
+  )
+  if (error) throw new Error(error.message)
+  return fresh.length
+}
+
+/** 네이버 글 수치: 공감(공개 like API) + 댓글(페이지 HTML의 commentCount) */
+async function collectNaver(blogId: string, logNo: string): Promise<Collected> {
+  let likes: number | undefined
+  try {
+    const likeJson = await fetchJson(
+      `https://apis.naver.com/blogserver/like/v1/search/contents?suppress_response_codes=true&pool=blogid&q=BLOG%5B${blogId}_${logNo}%5D&displayId=BLOG`
+    )
+    const reactions = (likeJson.contents as Array<{ reactions?: Array<{ count?: number }> }>)?.[0]?.reactions ?? []
+    likes = reactions.reduce((s, r) => s + (r.count ?? 0), 0)
+  } catch {
+    // 공감 API 실패 시 댓글만 수집
+  }
+
+  let comments: number | undefined
+  const pageRes = await fetch(`https://m.blog.naver.com/${blogId}/${logNo}`, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0 Safari/537.36' },
+    redirect: 'follow',
+  })
+  if (pageRes.ok) {
+    const html = await pageRes.text()
+    const m = html.match(/commentCount\D{0,5}(\d+)/)
+    if (m) comments = Number(m[1])
+  }
+
+  if (likes == null && comments == null) throw new Error('네이버 수치 미검출')
+  return { likes, comments }
+}
+
 /** 새 Facebook 페이지 게시물 자동 등록 */
 async function syncFacebookPosts(sb: Supabase, token: string, pageId: string): Promise<number> {
   const json = await fetchJson(
@@ -260,18 +333,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { data: connections } = await sb
     .from('platform_connections')
-    .select('platform, access_token, account_id')
+    .select('platform, access_token, account_id, account_name')
   const tokens: Record<string, string> = {}
   const accountIds: Record<string, string> = {}
+  const accountNames: Record<string, string> = {}
   for (const c of connections ?? []) {
     if (c.access_token) tokens[c.platform] = c.access_token
     if (c.account_id) accountIds[c.platform] = c.account_id
+    if (c.account_name) accountNames[c.platform] = c.account_name
   }
+  const naverBlogId = accountNames.naver_blog
 
   const report = {
     collected: 0,
     skipped_no_token: 0,
-    synced: { threads: 0, instagram: 0, facebook: 0 },
+    synced: { threads: 0, instagram: 0, facebook: 0, naver_blog: 0 },
     token_refreshed: { threads: false, instagram: false },
     failed: [] as string[],
   }
@@ -285,6 +361,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       report.synced.threads = await syncThreadsPosts(sb, token)
     } catch (err) {
       report.failed.push(`threads sync: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }
+
+  // 네이버 블로그: RSS로 새 글 자동 등록 (로그인·토큰 불필요)
+  if (naverBlogId) {
+    try {
+      report.synced.naver_blog = await syncNaverPosts(sb, naverBlogId)
+    } catch (err) {
+      report.failed.push(`naver sync: ${err instanceof Error ? err.message : String(err)}`)
     }
   }
 
@@ -316,6 +401,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (error) return res.status(500).json({ detail: error.message })
 
   for (const post of posts ?? []) {
+    // 네이버는 토큰 없이 공개 엔드포인트로 수집
+    if (post.platform === 'naver_blog') {
+      if (!naverBlogId) {
+        report.skipped_no_token += 1
+        continue
+      }
+      try {
+        const m = await collectNaver(naverBlogId, post.external_id)
+        await sb.from('post_metrics').insert({
+          post_id: post.id,
+          views: null,
+          likes: m.likes ?? null,
+          comments: m.comments ?? null,
+          shares: null,
+          saves: null,
+          source: 'api',
+          raw: null,
+        })
+        report.collected += 1
+      } catch (err) {
+        report.failed.push(`post ${post.id} (naver_blog): ${err instanceof Error ? err.message : String(err)}`)
+      }
+      continue
+    }
+
     const collector = COLLECTORS[post.platform]
     const token = tokens[TOKEN_PLATFORM[post.platform] ?? '']
     if (!collector || !token) {
