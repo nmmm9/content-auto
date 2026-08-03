@@ -95,11 +95,17 @@ async function scrapeNaverPost(page, post) {
   const key = naverKey(post.post_url)
   const target = key.includes('/') ? `https://m.blog.naver.com/${key}` : post.post_url
   await page.goto(target, { waitUntil: 'domcontentloaded', timeout: 45000 })
-  await page.waitForTimeout(3000)
+  await page.waitForTimeout(2000)
+  // 하단 공감/댓글 영역은 지연 렌더링 — 스크롤로 로드 유도
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+  await page.waitForTimeout(2000)
   const text = await page.evaluate(() => document.body.innerText)
 
-  const likes = num(text.match(/공감\s*([\d,]+)/))
-  const comments = num(text.match(/댓글\s*([\d,]+)/))
+  // 카운트가 0이면 네이버는 숫자 없이 라벨("공감"/"댓글")만 표시함 → 라벨 존재 시 0으로 처리
+  let likes = num(text.match(/공감\s*([\d,]+)/))
+  let comments = num(text.match(/댓글\s*([\d,]+)/))
+  if (likes == null && /공감/.test(text)) likes = 0
+  if (comments == null && /댓글/.test(text)) comments = 0
 
   if (likes == null && comments == null) {
     dumpDebug(`naver_${key.replace(/\W/g, '_')}`, text)
