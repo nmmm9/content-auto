@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { BarChart3, Plus, Trash2, Pencil, RefreshCw, X, ExternalLink, Megaphone, MousePointerClick } from 'lucide-react'
+import { BarChart3, Plus, Trash2, Pencil, RefreshCw, X, ExternalLink, Megaphone, MousePointerClick, CloudDownload } from 'lucide-react'
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
@@ -316,6 +316,7 @@ export default function Posts() {
   const [registerOpen, setRegisterOpen] = useState(false)
   const [editing, setEditing] = useState<Post | null>(null)
   const [metricPost, setMetricPost] = useState<Post | null>(null)
+  const [collecting, setCollecting] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -331,6 +332,25 @@ export default function Posts() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  // 전 플랫폼 즉시 수집 (매일 06:00 크론과 동일한 작업을 수동 실행)
+  const collectNow = async () => {
+    if (collecting) return
+    setCollecting(true)
+    try {
+      const res = await fetch(`${API_BASE}/cron/collect`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const r = await res.json()
+      const synced = Object.values(r.synced ?? {}).reduce((a: number, b) => a + Number(b), 0)
+      alert(`수집 완료 — 수치 갱신 ${r.collected}건${synced > 0 ? `, 새 게시물 ${synced}건 등록` : ''}${r.failed?.length ? `, 실패 ${r.failed.length}건` : ''}`)
+      load()
+    } catch (err) {
+      console.error('collect failed:', err)
+      alert('수집에 실패했습니다')
+    } finally {
+      setCollecting(false)
+    }
+  }
 
   const remove = async (post: Post) => {
     if (!confirm(`"${post.title || post.post_url}" 게시글과 수치 이력을 삭제할까요?`)) return
@@ -372,6 +392,14 @@ export default function Posts() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={collectNow}
+            disabled={collecting}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-paper-white bg-paper-ink rounded hover:bg-charcoal disabled:opacity-60"
+          >
+            <CloudDownload size={14} className={collecting ? 'animate-bounce' : ''} />
+            {collecting ? '수집 중… (최대 1~2분)' : '지금 수집'}
+          </button>
           <button
             onClick={load}
             className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-charcoal bg-paper-white border border-paper-gray rounded hover:bg-paper-beige"
