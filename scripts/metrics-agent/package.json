@@ -1,0 +1,14 @@
+{
+  "name": "metrics-agent",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "네이버 블로그·LinkedIn 수치 로컬 수집 에이전트 (로그인 세션 기반, 작업 스케줄러로 매일 실행)",
+  "scripts": {
+    "login": "node login.mjs",
+    "scrape": "node scrape.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "^1.49.0"
+  }
+}

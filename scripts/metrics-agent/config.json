@@ -1,0 +1,5 @@
+{
+  "api_base": "https://content-auto-delta.vercel.app/api",
+  "naver_blog_id": "",
+  "headless": false
+}
