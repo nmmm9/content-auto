@@ -368,32 +368,32 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* 플랫폼별 조회수 */}
               <div className="bg-paper-white rounded p-6 border border-paper-gray">
-                <h4 className="text-sm font-bold text-charcoal mb-4 flex items-center gap-2">
-                  <BarChart3 size={14} className="text-ink" />
+                <h4 className="text-base font-bold text-charcoal mb-5 flex items-center gap-2">
+                  <BarChart3 size={16} className="text-ink" />
                   플랫폼별 조회수
                 </h4>
-                <div className="space-y-2.5">
+                <div className="space-y-4">
                   {[...ps.by_platform].sort((a, b) => b.views - a.views).map(p => {
                     const color = trackingPlatformColor[p.platform] || '#0c0c0c'
                     return (
-                      <div key={p.platform} className="flex items-center gap-2.5">
-                        <div className="w-24 text-[11px] font-semibold text-charcoal text-right shrink-0">
-                          {trackingPlatformLabel[p.platform] || p.platform}
-                          <span className="text-ash-gray font-medium ml-1">{p.count}건</span>
-                        </div>
-                        <div className="flex-1 bg-paper-beige rounded-none h-6 overflow-hidden">
-                          <div className="h-full rounded-none transition-all duration-700 ease-out flex items-center"
-                            style={{ width: `${Math.max((p.views / maxViews) * 100, 3)}%`, backgroundColor: color }}>
-                            <span className="text-[10px] font-bold text-paper-white ml-2 whitespace-nowrap">
-                              {p.views.toLocaleString()}
-                            </span>
+                      <div key={p.platform}>
+                        <div className="flex items-baseline justify-between mb-1.5">
+                          <div className="text-sm font-bold text-ink">
+                            {trackingPlatformLabel[p.platform] || p.platform}
+                            <span className="text-xs text-muted-gray font-medium ml-1.5">{p.count}건</span>
+                            {p.spend > 0 && (
+                              <span className="text-xs font-bold text-danger ml-2">₩{Math.round(p.spend).toLocaleString()}</span>
+                            )}
+                          </div>
+                          <div className="text-xl font-extrabold text-ink">
+                            {p.views.toLocaleString()}
+                            <span className="text-[11px] font-semibold text-ash-gray ml-1">조회</span>
                           </div>
                         </div>
-                        {p.spend > 0 && (
-                          <div className="w-16 text-[10px] font-bold text-danger text-right shrink-0">
-                            ₩{Math.round(p.spend).toLocaleString()}
-                          </div>
-                        )}
+                        <div className="bg-paper-beige rounded-none h-3 overflow-hidden">
+                          <div className="h-full rounded-none transition-all duration-700 ease-out"
+                            style={{ width: `${Math.max((p.views / maxViews) * 100, 3)}%`, backgroundColor: color }} />
+                        </div>
                       </div>
                     )
                   })}
@@ -437,37 +437,42 @@ export default function Dashboard() {
             {/* 조회수 상위 게시글 */}
             {ps.top.length > 0 && (
               <div className="bg-paper-white rounded p-6 border border-paper-gray">
-                <h4 className="text-sm font-bold text-charcoal mb-4 flex items-center gap-2">
-                  <Crown size={14} className="text-ink" />
+                <h4 className="text-base font-bold text-charcoal mb-5 flex items-center gap-2">
+                  <Crown size={16} className="text-ink" />
                   조회수 상위 게시글
                 </h4>
-                <div className="space-y-2.5">
+                <div className="space-y-4">
                   {ps.top.map((item, idx) => {
                     const maxTop = Math.max(...ps.top.map(t => t.views), 1)
                     const color = trackingPlatformColor[item.platform] || '#0c0c0c'
+                    const RankIcon = idx === 0 ? Crown : idx === 1 ? Medal : idx === 2 ? Award : null
                     return (
-                      <div key={item.id} className="flex items-center gap-2.5 py-1.5">
-                        <div className="w-5 shrink-0 text-center text-[11px] font-bold text-ash-gray">{idx + 1}</div>
-                        <div className="w-24 shrink-0">
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-none whitespace-nowrap"
-                            style={{ backgroundColor: `${color}15`, color }}>
-                            {trackingPlatformLabel[item.platform] || item.platform}
-                          </span>
+                      <div key={item.id} className="flex items-center gap-4">
+                        <div className="w-8 shrink-0 flex justify-center">
+                          {RankIcon
+                            ? <RankIcon size={20} className={idx === 0 ? 'text-ink' : idx === 1 ? 'text-charcoal' : 'text-muted-gray'} />
+                            : <span className="text-base font-bold text-ash-gray">{idx + 1}</span>}
                         </div>
-                        <div className="w-44 shrink-0 flex items-center gap-1 text-[11px] font-medium text-charcoal truncate">
-                          <span className="truncate">{item.title}</span>
-                          {item.boosted && <Megaphone size={10} className="text-danger shrink-0" />}
-                        </div>
-                        <div className="flex-1 bg-paper-beige rounded-none h-5 overflow-hidden">
-                          <div className="h-full rounded-none transition-all duration-700 flex items-center"
-                            style={{ width: `${Math.max((item.views / maxTop) * 100, 4)}%`, backgroundColor: color }}>
-                            <span className="text-[9px] font-bold text-paper-white ml-2 whitespace-nowrap">
-                              {item.views.toLocaleString()}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-none whitespace-nowrap"
+                              style={{ backgroundColor: `${color}15`, color }}>
+                              {trackingPlatformLabel[item.platform] || item.platform}
+                            </span>
+                            <span className="text-sm font-semibold text-ink truncate">{item.title}</span>
+                            {item.boosted && <Megaphone size={13} className="text-danger shrink-0" />}
+                            <span className="text-xs text-muted-gray shrink-0 ml-auto">
+                              참여 {item.engage.toLocaleString()} · 클릭 {item.clicks.toLocaleString()}
                             </span>
                           </div>
+                          <div className="bg-paper-beige rounded-none h-3 overflow-hidden">
+                            <div className="h-full rounded-none transition-all duration-700"
+                              style={{ width: `${Math.max((item.views / maxTop) * 100, 4)}%`, backgroundColor: color }} />
+                          </div>
                         </div>
-                        <div className="w-24 text-right text-[10px] text-muted-gray shrink-0">
-                          참여 {item.engage.toLocaleString()} · 클릭 {item.clicks.toLocaleString()}
+                        <div className="w-20 text-right shrink-0">
+                          <span className="text-xl font-extrabold text-ink">{item.views.toLocaleString()}</span>
+                          <span className="text-[11px] font-semibold text-ash-gray ml-1">조회</span>
                         </div>
                       </div>
                     )
