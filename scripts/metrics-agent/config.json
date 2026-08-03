@@ -1,5 +1,5 @@
 {
   "api_base": "https://content-auto-delta.vercel.app/api",
   "naver_blog_id": "living_sequence",
-  "headless": false
+  "headless": true
 }
