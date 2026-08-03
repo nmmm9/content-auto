@@ -2,7 +2,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getSupabase } from '../_lib/clients.js'
 
 const SUPPORTED_PLATFORMS = [
-  'youtube', 'naver_blog', 'facebook', 'instagram', 'linkedin', 'living_sequence_lab',
+  'youtube', 'youtube_shorts', 'naver_blog', 'facebook', 'instagram', 'instagram_reels',
+  'threads', 'tiktok', 'linkedin', 'living_sequence_lab',
 ]
 
 const COLUMNS = 'id, platform, is_connected, account_name, account_id'

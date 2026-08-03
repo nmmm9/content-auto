@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Youtube, FileText, Facebook, Instagram, CheckCircle, XCircle, ExternalLink, Clapperboard, Film, AtSign, Linkedin, FlaskConical } from 'lucide-react'
+import { Youtube, FileText, Facebook, Instagram, CheckCircle, XCircle, ExternalLink, Clapperboard, Film, AtSign, Linkedin, FlaskConical, Music2 } from 'lucide-react'
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
@@ -74,6 +74,14 @@ const platformInfo: Record<string, {
     bgColor: 'bg-paper-white',
     description: 'Threads API를 통해 게시물을 올립니다.',
     setupUrl: 'https://developers.facebook.com/'
+  },
+  tiktok: {
+    name: 'TikTok',
+    icon: Music2,
+    color: 'text-ink',
+    bgColor: 'bg-paper-white',
+    description: 'TikTok Display API를 통해 영상 수치를 수집합니다. (개발자 앱 심사 필요)',
+    setupUrl: 'https://developers.tiktok.com/'
   },
   linkedin: {
     name: 'LinkedIn',
