@@ -1,0 +1,169 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { getSupabase } from '../_lib/clients.js'
+
+// 일일 수치 자동 수집 (Vercel Cron)
+// - external_id가 등록된 게시글만 대상
+// - platform_connections에 access_token이 연결된 플랫폼만 수집
+// - 토큰이 없으면 조용히 skip (수동 입력으로 운영)
+
+interface Collected {
+  views?: number
+  likes?: number
+  comments?: number
+  shares?: number
+  saves?: number
+  raw?: unknown
+}
+
+async function fetchJson(url: string, init?: RequestInit): Promise<Record<string, unknown>> {
+  const res = await fetch(url, init)
+  const json = (await res.json()) as Record<string, unknown>
+  if (!res.ok) throw new Error(JSON.stringify(json).slice(0, 300))
+  return json
+}
+
+/** Threads: https://developers.facebook.com/docs/threads/insights */
+async function collectThreads(externalId: string, token: string): Promise<Collected> {
+  const json = await fetchJson(
+    `https://graph.threads.net/v1.0/${externalId}/insights?metric=views,likes,replies,reposts&access_token=${token}`
+  )
+  const out: Collected = { raw: json }
+  for (const item of (json.data as Array<Record<string, unknown>>) ?? []) {
+    const value = Number(
+      (item.values as Array<{ value?: number }>)?.[0]?.value ??
+        (item as { total_value?: { value?: number } }).total_value?.value ?? 0
+    )
+    if (item.name === 'views') out.views = value
+    if (item.name === 'likes') out.likes = value
+    if (item.name === 'replies') out.comments = value
+    if (item.name === 'reposts') out.shares = value
+  }
+  return out
+}
+
+/** Instagram 미디어 인사이트 (Graph API) */
+async function collectInstagram(externalId: string, token: string): Promise<Collected> {
+  const json = await fetchJson(
+    `https://graph.facebook.com/v23.0/${externalId}/insights?metric=views,likes,comments,shares,saved&access_token=${token}`
+  )
+  const out: Collected = { raw: json }
+  for (const item of (json.data as Array<Record<string, unknown>>) ?? []) {
+    const value = Number((item.values as Array<{ value?: number }>)?.[0]?.value ?? 0)
+    if (item.name === 'views') out.views = value
+    if (item.name === 'likes') out.likes = value
+    if (item.name === 'comments') out.comments = value
+    if (item.name === 'shares') out.shares = value
+    if (item.name === 'saved') out.saves = value
+  }
+  return out
+}
+
+/** Facebook 페이지 게시물 */
+async function collectFacebook(externalId: string, token: string): Promise<Collected> {
+  const json = await fetchJson(
+    `https://graph.facebook.com/v23.0/${externalId}?fields=shares,likes.summary(true),comments.summary(true)&access_token=${token}`
+  )
+  const likes = (json.likes as { summary?: { total_count?: number } })?.summary?.total_count
+  const comments = (json.comments as { summary?: { total_count?: number } })?.summary?.total_count
+  const shares = (json.shares as { count?: number })?.count
+  return { likes, comments, shares, raw: json }
+}
+
+/** TikTok Display API: video/query */
+async function collectTiktok(externalId: string, token: string): Promise<Collected> {
+  const json = await fetchJson(
+    'https://open.tiktokapis.com/v2/video/query/?fields=id,view_count,like_count,comment_count,share_count',
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filters: { video_ids: [externalId] } }),
+    }
+  )
+  const video = (json.data as { videos?: Array<Record<string, number>> })?.videos?.[0]
+  if (!video) throw new Error('video not found')
+  return {
+    views: video.view_count,
+    likes: video.like_count,
+    comments: video.comment_count,
+    shares: video.share_count,
+    raw: json,
+  }
+}
+
+const COLLECTORS: Record<string, (id: string, token: string) => Promise<Collected>> = {
+  threads: collectThreads,
+  instagram: collectInstagram,
+  instagram_reels: collectInstagram,
+  facebook: collectFacebook,
+  tiktok: collectTiktok,
+}
+
+// platform_connections의 platform 키 매핑 (reels → instagram 토큰 공유)
+const TOKEN_PLATFORM: Record<string, string> = {
+  threads: 'threads',
+  instagram: 'instagram',
+  instagram_reels: 'instagram',
+  facebook: 'facebook',
+  tiktok: 'tiktok',
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Vercel Cron 인증 (CRON_SECRET 설정 시)
+  const secret = process.env.CRON_SECRET
+  if (secret && req.headers.authorization !== `Bearer ${secret}`) {
+    return res.status(401).json({ detail: 'Unauthorized' })
+  }
+
+  const sb = getSupabase()
+
+  const { data: connections } = await sb
+    .from('platform_connections')
+    .select('platform, access_token')
+  const tokens: Record<string, string> = {}
+  for (const c of connections ?? []) {
+    if (c.access_token) tokens[c.platform] = c.access_token
+  }
+
+  const { data: posts, error } = await sb
+    .from('posts')
+    .select('id, platform, external_id')
+    .not('external_id', 'is', null)
+  if (error) return res.status(500).json({ detail: error.message })
+
+  const report = { collected: 0, skipped_no_token: 0, failed: [] as string[] }
+
+  for (const post of posts ?? []) {
+    const collector = COLLECTORS[post.platform]
+    const token = tokens[TOKEN_PLATFORM[post.platform] ?? '']
+    if (!collector || !token) {
+      report.skipped_no_token += 1
+      continue
+    }
+    try {
+      const m = await collectClamped(collector, post.external_id, token)
+      await sb.from('post_metrics').insert({
+        post_id: post.id,
+        views: m.views ?? null,
+        likes: m.likes ?? null,
+        comments: m.comments ?? null,
+        shares: m.shares ?? null,
+        saves: m.saves ?? null,
+        source: 'api',
+        raw: m.raw ?? null,
+      })
+      report.collected += 1
+    } catch (err) {
+      report.failed.push(`post ${post.id} (${post.platform}): ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }
+
+  return res.status(200).json(report)
+}
+
+async function collectClamped(
+  collector: (id: string, token: string) => Promise<Collected>,
+  externalId: string,
+  token: string
+): Promise<Collected> {
+  return await collector(externalId, token)
+}
