@@ -68,18 +68,49 @@ async function collectFacebook(externalId: string, token: string): Promise<Colle
   const comments = (json.comments as { summary?: { total_count?: number } })?.summary?.total_count
   const shares = (json.shares as { count?: number })?.count
 
-  // 조회수는 별도 인사이트 호출 (실패해도 나머지 수치는 유지)
+  // 조회수는 별도 인사이트 호출 — 신형 post_media_view 메트릭 (실패해도 나머지 수치는 유지)
   let views: number | undefined
   try {
     const insights = await fetchJson(
-      `https://graph.facebook.com/v23.0/${externalId}/insights?metric=views&access_token=${token}`
+      `https://graph.facebook.com/v23.0/${externalId}/insights?metric=post_media_view&access_token=${token}`
     )
     const item = (insights.data as Array<{ name?: string; values?: Array<{ value?: number }> }>)?.[0]
     views = Number(item?.values?.[0]?.value ?? NaN) || undefined
   } catch {
-    // 구버전 페이지/미지원 게시물이면 조회수 없이 진행
+    // 미지원 게시물이면 조회수 없이 진행
   }
   return { views, likes, comments, shares, raw: json }
+}
+
+/** 새 Facebook 페이지 게시물 자동 등록 */
+async function syncFacebookPosts(sb: Supabase, token: string, pageId: string): Promise<number> {
+  const json = await fetchJson(
+    `https://graph.facebook.com/v23.0/${pageId}/posts?fields=id,message,permalink_url,created_time&limit=50&access_token=${token}`
+  )
+  const items = (json.data as Array<{
+    id: string
+    message?: string
+    permalink_url?: string
+    created_time?: string
+  }>) ?? []
+  if (items.length === 0) return 0
+
+  const { data: existing } = await sb.from('posts').select('external_id').eq('platform', 'facebook')
+  const known = new Set((existing ?? []).map((e) => e.external_id))
+  const fresh = items.filter((i) => !known.has(i.id))
+  if (fresh.length === 0) return 0
+
+  const { error } = await sb.from('posts').insert(
+    fresh.map((i) => ({
+      platform: 'facebook',
+      external_id: i.id,
+      post_url: i.permalink_url ?? '',
+      title: String(i.message ?? '').split('\n')[0].trim().slice(0, 60) || '게시물',
+      posted_at: i.created_time ?? new Date().toISOString(),
+    }))
+  )
+  if (error) throw new Error(error.message)
+  return fresh.length
 }
 
 /** TikTok Display API: video/query */
@@ -229,16 +260,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { data: connections } = await sb
     .from('platform_connections')
-    .select('platform, access_token')
+    .select('platform, access_token, account_id')
   const tokens: Record<string, string> = {}
+  const accountIds: Record<string, string> = {}
   for (const c of connections ?? []) {
     if (c.access_token) tokens[c.platform] = c.access_token
+    if (c.account_id) accountIds[c.platform] = c.account_id
   }
 
   const report = {
     collected: 0,
     skipped_no_token: 0,
-    synced: { threads: 0, instagram: 0 },
+    synced: { threads: 0, instagram: 0, facebook: 0 },
     token_refreshed: { threads: false, instagram: false },
     failed: [] as string[],
   }
@@ -252,6 +285,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       report.synced.threads = await syncThreadsPosts(sb, token)
     } catch (err) {
       report.failed.push(`threads sync: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }
+
+  // Facebook: 새 게시물 자동 등록 (페이지 토큰은 무기한 — 리프레시 불필요)
+  if (tokens.facebook && accountIds.facebook) {
+    try {
+      report.synced.facebook = await syncFacebookPosts(sb, tokens.facebook, accountIds.facebook)
+    } catch (err) {
+      report.failed.push(`facebook sync: ${err instanceof Error ? err.message : String(err)}`)
     }
   }
 
