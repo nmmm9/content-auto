@@ -394,31 +394,12 @@ function WorkflowInner() {
     )
   }, [setNodes])
 
-  // 승인 처리
+  // 승인 처리 — 실제 발행 기능 연결 전까지는 상태 변경만 (가짜 업로드 연출 없음)
   const handleApprove = useCallback(async (nodeId: string) => {
     setNodes((nds) =>
       nds.map((n) => {
         if (n.id === nodeId) {
-          return { ...n, data: { ...n.data, status: 'uploading', progress: 0 } }
-        }
-        return n
-      })
-    )
-
-    for (let p = 0; p <= 100; p += 20) {
-      await new Promise((r) => setTimeout(r, 150))
-      setNodes((nds) =>
-        nds.map((n) => {
-          if (n.id === nodeId) return { ...n, data: { ...n.data, progress: p } }
-          return n
-        })
-      )
-    }
-
-    setNodes((nds) =>
-      nds.map((n) => {
-        if (n.id === nodeId) {
-          return { ...n, data: { ...n.data, status: 'success', message: '업로드 완료', progress: undefined } }
+          return { ...n, data: { ...n.data, status: 'success', message: '승인됨 (발행 대기)', progress: undefined } }
         }
         return n
       })
@@ -443,7 +424,7 @@ function WorkflowInner() {
     setNodes((nds) =>
       nds.map((n) => {
         if (n.id === nodeId) {
-          return { ...n, data: { ...n.data, status: 'failed', message: '업로드 거절됨' } }
+          return { ...n, data: { ...n.data, status: 'failed', message: '거절됨' } }
         }
         return n
       })
@@ -484,7 +465,7 @@ function WorkflowInner() {
     )
   }, [setNodes])
 
-  // YouTube URL 처리 (실제 API 호출 + 단계별 프로그레스)
+  // YouTube URL 처리 — 실제 진행 상태만 표시 (가짜 단계 연출 없음)
   const handleYoutubeUrl = useCallback(async (url: string) => {
     setYoutubeUrl(url)
 
@@ -492,40 +473,15 @@ function WorkflowInner() {
     const videoId = videoIdMatch ? videoIdMatch[1] : ''
     const thumbnail = videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : ''
 
-    // 분석 단계 정의
-    const steps = [
-      { message: '1/5 YouTube 메타데이터 추출 중...', progress: 10, delay: 0 },
-      { message: '2/5 영상 다운로드 중...', progress: 25, delay: 2000 },
-      { message: '3/5 Gemini에 영상 업로드 중...', progress: 45, delay: 6000 },
-      { message: '4/5 AI 영상 분석 중...', progress: 65, delay: 12000 },
-      { message: '5/5 분석 결과 정리 중...', progress: 85, delay: 20000 },
-    ]
-
-    // 초기 상태
     setCurrentPhase('pending')
     updateMainNode({
       status: 'pending',
       youtubeUrl: url,
       videoThumbnail: thumbnail,
-      message: steps[0].message,
-      progress: steps[0].progress,
-      analysisSteps: steps.map((s, i) => ({ ...s, active: i === 0, done: false })),
+      message: 'Gemini가 영상을 분석하는 중… (영상 길이에 따라 최대 2~3분)',
+      progress: undefined,
+      analysisSteps: undefined,
     } as Partial<PlatformNodeData>)
-
-    // 단계별 타이머 설정
-    const timers = steps.slice(1).map((step, i) =>
-      setTimeout(() => {
-        updateMainNode({
-          message: step.message,
-          progress: step.progress,
-          analysisSteps: steps.map((s, j) => ({
-            ...s,
-            active: j === i + 1,
-            done: j <= i,
-          })),
-        } as Partial<PlatformNodeData>)
-      }, step.delay)
-    )
 
     try {
       const res = await fetch(`${API_BASE}/workflow/analyze`, {
@@ -533,9 +489,6 @@ function WorkflowInner() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ youtube_url: url, model: selectedAnalysisModel }),
       })
-
-      // 타이머 정리
-      timers.forEach(clearTimeout)
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: '알 수 없는 오류' }))
@@ -553,12 +506,11 @@ function WorkflowInner() {
         channelName: data.video_info.channel_name,
         analysisResult: data.analysis,
         message: '영상 분석 완료 (클릭하여 상세보기)',
-        progress: 100,
+        progress: undefined,
         analysisSteps: undefined,
       } as Partial<PlatformNodeData>)
       setCurrentPhase('ready')
     } catch (err) {
-      timers.forEach(clearTimeout)
       const message = err instanceof Error ? err.message : '영상 분석 실패'
       updateMainNode({
         status: 'failed',
@@ -625,7 +577,7 @@ function WorkflowInner() {
     }
   }, [handleApprove, handleReject, handleEdit, handleYoutubeUrl, handleModelChange, handleAnalysisModelChange])
 
-  // 수정 저장
+  // 수정 저장 — 노드와 저장 결과(lastResults) 양쪽에 반영 (수정본 유실 방지)
   const handleSaveEdit = useCallback((content: typeof editingContent) => {
     if (!editingNodeId) return
 
@@ -643,20 +595,49 @@ function WorkflowInner() {
         return n
       })
     )
+    const key = platformKeys[editingNodeId]
+    if (key) {
+      setLastResults((prev) => ({
+        ...prev,
+        [key]: { status: 'success', data: content as Record<string, unknown> },
+      }))
+    }
     setEditModalOpen(false)
     setEditingNodeId(null)
   }, [editingNodeId, setNodes])
 
-  // AI 재생성
+  // AI 재생성 — 해당 플랫폼만 실제 재변환
   const handleRegenerate = useCallback(async () => {
-    if (!editingNodeId) return
-    const newContent = {
-      ...editingContent,
-      title: editingContent.title ? `[재생성] ${editingContent.title}` : undefined,
-      caption: editingContent.caption ? `${editingContent.caption} ✨` : undefined,
+    if (!editingNodeId || !analysisResult || !videoInfo) return
+    const key = platformKeys[editingNodeId]
+    try {
+      const res = await fetch(`${API_BASE}/workflow/transform-one`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          analysis: analysisResult,
+          video_info: videoInfo,
+          platform: key,
+          model: selectedModel,
+          youtube_url: youtubeUrl || '',
+          brand_voice: brandVoice,
+          custom_prompt: customPrompts[key] ?? null,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.status !== 'success') {
+        throw new Error(data.error || data.detail || `HTTP ${res.status}`)
+      }
+      setEditingContent(data.data)
+      setNodes((nds) =>
+        nds.map((n) => (n.id === editingNodeId ? { ...n, data: { ...n.data, generatedContent: data.data } } : n))
+      )
+      setLastResults((prev) => ({ ...prev, [key]: { status: 'success', data: data.data } }))
+    } catch (err) {
+      console.error('regenerate failed:', err)
+      alert(`재생성 실패: ${err instanceof Error ? err.message : String(err)}`)
     }
-    setEditingContent(newContent)
-  }, [editingNodeId, editingContent])
+  }, [editingNodeId, analysisResult, videoInfo, selectedModel, youtubeUrl, brandVoice, customPrompts, setNodes])
 
   // 워크플로우 실행 (실제 API 호출)
   const runWorkflow = useCallback(async (
