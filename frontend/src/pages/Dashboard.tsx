@@ -6,6 +6,8 @@ import type { AnalyticsSummary } from '../types'
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
+interface AccountDailyRow { platform: string; metric: string; date: string; value: number }
+
 interface PostAgg { count: number; views: number; engage: number; clicks: number; spend: number }
 interface PostsSummary {
   total: { count: number; views: number; engage: number; spend: number }
@@ -90,6 +92,7 @@ export default function Dashboard() {
   const [linkFilter, setLinkFilter] = useState<'all' | string>('all')
   const [postsSummary, setPostsSummary] = useState<PostsSummary | null>(null)
   const [collecting, setCollecting] = useState(false)
+  const [accountDaily, setAccountDaily] = useState<AccountDailyRow[]>([])
 
   // 통합 분석 API 한 번으로 대시보드 데이터 전체 로드 (service_role 서버 집계)
   const fetchData = useCallback(async () => {
@@ -110,6 +113,7 @@ export default function Dashboard() {
         )
       )
       setPostsSummary(data.posts ?? null)
+      setAccountDaily(data.account_daily ?? [])
     } catch (error) {
       console.error('Failed to fetch analytics:', error)
     } finally {
@@ -487,6 +491,78 @@ export default function Dashboard() {
                 )}
               </div>
             </div>
+
+            {/* 플랫폼별 일별 추이 (계정 단위 API 시계열) */}
+            {(() => {
+              const metricLabel: Record<string, string> = { views: '조회', reach: '도달' }
+              const dates = [...new Set(accountDaily.map(r => r.date))].sort()
+              if (dates.length < 2) return null
+              const byPlatform = new Map<string, Map<string, number>>()
+              for (const r of accountDaily) {
+                if (!byPlatform.has(r.platform)) byPlatform.set(r.platform, new Map())
+                byPlatform.get(r.platform)!.set(r.date, r.value)
+              }
+              const maxVal = Math.max(...accountDaily.map(r => r.value), 1)
+              const W = 920, H = 230, PL = 46, PR = 14, PT = 16, PB = 28
+              const chartW = W - PL - PR, chartH = H - PT - PB
+              const getX = (i: number) => PL + (i / (dates.length - 1)) * chartW
+              const getY = (v: number) => PT + chartH - (v / maxVal) * chartH
+              return (
+                <div className="bg-paper-white rounded p-6 border border-paper-gray">
+                  <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                    <h4 className="text-base font-bold text-charcoal flex items-center gap-2">
+                      <TrendingUp size={16} className="text-ink" />
+                      플랫폼별 일별 추이
+                      <span className="text-[10px] font-medium text-ash-gray">최근 {dates.length}일 · 계정 단위</span>
+                    </h4>
+                    <div className="flex items-center gap-3">
+                      {[...byPlatform.keys()].map(p => {
+                        const metric = accountDaily.find(r => r.platform === p)?.metric ?? 'views'
+                        return (
+                          <span key={p} className="flex items-center gap-1.5 text-[11px] font-semibold text-charcoal">
+                            <span className="w-2.5 h-2.5 rounded-none" style={{ backgroundColor: trackingPlatformColor[p] || '#0c0c0c' }} />
+                            {trackingPlatformLabel[p] || p}
+                            <span className="text-ash-gray font-medium">({metricLabel[metric] || metric})</span>
+                          </span>
+                        )
+                      })}
+                    </div>
+                  </div>
+                  <svg viewBox={`0 0 ${W} ${H}`} className="w-full block">
+                    {[0, 0.5, 1].map(pct => {
+                      const y = PT + chartH * (1 - pct)
+                      return (
+                        <g key={pct}>
+                          <line x1={PL} y1={y} x2={W - PR} y2={y} stroke="#dbdbdb" strokeWidth="0.5" />
+                          <text x={PL - 6} y={y} textAnchor="end" dominantBaseline="middle" style={{ fontSize: '9px', fill: '#9e9e9e' }}>
+                            {Math.round(maxVal * pct).toLocaleString()}
+                          </text>
+                        </g>
+                      )
+                    })}
+                    {[...byPlatform.entries()].map(([p, series]) => {
+                      const color = trackingPlatformColor[p] || '#0c0c0c'
+                      const path = dates
+                        .map((d, i) => `${i === 0 ? 'M' : 'L'}${getX(i)},${getY(series.get(d) ?? 0)}`)
+                        .join(' ')
+                      return (
+                        <g key={p}>
+                          <path d={path} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+                          {dates.map((d, i) => (
+                            <circle key={i} cx={getX(i)} cy={getY(series.get(d) ?? 0)} r="2.5" fill="#fffefb" stroke={color} strokeWidth="1.3" />
+                          ))}
+                        </g>
+                      )
+                    })}
+                    {[0, Math.floor(dates.length / 2), dates.length - 1].map(idx => (
+                      <text key={idx} x={getX(idx)} y={H - 6} textAnchor="middle" style={{ fontSize: '9px', fill: '#9e9e9e' }}>
+                        {dates[idx].slice(5)}
+                      </text>
+                    ))}
+                  </svg>
+                </div>
+              )
+            })()}
 
             {/* 조회수 상위 게시글 */}
             {ps.top.length > 0 && (

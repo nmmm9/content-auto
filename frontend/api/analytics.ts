@@ -15,13 +15,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const sb = getSupabase()
 
-  const [contentsQ, clicksQ, linksQ, connectionsQ, postsQ, metricsQ] = await Promise.all([
+  const accountSince = new Date()
+  accountSince.setDate(accountSince.getDate() - 30)
+
+  const [contentsQ, clicksQ, linksQ, connectionsQ, postsQ, metricsQ, accountDailyQ] = await Promise.all([
     sb.from('contents').select('id, title, status, created_at').order('created_at', { ascending: false }),
     sb.from('click_events').select('content_id, platform, tracking_link_id, clicked_at').gte('clicked_at', sinceStr),
     sb.from('tracking_links').select('*').order('created_at', { ascending: false }),
     sb.from('platform_connections').select('platform, is_connected, account_name, account_id'),
     sb.from('posts').select('*').order('posted_at', { ascending: false }),
     sb.from('post_metrics').select('*').order('captured_at', { ascending: false }).limit(2000),
+    sb.from('account_metrics').select('platform, metric, date, value')
+      .gte('date', accountSince.toISOString().slice(0, 10))
+      .order('date', { ascending: true }),
   ])
 
   const contents = contentsQ.data ?? []
@@ -153,6 +159,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       daily_trend: dailyTrend,
     },
     tracking_links: trackingLinks,
+    account_daily: accountDailyQ.data ?? [],
     posts: {
       total: {
         count: posts.length,

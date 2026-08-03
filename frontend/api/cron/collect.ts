@@ -322,6 +322,76 @@ async function syncInstagramPosts(sb: Supabase, token: string): Promise<number> 
   return fresh.length
 }
 
+// ── 계정 단위 일별 시계열 (Meta insights: end_time은 PT 기준 하루 버킷의 끝) ──
+
+interface DailyPoint { date: string; value: number }
+
+function parseDailyValues(json: Record<string, unknown>): DailyPoint[] {
+  const item = (json.data as Array<{ values?: Array<{ value?: number; end_time?: string }> }>)?.[0]
+  return (item?.values ?? [])
+    .filter((v) => v.end_time != null)
+    .map((v) => ({
+      // end_time에서 8시간을 빼면 해당 버킷의 실제 날짜(PT 기준)가 나온다
+      date: new Date(new Date(v.end_time as string).getTime() - 8 * 3600 * 1000).toISOString().slice(0, 10),
+      value: Number(v.value ?? 0),
+    }))
+}
+
+/** 최근 14일 계정 일별 지표 수집 → account_metrics 업서트 */
+async function collectAccountDaily(
+  sb: Supabase,
+  tokens: Record<string, string>,
+  accountIds: Record<string, string>
+): Promise<{ points: number; failed: string[] }> {
+  const now = Math.floor(Date.now() / 1000)
+  const since = now - 14 * 86400
+  const failed: string[] = []
+  const rows: Array<{ platform: string; metric: string; date: string; value: number }> = []
+
+  const sources: Array<{ platform: string; metric: string; url: string | null }> = [
+    {
+      platform: 'threads',
+      metric: 'views',
+      url: tokens.threads
+        ? `https://graph.threads.net/v1.0/me/threads_insights?metric=views&since=${since}&until=${now}&access_token=${tokens.threads}`
+        : null,
+    },
+    {
+      platform: 'instagram',
+      metric: 'reach',
+      url: tokens.instagram
+        ? `https://graph.instagram.com/v23.0/me/insights?metric=reach&period=day&since=${since}&until=${now}&access_token=${tokens.instagram}`
+        : null,
+    },
+    {
+      platform: 'facebook',
+      metric: 'views',
+      url:
+        tokens.facebook && accountIds.facebook
+          ? `https://graph.facebook.com/v23.0/${accountIds.facebook}/insights?metric=page_media_view&period=day&since=${since}&until=${now}&access_token=${tokens.facebook}`
+          : null,
+    },
+  ]
+
+  for (const s of sources) {
+    if (!s.url) continue
+    try {
+      const json = await fetchJson(s.url)
+      for (const p of parseDailyValues(json)) {
+        rows.push({ platform: s.platform, metric: s.metric, date: p.date, value: p.value })
+      }
+    } catch (err) {
+      failed.push(`daily ${s.platform}: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }
+
+  if (rows.length > 0) {
+    const { error } = await sb.from('account_metrics').upsert(rows, { onConflict: 'platform,metric,date' })
+    if (error) failed.push(`daily upsert: ${error.message}`)
+  }
+  return { points: rows.length, failed }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Vercel Cron 인증 (CRON_SECRET 설정 시)
   const secret = process.env.CRON_SECRET
@@ -349,6 +419,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     skipped_no_token: 0,
     synced: { threads: 0, instagram: 0, facebook: 0, naver_blog: 0 },
     token_refreshed: { threads: false, instagram: false },
+    account_daily_points: 0,
     failed: [] as string[],
   }
 
@@ -393,6 +464,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       report.failed.push(`instagram sync: ${err instanceof Error ? err.message : String(err)}`)
     }
   }
+
+  // 계정 단위 일별 시계열 (최근 14일 업서트)
+  const daily = await collectAccountDaily(sb, tokens, accountIds)
+  report.account_daily_points = daily.points
+  report.failed.push(...daily.failed)
 
   const { data: posts, error } = await sb
     .from('posts')
