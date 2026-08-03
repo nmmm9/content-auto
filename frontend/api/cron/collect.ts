@@ -41,10 +41,10 @@ async function collectThreads(externalId: string, token: string): Promise<Collec
   return out
 }
 
-/** Instagram 미디어 인사이트 (Graph API) */
+/** Instagram 미디어 인사이트 (Instagram 로그인 토큰 — graph.instagram.com) */
 async function collectInstagram(externalId: string, token: string): Promise<Collected> {
   const json = await fetchJson(
-    `https://graph.facebook.com/v23.0/${externalId}/insights?metric=views,likes,comments,shares,saved&access_token=${token}`
+    `https://graph.instagram.com/v23.0/${externalId}/insights?metric=views,likes,comments,shares,saved&access_token=${token}`
   )
   const out: Collected = { raw: json }
   for (const item of (json.data as Array<Record<string, unknown>>) ?? []) {
@@ -153,6 +153,58 @@ async function syncThreadsPosts(sb: Supabase, token: string): Promise<number> {
   return fresh.length
 }
 
+/** Instagram 장기 토큰 리프레시 (60일 만료 방지 — 매일 갱신) */
+async function refreshInstagramToken(sb: Supabase, token: string): Promise<{ token: string; refreshed: boolean }> {
+  try {
+    const json = await fetchJson(
+      `https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${token}`
+    )
+    const newToken = json.access_token as string | undefined
+    if (newToken && newToken !== token) {
+      await sb.from('platform_connections').update({ access_token: newToken }).eq('platform', 'instagram')
+      return { token: newToken, refreshed: true }
+    }
+  } catch (err) {
+    console.warn('instagram token refresh skipped:', err instanceof Error ? err.message : err)
+  }
+  return { token, refreshed: false }
+}
+
+/** 새 Instagram 게시물 자동 등록 — 릴스는 instagram_reels, 나머지는 instagram으로 분류 */
+async function syncInstagramPosts(sb: Supabase, token: string): Promise<number> {
+  const json = await fetchJson(
+    `https://graph.instagram.com/v23.0/me/media?fields=id,caption,permalink,timestamp,media_product_type&limit=50&access_token=${token}`
+  )
+  const items = (json.data as Array<{
+    id: string
+    caption?: string
+    permalink?: string
+    timestamp?: string
+    media_product_type?: string
+  }>) ?? []
+  if (items.length === 0) return 0
+
+  const { data: existing } = await sb
+    .from('posts')
+    .select('external_id')
+    .in('platform', ['instagram', 'instagram_reels'])
+  const known = new Set((existing ?? []).map((e) => e.external_id))
+  const fresh = items.filter((i) => !known.has(i.id))
+  if (fresh.length === 0) return 0
+
+  const { error } = await sb.from('posts').insert(
+    fresh.map((i) => ({
+      platform: i.media_product_type === 'REELS' ? 'instagram_reels' : 'instagram',
+      external_id: i.id,
+      post_url: i.permalink ?? '',
+      title: String(i.caption ?? '').split('\n')[0].trim().slice(0, 60) || (i.media_product_type === 'REELS' ? '릴스' : '게시물'),
+      posted_at: i.timestamp ?? new Date().toISOString(),
+    }))
+  )
+  if (error) throw new Error(error.message)
+  return fresh.length
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Vercel Cron 인증 (CRON_SECRET 설정 시)
   const secret = process.env.CRON_SECRET
@@ -173,8 +225,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const report = {
     collected: 0,
     skipped_no_token: 0,
-    synced_new_posts: 0,
-    token_refreshed: false,
+    synced: { threads: 0, instagram: 0 },
+    token_refreshed: { threads: false, instagram: false },
     failed: [] as string[],
   }
 
@@ -182,11 +234,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (tokens.threads) {
     const { token, refreshed } = await refreshThreadsToken(sb, tokens.threads)
     tokens.threads = token
-    report.token_refreshed = refreshed
+    report.token_refreshed.threads = refreshed
     try {
-      report.synced_new_posts = await syncThreadsPosts(sb, token)
+      report.synced.threads = await syncThreadsPosts(sb, token)
     } catch (err) {
       report.failed.push(`threads sync: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }
+
+  // Instagram: 토큰 리프레시 + 새 게시물 자동 등록 (릴스 포함)
+  if (tokens.instagram) {
+    const { token, refreshed } = await refreshInstagramToken(sb, tokens.instagram)
+    tokens.instagram = token
+    report.token_refreshed.instagram = refreshed
+    try {
+      report.synced.instagram = await syncInstagramPosts(sb, token)
+    } catch (err) {
+      report.failed.push(`instagram sync: ${err instanceof Error ? err.message : String(err)}`)
     }
   }
 
