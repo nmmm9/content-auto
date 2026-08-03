@@ -1,10 +1,11 @@
 import { Outlet, NavLink } from 'react-router-dom'
-import { LayoutDashboard, Settings, Workflow, CalendarDays } from 'lucide-react'
+import { LayoutDashboard, Settings, Workflow, CalendarDays, BarChart3 } from 'lucide-react'
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, label: '대시보드' },
   { path: '/calendar', icon: CalendarDays, label: '캘린더' },
   { path: '/workflow', icon: Workflow, label: '워크플로우' },
+  { path: '/posts', icon: BarChart3, label: '게시글 성과' },
   { path: '/settings', icon: Settings, label: '설정' },
 ]
 

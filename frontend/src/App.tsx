@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import Calendar from './pages/Calendar'
 import Settings from './pages/Settings'
 import Workflow from './pages/Workflow'
+import Posts from './pages/Posts'
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="workflow" element={<Workflow />} />
+          <Route path="posts" element={<Posts />} />
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>

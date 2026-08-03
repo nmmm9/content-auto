@@ -5,6 +5,9 @@
       "maxDuration": 300
     }
   },
+  "crons": [
+    { "path": "/api/cron/collect", "schedule": "0 21 * * *" }
+  ],
   "rewrites": [
     { "source": "/t/:code", "destination": "/api/track?code=:code" },
     { "source": "/api/t/:code", "destination": "/api/track?code=:code" },
