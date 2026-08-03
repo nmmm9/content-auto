@@ -58,7 +58,8 @@ async function collectInstagram(externalId: string, token: string): Promise<Coll
   return out
 }
 
-/** Facebook 페이지 게시물 */
+/** Facebook 페이지 게시물.
+ * 주의: impressions 계열 메트릭은 2025-11~2026-06에 걸쳐 폐기 — 신형 `views` 메트릭 사용. */
 async function collectFacebook(externalId: string, token: string): Promise<Collected> {
   const json = await fetchJson(
     `https://graph.facebook.com/v23.0/${externalId}?fields=shares,likes.summary(true),comments.summary(true)&access_token=${token}`
@@ -66,7 +67,19 @@ async function collectFacebook(externalId: string, token: string): Promise<Colle
   const likes = (json.likes as { summary?: { total_count?: number } })?.summary?.total_count
   const comments = (json.comments as { summary?: { total_count?: number } })?.summary?.total_count
   const shares = (json.shares as { count?: number })?.count
-  return { likes, comments, shares, raw: json }
+
+  // 조회수는 별도 인사이트 호출 (실패해도 나머지 수치는 유지)
+  let views: number | undefined
+  try {
+    const insights = await fetchJson(
+      `https://graph.facebook.com/v23.0/${externalId}/insights?metric=views&access_token=${token}`
+    )
+    const item = (insights.data as Array<{ name?: string; values?: Array<{ value?: number }> }>)?.[0]
+    views = Number(item?.values?.[0]?.value ?? NaN) || undefined
+  } catch {
+    // 구버전 페이지/미지원 게시물이면 조회수 없이 진행
+  }
+  return { views, likes, comments, shares, raw: json }
 }
 
 /** TikTok Display API: video/query */
