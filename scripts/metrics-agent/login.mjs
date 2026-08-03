@@ -16,6 +16,9 @@ const context = await chromium.launchPersistentContext(PROFILE, {
   channel: 'chrome',
   headless: false,
   viewport: null,
+  // 자동화 감지 완화 (구글 SSO "안전하지 않은 브라우저" 차단 우회)
+  ignoreDefaultArgs: ['--enable-automation'],
+  args: ['--disable-blink-features=AutomationControlled'],
 })
 
 const naver = context.pages()[0] ?? (await context.newPage())

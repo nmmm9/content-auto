@@ -178,6 +178,8 @@ async function main() {
     channel: 'chrome',
     headless: Boolean(cfg.headless),
     viewport: { width: 1280, height: 900 },
+    ignoreDefaultArgs: ['--enable-automation'],
+    args: ['--disable-blink-features=AutomationControlled'],
   })
   const page = context.pages()[0] ?? (await context.newPage())
 
