@@ -149,10 +149,6 @@ export default function Dashboard() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold tracking-tight text-ink">대시보드 개요</h2>
-        <div className="flex items-center gap-2 text-sm text-muted-gray bg-paper-white px-4 py-2 rounded border border-paper-gray">
-          <Activity size={16} className="text-success animate-pulse" />
-          시스템 정상 작동 중
-        </div>
       </div>
 
       {/* Stats Cards */}

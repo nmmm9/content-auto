@@ -139,13 +139,10 @@ function FacebookPreview({ content }: { content: GeneratedContent }) {
         )}
       </div>
       {/* 반응 바 */}
-      <div className="px-3 py-1.5 border-t border-gray-100 flex items-center gap-1 text-[10px] text-gray-500">
+      <div className="px-3 py-1.5 border-t border-gray-100 flex items-center gap-1 text-[10px] text-gray-400">
         <span>👍 😮 ❤️</span>
-        <span className="ml-1">24</span>
         <div className="flex-1" />
-        <span>댓글 3개</span>
-        <span className="mx-1">·</span>
-        <span>공유 1회</span>
+        <span>게시 전 미리보기</span>
       </div>
       <div className="px-3 py-2 border-t border-gray-100 flex items-center justify-around">
         {[
@@ -195,8 +192,6 @@ function InstagramPreview({ content, thumbnail }: { content: GeneratedContent; t
         <div className="flex-1" />
         <Bookmark size={18} className="text-gray-800" />
       </div>
-      {/* 좋아요 */}
-      <div className="px-3 text-[10px] font-semibold text-gray-900">좋아요 128개</div>
       {/* 캡션 */}
       <div className="px-3 py-1.5">
         <p className="text-[10px] text-gray-800 leading-relaxed line-clamp-4 whitespace-pre-line">
@@ -231,7 +226,6 @@ function InstagramReelsPreview({ content, thumbnail }: { content: GeneratedConte
         {[Heart, MessageCircle, Send, Bookmark].map((Icon, i) => (
           <div key={i} className="flex flex-col items-center gap-0.5">
             <Icon size={18} className="text-white" />
-            {i < 2 && <span className="text-[8px] text-white/70">{i === 0 ? '1.2K' : '48'}</span>}
           </div>
         ))}
       </div>
@@ -298,10 +292,8 @@ function ThreadsPreview({ content }: { content: GeneratedContent }) {
           </div>
         </div>
       </div>
-      <div className="px-3 pb-2 text-[10px] text-gray-400 flex items-center gap-1.5 ml-[42px]">
-        <span>답글 3개</span>
-        <span>·</span>
-        <span>좋아요 24개</span>
+      <div className="px-3 pb-2 text-[10px] text-gray-400 ml-[42px]">
+        <span>게시 전 미리보기</span>
       </div>
     </div>
   )
