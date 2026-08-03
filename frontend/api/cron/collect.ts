@@ -107,6 +107,52 @@ const TOKEN_PLATFORM: Record<string, string> = {
   tiktok: 'tiktok',
 }
 
+type Supabase = ReturnType<typeof getSupabase>
+
+/** Threads 장기 토큰 리프레시 (60일 만료 방지 — 매일 갱신).
+ * 발급 후 24시간 미만인 토큰은 리프레시가 거부되므로 실패해도 기존 토큰으로 계속 진행. */
+async function refreshThreadsToken(sb: Supabase, token: string): Promise<{ token: string; refreshed: boolean }> {
+  try {
+    const json = await fetchJson(
+      `https://graph.threads.net/refresh_access_token?grant_type=th_refresh_token&access_token=${token}`
+    )
+    const newToken = json.access_token as string | undefined
+    if (newToken && newToken !== token) {
+      await sb.from('platform_connections').update({ access_token: newToken }).eq('platform', 'threads')
+      return { token: newToken, refreshed: true }
+    }
+  } catch (err) {
+    console.warn('threads token refresh skipped:', err instanceof Error ? err.message : err)
+  }
+  return { token, refreshed: false }
+}
+
+/** 새 Threads 게시물 자동 등록 — 계정 게시물 목록과 posts 테이블 대조 후 없는 것만 삽입 */
+async function syncThreadsPosts(sb: Supabase, token: string): Promise<number> {
+  const json = await fetchJson(
+    `https://graph.threads.net/v1.0/me/threads?fields=id,text,permalink,timestamp&limit=50&access_token=${token}`
+  )
+  const items = (json.data as Array<{ id: string; text?: string; permalink?: string; timestamp?: string }>) ?? []
+  if (items.length === 0) return 0
+
+  const { data: existing } = await sb.from('posts').select('external_id').eq('platform', 'threads')
+  const known = new Set((existing ?? []).map((e) => e.external_id))
+  const fresh = items.filter((i) => !known.has(i.id))
+  if (fresh.length === 0) return 0
+
+  const { error } = await sb.from('posts').insert(
+    fresh.map((i) => ({
+      platform: 'threads',
+      external_id: i.id,
+      post_url: i.permalink ?? '',
+      title: String(i.text ?? '').split('\n')[0].trim().slice(0, 60),
+      posted_at: i.timestamp ?? new Date().toISOString(),
+    }))
+  )
+  if (error) throw new Error(error.message)
+  return fresh.length
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Vercel Cron 인증 (CRON_SECRET 설정 시)
   const secret = process.env.CRON_SECRET
@@ -124,13 +170,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (c.access_token) tokens[c.platform] = c.access_token
   }
 
+  const report = {
+    collected: 0,
+    skipped_no_token: 0,
+    synced_new_posts: 0,
+    token_refreshed: false,
+    failed: [] as string[],
+  }
+
+  // Threads: 토큰 리프레시 + 새 게시물 자동 등록
+  if (tokens.threads) {
+    const { token, refreshed } = await refreshThreadsToken(sb, tokens.threads)
+    tokens.threads = token
+    report.token_refreshed = refreshed
+    try {
+      report.synced_new_posts = await syncThreadsPosts(sb, token)
+    } catch (err) {
+      report.failed.push(`threads sync: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }
+
   const { data: posts, error } = await sb
     .from('posts')
     .select('id, platform, external_id')
     .not('external_id', 'is', null)
   if (error) return res.status(500).json({ detail: error.message })
-
-  const report = { collected: 0, skipped_no_token: 0, failed: [] as string[] }
 
   for (const post of posts ?? []) {
     const collector = COLLECTORS[post.platform]
