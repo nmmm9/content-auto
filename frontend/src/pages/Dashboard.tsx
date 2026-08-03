@@ -12,7 +12,7 @@ interface PostsSummary {
   by_platform: Array<{ platform: string } & PostAgg>
   boosted: PostAgg
   organic: PostAgg
-  top: Array<{ id: number; title: string; platform: string; boosted: boolean; views: number; engage: number; clicks: number }>
+  top: Array<{ id: number; title: string; platform: string; post_url: string; boosted: boolean; views: number; engage: number; clicks: number }>
 }
 
 interface Stats {
@@ -34,6 +34,24 @@ interface PlatformConnection {
   is_connected: boolean
   account_name?: string | null
   account_id?: string | null
+}
+
+// 플랫폼 연동 카드 클릭 시 이동할 실제 채널 URL (연동 정보 기반)
+function platformChannelUrl(conn: PlatformConnection): string | null {
+  const name = conn.account_name?.trim()
+  switch (conn.platform) {
+    case 'threads':
+      return name ? `https://www.threads.net/@${name}` : null
+    case 'instagram':
+    case 'instagram_reels':
+      return name ? `https://www.instagram.com/${name}/` : null
+    case 'facebook':
+      return conn.account_id ? `https://www.facebook.com/${conn.account_id}` : null
+    case 'tiktok':
+      return name ? `https://www.tiktok.com/@${name}` : null
+    default:
+      return null
+  }
 }
 
 const trackingPlatformLabel: Record<string, string> = {
@@ -225,10 +243,13 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
             {platforms.map((platform) => {
               const info = platformIcons[platform.platform]
+              const channelUrl = platformChannelUrl(platform)
+              const Wrapper = channelUrl ? 'a' : 'div'
               return (
-                <div
+                <Wrapper
                   key={platform.platform}
-                  className={`p-4 rounded border transition-colors ${platform.is_connected
+                  {...(channelUrl ? { href: channelUrl, target: '_blank', rel: 'noreferrer' } : {})}
+                  className={`block p-4 rounded border transition-colors ${channelUrl ? 'cursor-pointer' : ''} ${platform.is_connected
                       ? 'border-paper-gray bg-paper-white hover:bg-paper-beige'
                       : 'border-paper-beige bg-paper-ivory hover:bg-paper-beige'
                     }`}
@@ -246,7 +267,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </Wrapper>
               )
             })}
           </div>
@@ -447,8 +468,13 @@ export default function Dashboard() {
                     const maxTop = Math.max(...ps.top.map(t => t.views), 1)
                     const color = trackingPlatformColor[item.platform] || '#0c0c0c'
                     const RankIcon = idx === 0 ? Crown : idx === 1 ? Medal : idx === 2 ? Award : null
+                    const RowTag = item.post_url ? 'a' : 'div'
                     return (
-                      <div key={item.id} className="flex items-center gap-4">
+                      <RowTag
+                        key={item.id}
+                        {...(item.post_url ? { href: item.post_url, target: '_blank', rel: 'noreferrer' } : {})}
+                        className={`flex items-center gap-4 rounded px-2 py-1 -mx-2 transition-colors ${item.post_url ? 'cursor-pointer hover:bg-paper-ivory' : ''}`}
+                      >
                         <div className="w-8 shrink-0 flex justify-center">
                           {RankIcon
                             ? <RankIcon size={20} className={idx === 0 ? 'text-ink' : idx === 1 ? 'text-charcoal' : 'text-muted-gray'} />
@@ -475,7 +501,7 @@ export default function Dashboard() {
                           <span className="text-xl font-extrabold text-ink">{item.views.toLocaleString()}</span>
                           <span className="text-[11px] font-semibold text-ash-gray ml-1">조회</span>
                         </div>
-                      </div>
+                      </RowTag>
                     )
                   })}
                 </div>

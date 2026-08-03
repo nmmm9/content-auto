@@ -19,7 +19,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     sb.from('contents').select('id, title, status, created_at').order('created_at', { ascending: false }),
     sb.from('click_events').select('content_id, platform, tracking_link_id, clicked_at').gte('clicked_at', sinceStr),
     sb.from('tracking_links').select('*').order('created_at', { ascending: false }),
-    sb.from('platform_connections').select('platform, is_connected, account_name'),
+    sb.from('platform_connections').select('platform, is_connected, account_name, account_id'),
     sb.from('posts').select('*').order('posted_at', { ascending: false }),
     sb.from('post_metrics').select('*').order('captured_at', { ascending: false }).limit(2000),
   ])
@@ -127,6 +127,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       id: post.id,
       title: post.title || post.post_url,
       platform: post.platform,
+      post_url: post.post_url ?? '',
       boosted: post.boosted,
       views,
       engage,
