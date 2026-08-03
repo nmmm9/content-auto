@@ -1,7 +1,19 @@
-import { useState, useEffect } from 'react'
-import { Youtube, FileText, Facebook, Instagram, CheckCircle, Clock, AlertCircle, Clapperboard, Film, AtSign, LayoutDashboard, CloudLightning, Activity, BarChart3, MousePointerClick, Link2, TrendingUp, Crown, Medal, Award, Linkedin, FlaskConical } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Link } from 'react-router-dom'
+import { Youtube, FileText, Facebook, Instagram, CheckCircle, Clock, AlertCircle, Clapperboard, Film, AtSign, LayoutDashboard, CloudLightning, Activity, BarChart3, MousePointerClick, Link2, TrendingUp, Crown, Medal, Award, Linkedin, FlaskConical, Megaphone, ArrowRight } from 'lucide-react'
 import { api } from '../services/api'
 import type { AnalyticsSummary } from '../types'
+
+const API_BASE = import.meta.env.VITE_API_BASE || '/api'
+
+interface PostAgg { count: number; views: number; engage: number; clicks: number; spend: number }
+interface PostsSummary {
+  total: { count: number; views: number; engage: number; spend: number }
+  by_platform: Array<{ platform: string } & PostAgg>
+  boosted: PostAgg
+  organic: PostAgg
+  top: Array<{ id: number; title: string; platform: string; boosted: boolean; views: number; engage: number; clicks: number }>
+}
 
 interface Stats {
   total: number
@@ -27,12 +39,12 @@ interface PlatformConnection {
 const trackingPlatformLabel: Record<string, string> = {
   youtube: 'YouTube', youtube_shorts: 'YouTube Shorts', naver_blog: '네이버 블로그',
   facebook: 'Facebook', instagram: 'Instagram', instagram_reels: 'Instagram Reels', threads: 'Threads',
-  linkedin: 'LinkedIn', living_sequence_lab: 'Living Sequence Lab',
+  linkedin: 'LinkedIn', living_sequence_lab: 'Living Sequence Lab', tiktok: 'TikTok',
 }
 const trackingPlatformColor: Record<string, string> = {
   youtube: '#ef4444', youtube_shorts: '#f97316', naver_blog: '#22c55e',
   facebook: '#3b82f6', instagram: '#ec4899', instagram_reels: '#a855f7', threads: '#71717a',
-  linkedin: '#1d4ed8', living_sequence_lab: '#10b981',
+  linkedin: '#1d4ed8', living_sequence_lab: '#10b981', tiktok: '#0c0c0c',
 }
 
 export default function Dashboard() {
@@ -56,38 +68,37 @@ export default function Dashboard() {
   }>>([])
   const [contentNames, setContentNames] = useState<Record<number, string>>({})
   const [linkFilter, setLinkFilter] = useState<'all' | string>('all')
+  const [postsSummary, setPostsSummary] = useState<PostsSummary | null>(null)
 
-  useEffect(() => {
-    fetchData()
-  }, [])
-
-  useEffect(() => {
-    fetchAnalytics()
-  }, [analyticsDays])
-
-  const fetchData = async () => {
+  // 통합 분석 API 한 번으로 대시보드 데이터 전체 로드 (service_role 서버 집계)
+  const fetchData = useCallback(async () => {
     try {
-      // Fetch contents from Supabase
-      const contents = await api.getContents()
-      setRecentContents(contents.slice(0, 5))
-      setDrafts(contents.filter((c: Content) => c.status === 'draft'))
+      const res = await fetch(`${API_BASE}/analytics?days=${analyticsDays}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
 
-      setStats({
-        total: contents.length,
-        completed: contents.filter((c: Content) => c.status === 'completed').length,
-        pending: contents.filter((c: Content) => c.status === 'pending' || c.status === 'draft').length,
-        failed: contents.filter((c: Content) => c.status === 'failed').length,
-      })
-
-      // Fetch platforms from Supabase
-      const platformData = await api.getPlatforms()
-      setPlatforms(platformData)
+      setStats(data.stats)
+      setRecentContents(data.recent ?? [])
+      setDrafts(data.drafts ?? [])
+      setPlatforms(data.platforms ?? [])
+      setAnalytics(data.analytics ?? null)
+      setContentNames(data.content_titles ?? {})
+      setTrackingLinks(
+        (data.tracking_links ?? []).sort(
+          (a: { click_count: number }, b: { click_count: number }) => b.click_count - a.click_count
+        )
+      )
+      setPostsSummary(data.posts ?? null)
     } catch (error) {
-      console.error('Failed to fetch data:', error)
+      console.error('Failed to fetch analytics:', error)
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [analyticsDays])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   const handleSchedule = async (id: number) => {
     const date = scheduleDates[id]
@@ -105,30 +116,6 @@ export default function Dashboard() {
       alert('예약에 실패했습니다.')
     }
   }
-
-  const fetchAnalytics = async () => {
-    try {
-      const result = await api.getAnalyticsSummary(analyticsDays)
-      setAnalytics(result)
-    } catch {
-      setAnalytics(getSampleAnalytics())
-    }
-  }
-
-  useEffect(() => {
-    const fetchLinks = async () => {
-      try {
-        const links = await api.getTrackingLinks()
-        setTrackingLinks(links.sort((a: { click_count: number }, b: { click_count: number }) => b.click_count - a.click_count))
-        // 콘텐츠 이름 매핑
-        const contents = await api.getContents()
-        const nameMap: Record<number, string> = {}
-        contents.forEach((c: { id: number; title: string }) => { nameMap[c.id] = c.title })
-        setContentNames(nameMap)
-      } catch { /* ignore */ }
-    }
-    fetchLinks()
-  }, [])
 
   const platformIcons: Record<string, { icon: React.ReactNode; name: string }> = {
     youtube: { icon: <Youtube size={22} />, name: 'YouTube' },
@@ -342,6 +329,159 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* 게시글 성과 요약 */}
+      {postsSummary && postsSummary.total.count > 0 && (() => {
+        const ps = postsSummary
+        const maxViews = Math.max(...ps.by_platform.map(p => p.views), 1)
+        const cpv = ps.boosted.views > 0 ? ps.boosted.spend / ps.boosted.views : null
+        const cpc = ps.boosted.clicks > 0 ? ps.boosted.spend / ps.boosted.clicks : null
+        return (
+          <>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-ink flex items-center gap-2">
+                <BarChart3 size={20} className="text-ink" />
+                게시글 성과
+              </h3>
+              <Link to="/posts" className="flex items-center gap-1 text-xs font-semibold text-charcoal hover:text-ink bg-paper-white px-3 py-1.5 rounded border border-paper-gray hover:bg-paper-beige">
+                전체 보기 · 수치 입력 <ArrowRight size={13} />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                { label: '등록 게시글', value: ps.total.count.toLocaleString(), icon: FileText },
+                { label: '총 조회', value: ps.total.views.toLocaleString(), icon: TrendingUp },
+                { label: '총 참여', value: ps.total.engage.toLocaleString(), icon: Activity },
+                { label: '광고 지출', value: ps.total.spend > 0 ? `₩${Math.round(ps.total.spend).toLocaleString()}` : '–', icon: Megaphone },
+              ].map(card => (
+                <div key={card.label} className="bg-paper-white p-4 rounded border border-paper-gray">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded bg-paper-beige flex items-center justify-center">
+                      <card.icon size={20} className="text-ink" strokeWidth={2} />
+                    </div>
+                    <div>
+                      <div className="text-xs font-medium text-muted-gray">{card.label}</div>
+                      <div className="text-2xl font-extrabold text-ink">{card.value}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* 플랫폼별 조회수 */}
+              <div className="bg-paper-white rounded p-6 border border-paper-gray">
+                <h4 className="text-sm font-bold text-charcoal mb-4 flex items-center gap-2">
+                  <BarChart3 size={14} className="text-ink" />
+                  플랫폼별 조회수
+                </h4>
+                <div className="space-y-2.5">
+                  {[...ps.by_platform].sort((a, b) => b.views - a.views).map(p => {
+                    const color = trackingPlatformColor[p.platform] || '#0c0c0c'
+                    return (
+                      <div key={p.platform} className="flex items-center gap-2.5">
+                        <div className="w-24 text-[11px] font-semibold text-charcoal text-right shrink-0">
+                          {trackingPlatformLabel[p.platform] || p.platform}
+                          <span className="text-ash-gray font-medium ml-1">{p.count}건</span>
+                        </div>
+                        <div className="flex-1 bg-paper-beige rounded-none h-6 overflow-hidden">
+                          <div className="h-full rounded-none transition-all duration-700 ease-out flex items-center"
+                            style={{ width: `${Math.max((p.views / maxViews) * 100, 3)}%`, backgroundColor: color }}>
+                            <span className="text-[10px] font-bold text-paper-white ml-2 whitespace-nowrap">
+                              {p.views.toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                        {p.spend > 0 && (
+                          <div className="w-16 text-[10px] font-bold text-danger text-right shrink-0">
+                            ₩{Math.round(p.spend).toLocaleString()}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* 부스트 vs 오가닉 */}
+              <div className="bg-paper-white rounded p-6 border border-paper-gray">
+                <h4 className="text-sm font-bold text-charcoal mb-4 flex items-center gap-2">
+                  <Megaphone size={14} className="text-ink" />
+                  부스트 vs 오가닉
+                </h4>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: '부스트', agg: ps.boosted, accent: 'text-danger' },
+                    { label: '오가닉', agg: ps.organic, accent: 'text-success' },
+                  ].map(({ label, agg, accent }) => (
+                    <div key={label} className="border border-paper-beige rounded bg-paper-ivory p-3.5">
+                      <div className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${accent}`}>
+                        {label} · {agg.count}건
+                      </div>
+                      <div className="space-y-1 text-xs text-charcoal">
+                        <div className="flex justify-between"><span className="text-muted-gray">총 조회</span><span className="font-bold text-ink">{agg.views.toLocaleString()}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-gray">평균 조회</span><span className="font-semibold">{agg.count > 0 ? Math.round(agg.views / agg.count).toLocaleString() : '–'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-gray">참여</span><span className="font-semibold">{agg.engage.toLocaleString()}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-gray">클릭</span><span className="font-semibold">{agg.clicks.toLocaleString()}</span></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {(cpv != null || cpc != null) && (
+                  <div className="mt-3 flex items-center gap-4 border-t border-paper-beige pt-3 text-xs">
+                    <span className="text-[10px] font-bold text-muted-gray uppercase tracking-wider">부스트 효율</span>
+                    {cpv != null && <span className="text-charcoal">조회당 <b className="text-ink">₩{cpv.toFixed(1)}</b></span>}
+                    {cpc != null && <span className="text-charcoal">클릭당 <b className="text-ink">₩{Math.round(cpc).toLocaleString()}</b></span>}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 조회수 상위 게시글 */}
+            {ps.top.length > 0 && (
+              <div className="bg-paper-white rounded p-6 border border-paper-gray">
+                <h4 className="text-sm font-bold text-charcoal mb-4 flex items-center gap-2">
+                  <Crown size={14} className="text-ink" />
+                  조회수 상위 게시글
+                </h4>
+                <div className="space-y-2.5">
+                  {ps.top.map((item, idx) => {
+                    const maxTop = Math.max(...ps.top.map(t => t.views), 1)
+                    const color = trackingPlatformColor[item.platform] || '#0c0c0c'
+                    return (
+                      <div key={item.id} className="flex items-center gap-2.5 py-1.5">
+                        <div className="w-5 shrink-0 text-center text-[11px] font-bold text-ash-gray">{idx + 1}</div>
+                        <div className="w-24 shrink-0">
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-none whitespace-nowrap"
+                            style={{ backgroundColor: `${color}15`, color }}>
+                            {trackingPlatformLabel[item.platform] || item.platform}
+                          </span>
+                        </div>
+                        <div className="w-44 shrink-0 flex items-center gap-1 text-[11px] font-medium text-charcoal truncate">
+                          <span className="truncate">{item.title}</span>
+                          {item.boosted && <Megaphone size={10} className="text-danger shrink-0" />}
+                        </div>
+                        <div className="flex-1 bg-paper-beige rounded-none h-5 overflow-hidden">
+                          <div className="h-full rounded-none transition-all duration-700 flex items-center"
+                            style={{ width: `${Math.max((item.views / maxTop) * 100, 4)}%`, backgroundColor: color }}>
+                            <span className="text-[9px] font-bold text-paper-white ml-2 whitespace-nowrap">
+                              {item.views.toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="w-24 text-right text-[10px] text-muted-gray shrink-0">
+                          참여 {item.engage.toLocaleString()} · 클릭 {item.clicks.toLocaleString()}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </>
+        )
+      })()}
 
       {/* 링크 분석 섹션 */}
       {analytics && (() => {
@@ -607,29 +747,3 @@ export default function Dashboard() {
   )
 }
 
-function getSampleAnalytics(): AnalyticsSummary {
-  const today = new Date()
-  const trend = Array.from({ length: 14 }, (_, i) => {
-    const d = new Date(today)
-    d.setDate(d.getDate() - (13 - i))
-    return { date: d.toISOString().slice(0, 10), click_count: Math.floor(Math.random() * 80) + 10 }
-  })
-  return {
-    total_clicks: 1247, total_links: 42, today_clicks: 38, avg_clicks_per_link: 29.7,
-    platform_breakdown: [
-      { platform: 'youtube', total_clicks: 523, percentage: 41.9 },
-      { platform: 'instagram', total_clicks: 312, percentage: 25.0 },
-      { platform: 'naver_blog', total_clicks: 198, percentage: 15.9 },
-      { platform: 'facebook', total_clicks: 134, percentage: 10.7 },
-      { platform: 'threads', total_clicks: 80, percentage: 6.4 },
-    ],
-    top_content: [
-      { content_id: 1, content_title: '2026 봄 트렌드 총정리', total_clicks: 342, platforms: ['youtube', 'instagram'] },
-      { content_id: 2, content_title: '초보자를 위한 가이드', total_clicks: 256, platforms: ['youtube', 'naver_blog'] },
-      { content_id: 3, content_title: '일주일 브이로그', total_clicks: 189, platforms: ['youtube', 'instagram', 'facebook'] },
-      { content_id: 4, content_title: '제품 리뷰 - 신제품 언박싱', total_clicks: 145, platforms: ['youtube'] },
-      { content_id: 5, content_title: '맛집 탐방 시리즈 #3', total_clicks: 98, platforms: ['naver_blog', 'instagram'] },
-    ],
-    daily_trend: trend,
-  }
-}
