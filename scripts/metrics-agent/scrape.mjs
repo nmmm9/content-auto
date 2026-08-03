@@ -159,14 +159,18 @@ async function main() {
 
   let { posts } = await api('/posts')
 
-  try {
-    await syncNaverFromRss(posts)
-    if (summary.naver_new > 0) ({ posts } = await api('/posts'))
-  } catch (err) {
-    summary.failed.push(`naver rss: ${err.message}`)
+  // 네이버는 Vercel 크론이 클라우드에서 수집 — naver_enabled=true일 때만 로컬 백업 수집
+  const naverEnabled = Boolean(cfg.naver_enabled)
+  if (naverEnabled) {
+    try {
+      await syncNaverFromRss(posts)
+      if (summary.naver_new > 0) ({ posts } = await api('/posts'))
+    } catch (err) {
+      summary.failed.push(`naver rss: ${err.message}`)
+    }
   }
 
-  const naverPosts = posts.filter((p) => p.platform === 'naver_blog')
+  const naverPosts = naverEnabled ? posts.filter((p) => p.platform === 'naver_blog') : []
   const linkedinPosts = posts.filter((p) => p.platform === 'linkedin')
 
   if (naverPosts.length === 0 && linkedinPosts.length === 0) {
