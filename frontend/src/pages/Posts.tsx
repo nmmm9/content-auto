@@ -37,6 +37,8 @@ interface Post {
   boosted: boolean
   boost_spend: number
   boost_budget: number
+  paid_views: number
+  paid_reach: number
   external_id: string | null
   notes: string
   latest: MetricSnapshot | null
@@ -45,13 +47,15 @@ interface Post {
 
 type SortKey =
   | 'title' | 'platform' | 'posted_at' | 'views' | 'likes' | 'comments'
-  | 'shares' | 'saves' | 'clicks' | 'budget' | 'boost' | 'updated'
+  | 'shares' | 'saves' | 'clicks' | 'paid' | 'total' | 'budget' | 'boost' | 'updated'
 
 const COLUMNS: Array<{ key: SortKey; label: string; align: 'left' | 'right' }> = [
   { key: 'title', label: '게시글', align: 'left' },
   { key: 'platform', label: '플랫폼', align: 'left' },
   { key: 'posted_at', label: '게시일', align: 'right' },
-  { key: 'views', label: '조회', align: 'right' },
+  { key: 'views', label: '오가닉', align: 'right' },
+  { key: 'paid', label: '광고', align: 'right' },
+  { key: 'total', label: '총 도달', align: 'right' },
   { key: 'likes', label: '좋아요', align: 'right' },
   { key: 'comments', label: '댓글', align: 'right' },
   { key: 'shares', label: '공유', align: 'right' },
@@ -406,11 +410,12 @@ export default function Posts() {
   )
 
   const summary = useMemo(() => {
-    const by: Record<string, { count: number; views: number; engage: number; spend: number; clicks: number }> = {}
+    const by: Record<string, { count: number; views: number; paid: number; engage: number; spend: number; clicks: number }> = {}
     for (const p of posts) {
-      const s = (by[p.platform] ??= { count: 0, views: 0, engage: 0, spend: 0, clicks: 0 })
+      const s = (by[p.platform] ??= { count: 0, views: 0, paid: 0, engage: 0, spend: 0, clicks: 0 })
       s.count += 1
       s.views += p.latest?.views ?? 0
+      s.paid += Number(p.paid_views) || 0
       s.engage += (p.latest?.likes ?? 0) + (p.latest?.comments ?? 0) + (p.latest?.shares ?? 0) + (p.latest?.saves ?? 0)
       s.spend += Number(p.boost_spend) || 0
       s.clicks += p.clicks ?? 0
@@ -436,6 +441,8 @@ export default function Posts() {
         case 'platform': return PLATFORM_LABELS[p.platform] ?? p.platform
         case 'posted_at': return new Date(p.posted_at).getTime()
         case 'views': return num(p.latest?.views)
+        case 'paid': return Number(p.paid_views) || 0
+        case 'total': return (p.latest?.views ?? 0) + (Number(p.paid_views) || 0)
         case 'likes': return num(p.latest?.likes)
         case 'comments': return num(p.latest?.comments)
         case 'shares': return num(p.latest?.shares)
@@ -458,9 +465,10 @@ export default function Posts() {
 
   // 현재 보이는 목록 기준 합계 (부스트만 볼 때 효율 지표 계산용)
   const visibleTotals = useMemo(() => {
-    const t = { count: visible.length, views: 0, engage: 0, clicks: 0, spend: 0 }
+    const t = { count: visible.length, views: 0, paid: 0, engage: 0, clicks: 0, spend: 0 }
     for (const p of visible) {
       t.views += p.latest?.views ?? 0
+      t.paid += Number(p.paid_views) || 0
       t.engage += (p.latest?.likes ?? 0) + (p.latest?.comments ?? 0) + (p.latest?.shares ?? 0) + (p.latest?.saves ?? 0)
       t.clicks += p.clicks ?? 0
       t.spend += Number(p.boost_spend) || 0
@@ -519,7 +527,15 @@ export default function Posts() {
               <div className="text-[10px] xl:text-xs font-bold text-muted-gray uppercase tracking-wider mb-1.5">
                 {PLATFORM_LABELS[platform] ?? platform} · {s.count}건
               </div>
-              <div className="text-lg xl:text-2xl font-extrabold text-ink">{s.views.toLocaleString()}<span className="text-[10px] xl:text-xs font-semibold text-ash-gray ml-1">조회</span></div>
+              <div className="text-lg xl:text-2xl font-extrabold text-ink">
+                {(s.views + s.paid).toLocaleString()}
+                <span className="text-[10px] xl:text-xs font-semibold text-ash-gray ml-1">총 도달</span>
+              </div>
+              {s.paid > 0 && (
+                <div className="text-[10px] xl:text-[11px] text-muted-gray mt-0.5">
+                  오가닉 {s.views.toLocaleString()} · <span className="text-danger font-semibold">광고 {s.paid.toLocaleString()}</span>
+                </div>
+              )}
               <div className="flex items-center gap-2 mt-1 text-[11px] xl:text-xs text-charcoal">
                 <span>참여 {s.engage.toLocaleString()}</span>
                 {s.clicks > 0 && <span className="flex items-center gap-0.5"><MousePointerClick className="w-3 h-3" />{s.clicks.toLocaleString()}</span>}
@@ -616,11 +632,11 @@ export default function Posts() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
           {[
             { label: '집행액', value: fmtWon(visibleTotals.spend), accent: 'text-danger' },
-            { label: '조회', value: visibleTotals.views.toLocaleString(), accent: 'text-ink' },
-            { label: '참여', value: visibleTotals.engage.toLocaleString(), accent: 'text-ink' },
+            { label: '광고 노출', value: visibleTotals.paid.toLocaleString(), accent: 'text-danger' },
+            { label: '총 도달', value: (visibleTotals.views + visibleTotals.paid).toLocaleString(), accent: 'text-ink' },
             {
-              label: '조회당 비용',
-              value: visibleTotals.views > 0 ? `₩${(visibleTotals.spend / visibleTotals.views).toFixed(1)}` : '–',
+              label: '광고 노출당 비용',
+              value: visibleTotals.paid > 0 ? `₩${(visibleTotals.spend / visibleTotals.paid).toFixed(1)}` : '–',
               accent: 'text-ink',
             },
             {
@@ -663,9 +679,9 @@ export default function Posts() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={13} className="px-4 py-10 text-center text-sm text-ash-gray">불러오는 중…</td></tr>
+              <tr><td colSpan={15} className="px-4 py-10 text-center text-sm text-ash-gray">불러오는 중…</td></tr>
             ) : visible.length === 0 ? (
-              <tr><td colSpan={13} className="px-4 py-10 text-center text-sm text-ash-gray">
+              <tr><td colSpan={15} className="px-4 py-10 text-center text-sm text-ash-gray">
                 등록된 게시글이 없습니다. 우측 상단 "게시글 등록"으로 시작하세요.
               </td></tr>
             ) : (
@@ -688,6 +704,12 @@ export default function Posts() {
                   </td>
                   <td className="px-3 xl:px-4 py-2.5 xl:py-3.5 text-right text-xs xl:text-sm text-charcoal whitespace-nowrap">{fmtDate(p.posted_at)}</td>
                   <td className="px-3 xl:px-4 py-2.5 xl:py-3.5 text-right font-semibold text-ink">{fmt(p.latest?.views)}</td>
+                  <td className="px-3 xl:px-4 py-2.5 xl:py-3.5 text-right text-danger font-semibold">
+                    {Number(p.paid_views) > 0 ? fmt(Number(p.paid_views)) : '–'}
+                  </td>
+                  <td className="px-3 xl:px-4 py-2.5 xl:py-3.5 text-right font-extrabold text-ink">
+                    {fmt((p.latest?.views ?? 0) + (Number(p.paid_views) || 0))}
+                  </td>
                   <td className="px-3 xl:px-4 py-2.5 xl:py-3.5 text-right text-charcoal">{fmt(p.latest?.likes)}</td>
                   <td className="px-3 xl:px-4 py-2.5 xl:py-3.5 text-right text-charcoal">{fmt(p.latest?.comments)}</td>
                   <td className="px-3 xl:px-4 py-2.5 xl:py-3.5 text-right text-charcoal">{fmt(p.latest?.shares)}</td>
