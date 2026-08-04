@@ -429,30 +429,30 @@ export default function Dashboard() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* 플랫폼별 조회수 */}
-              <div className="bg-paper-white rounded p-6 border border-paper-gray">
-                <h4 className="text-base font-bold text-charcoal mb-5 flex items-center gap-2">
-                  <BarChart3 size={16} className="text-ink" />
+              <div className="bg-paper-white rounded p-5 border border-paper-gray">
+                <h4 className="text-sm font-bold text-charcoal mb-3 flex items-center gap-2">
+                  <BarChart3 size={14} className="text-ink" />
                   플랫폼별 조회수
                 </h4>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {[...ps.by_platform].sort((a, b) => b.views - a.views).map(p => {
                     const color = trackingPlatformColor[p.platform] || '#0c0c0c'
                     return (
                       <div key={p.platform}>
-                        <div className="flex items-baseline justify-between mb-1.5">
-                          <div className="text-sm font-bold text-ink">
+                        <div className="flex items-baseline justify-between mb-1">
+                          <div className="text-xs font-bold text-ink">
                             {trackingPlatformLabel[p.platform] || p.platform}
-                            <span className="text-xs text-muted-gray font-medium ml-1.5">{p.count}건</span>
+                            <span className="text-[11px] text-muted-gray font-medium ml-1.5">{p.count}건</span>
                             {p.spend > 0 && (
-                              <span className="text-xs font-bold text-danger ml-2">₩{Math.round(p.spend).toLocaleString()}</span>
+                              <span className="text-[11px] font-bold text-danger ml-2">₩{Math.round(p.spend).toLocaleString()}</span>
                             )}
                           </div>
-                          <div className="text-xl font-extrabold text-ink">
+                          <div className="text-base font-extrabold text-ink">
                             {p.views.toLocaleString()}
-                            <span className="text-[11px] font-semibold text-ash-gray ml-1">조회</span>
+                            <span className="text-[10px] font-semibold text-ash-gray ml-1">조회</span>
                           </div>
                         </div>
-                        <div className="bg-paper-beige rounded-none h-3 overflow-hidden">
+                        <div className="bg-paper-beige rounded-none h-2 overflow-hidden">
                           <div className="h-full rounded-none transition-all duration-700 ease-out"
                             style={{ width: `${Math.max((p.views / maxViews) * 100, 3)}%`, backgroundColor: color }} />
                         </div>
@@ -507,15 +507,15 @@ export default function Dashboard() {
                 byPlatform.get(r.platform)!.set(r.date, r.value)
               }
               const maxVal = Math.max(...accountDaily.map(r => r.value), 1)
-              const W = 920, H = 230, PL = 46, PR = 14, PT = 16, PB = 28
+              const W = 1200, H = 170, PL = 44, PR = 14, PT = 14, PB = 24
               const chartW = W - PL - PR, chartH = H - PT - PB
               const getX = (i: number) => PL + (i / (dates.length - 1)) * chartW
               const getY = (v: number) => PT + chartH - (v / maxVal) * chartH
               return (
-                <div className="bg-paper-white rounded p-6 border border-paper-gray">
-                  <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                    <h4 className="text-base font-bold text-charcoal flex items-center gap-2">
-                      <TrendingUp size={16} className="text-ink" />
+                <div className="bg-paper-white rounded p-5 border border-paper-gray">
+                  <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                    <h4 className="text-sm font-bold text-charcoal flex items-center gap-2">
+                      <TrendingUp size={14} className="text-ink" />
                       플랫폼별 일별 추이
                       <span className="text-[10px] font-medium text-ash-gray">최근 {dates.length}일 · 계정 단위</span>
                     </h4>
@@ -523,8 +523,8 @@ export default function Dashboard() {
                       {[...byPlatform.keys()].map(p => {
                         const metric = accountDaily.find(r => r.platform === p)?.metric ?? 'views'
                         return (
-                          <span key={p} className="flex items-center gap-1.5 text-[11px] font-semibold text-charcoal">
-                            <span className="w-2.5 h-2.5 rounded-none" style={{ backgroundColor: trackingPlatformColor[p] || '#0c0c0c' }} />
+                          <span key={p} className="flex items-center gap-1 text-[10px] font-semibold text-charcoal">
+                            <span className="w-2 h-2 rounded-none" style={{ backgroundColor: trackingPlatformColor[p] || '#0c0c0c' }} />
                             {trackingPlatformLabel[p] || p}
                             <span className="text-ash-gray font-medium">({metricLabel[metric] || metric})</span>
                           </span>
@@ -551,9 +551,9 @@ export default function Dashboard() {
                         .join(' ')
                       return (
                         <g key={p}>
-                          <path d={path} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+                          <path d={path} fill="none" stroke={color} strokeWidth="1.6" strokeLinejoin="round" />
                           {dates.map((d, i) => (
-                            <circle key={i} cx={getX(i)} cy={getY(series.get(d) ?? 0)} r="2.5" fill="#fffefb" stroke={color} strokeWidth="1.3" />
+                            <circle key={i} cx={getX(i)} cy={getY(series.get(d) ?? 0)} r="2" fill="#fffefb" stroke={color} strokeWidth="1.1" />
                           ))}
                         </g>
                       )
@@ -570,12 +570,12 @@ export default function Dashboard() {
 
             {/* 조회수 상위 게시글 */}
             {ps.top.length > 0 && (
-              <div className="bg-paper-white rounded p-6 border border-paper-gray">
-                <h4 className="text-base font-bold text-charcoal mb-5 flex items-center gap-2">
-                  <Crown size={16} className="text-ink" />
+              <div className="bg-paper-white rounded p-5 border border-paper-gray">
+                <h4 className="text-sm font-bold text-charcoal mb-3 flex items-center gap-2">
+                  <Crown size={14} className="text-ink" />
                   조회수 상위 게시글
                 </h4>
-                <div className="space-y-4">
+                <div className="space-y-2.5">
                   {ps.top.map((item, idx) => {
                     const maxTop = Math.max(...ps.top.map(t => t.views), 1)
                     const color = trackingPlatformColor[item.platform] || '#0c0c0c'
@@ -585,33 +585,33 @@ export default function Dashboard() {
                       <RowTag
                         key={item.id}
                         {...(item.post_url ? { href: item.post_url, target: '_blank', rel: 'noreferrer' } : {})}
-                        className={`flex items-center gap-4 rounded px-2 py-1 -mx-2 transition-colors ${item.post_url ? 'cursor-pointer hover:bg-paper-ivory' : ''}`}
+                        className={`flex items-center gap-3 rounded px-2 py-0.5 -mx-2 transition-colors ${item.post_url ? 'cursor-pointer hover:bg-paper-ivory' : ''}`}
                       >
-                        <div className="w-8 shrink-0 flex justify-center">
+                        <div className="w-6 shrink-0 flex justify-center">
                           {RankIcon
-                            ? <RankIcon size={20} className={idx === 0 ? 'text-ink' : idx === 1 ? 'text-charcoal' : 'text-muted-gray'} />
-                            : <span className="text-base font-bold text-ash-gray">{idx + 1}</span>}
+                            ? <RankIcon size={15} className={idx === 0 ? 'text-ink' : idx === 1 ? 'text-charcoal' : 'text-muted-gray'} />
+                            : <span className="text-xs font-bold text-ash-gray">{idx + 1}</span>}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-none whitespace-nowrap"
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-none whitespace-nowrap"
                               style={{ backgroundColor: `${color}15`, color }}>
                               {trackingPlatformLabel[item.platform] || item.platform}
                             </span>
-                            <span className="text-sm font-semibold text-ink truncate">{item.title}</span>
-                            {item.boosted && <Megaphone size={13} className="text-danger shrink-0" />}
-                            <span className="text-xs text-muted-gray shrink-0 ml-auto">
+                            <span className="text-xs font-semibold text-ink truncate">{item.title}</span>
+                            {item.boosted && <Megaphone size={11} className="text-danger shrink-0" />}
+                            <span className="text-[11px] text-muted-gray shrink-0 ml-auto">
                               참여 {item.engage.toLocaleString()} · 클릭 {item.clicks.toLocaleString()}
                             </span>
                           </div>
-                          <div className="bg-paper-beige rounded-none h-3 overflow-hidden">
+                          <div className="bg-paper-beige rounded-none h-2 overflow-hidden">
                             <div className="h-full rounded-none transition-all duration-700"
                               style={{ width: `${Math.max((item.views / maxTop) * 100, 4)}%`, backgroundColor: color }} />
                           </div>
                         </div>
-                        <div className="w-20 text-right shrink-0">
-                          <span className="text-xl font-extrabold text-ink">{item.views.toLocaleString()}</span>
-                          <span className="text-[11px] font-semibold text-ash-gray ml-1">조회</span>
+                        <div className="w-16 text-right shrink-0">
+                          <span className="text-base font-extrabold text-ink">{item.views.toLocaleString()}</span>
+                          <span className="text-[10px] font-semibold text-ash-gray ml-0.5">조회</span>
                         </div>
                       </RowTag>
                     )
