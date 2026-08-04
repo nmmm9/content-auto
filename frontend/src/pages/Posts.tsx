@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { BarChart3, Plus, Trash2, Pencil, RefreshCw, X, ExternalLink, Megaphone, MousePointerClick, CloudDownload } from 'lucide-react'
+import { BarChart3, Plus, Trash2, Pencil, RefreshCw, X, ExternalLink, Megaphone, MousePointerClick, CloudDownload, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react'
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
@@ -40,6 +40,24 @@ interface Post {
   latest: MetricSnapshot | null
   clicks: number | null
 }
+
+type SortKey =
+  | 'title' | 'platform' | 'posted_at' | 'views' | 'likes' | 'comments'
+  | 'shares' | 'saves' | 'clicks' | 'boost' | 'updated'
+
+const COLUMNS: Array<{ key: SortKey; label: string; align: 'left' | 'right' }> = [
+  { key: 'title', label: '게시글', align: 'left' },
+  { key: 'platform', label: '플랫폼', align: 'left' },
+  { key: 'posted_at', label: '게시일', align: 'right' },
+  { key: 'views', label: '조회', align: 'right' },
+  { key: 'likes', label: '좋아요', align: 'right' },
+  { key: 'comments', label: '댓글', align: 'right' },
+  { key: 'shares', label: '공유', align: 'right' },
+  { key: 'saves', label: '저장', align: 'right' },
+  { key: 'clicks', label: '클릭', align: 'right' },
+  { key: 'boost', label: '부스트', align: 'right' },
+  { key: 'updated', label: '업데이트', align: 'right' },
+]
 
 const fmt = (n: number | null | undefined) => (n == null ? '–' : n.toLocaleString())
 const fmtWon = (n: number) => (n > 0 ? `₩${Math.round(n).toLocaleString()}` : '–')
@@ -317,6 +335,18 @@ export default function Posts() {
   const [editing, setEditing] = useState<Post | null>(null)
   const [metricPost, setMetricPost] = useState<Post | null>(null)
   const [collecting, setCollecting] = useState(false)
+  const [sortKey, setSortKey] = useState<SortKey>('views')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'))
+    } else {
+      setSortKey(key)
+      // 텍스트 컬럼은 오름차순, 수치 컬럼은 내림차순이 자연스럽다
+      setSortDir(key === 'title' || key === 'platform' ? 'asc' : 'desc')
+    }
+  }
 
   const load = useCallback(async () => {
     try {
@@ -380,7 +410,33 @@ export default function Posts() {
     return by
   }, [posts])
 
-  const visible = filter === 'all' ? posts : posts.filter((p) => p.platform === filter)
+  const visible = useMemo(() => {
+    const rows = filter === 'all' ? posts : posts.filter((p) => p.platform === filter)
+    const num = (v: number | null | undefined) => (v == null ? -1 : v) // 미수집(–)은 항상 뒤로
+    const value = (p: Post): number | string => {
+      switch (sortKey) {
+        case 'title': return p.title || p.post_url || ''
+        case 'platform': return PLATFORM_LABELS[p.platform] ?? p.platform
+        case 'posted_at': return new Date(p.posted_at).getTime()
+        case 'views': return num(p.latest?.views)
+        case 'likes': return num(p.latest?.likes)
+        case 'comments': return num(p.latest?.comments)
+        case 'shares': return num(p.latest?.shares)
+        case 'saves': return num(p.latest?.saves)
+        case 'clicks': return num(p.clicks)
+        case 'boost': return Number(p.boost_spend) || 0
+        case 'updated': return p.latest ? new Date(p.latest.captured_at).getTime() : -1
+      }
+    }
+    return [...rows].sort((a, b) => {
+      const av = value(a)
+      const bv = value(b)
+      const cmp = typeof av === 'string' || typeof bv === 'string'
+        ? String(av).localeCompare(String(bv), 'ko')
+        : av - bv
+      return sortDir === 'asc' ? cmp : -cmp
+    })
+  }, [posts, filter, sortKey, sortDir])
 
   return (
     <div className="animate-in fade-in duration-500">
@@ -472,17 +528,22 @@ export default function Posts() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-paper-gray bg-paper-ivory text-[10px] font-bold text-muted-gray uppercase tracking-wider">
-              <th className="text-left px-4 py-2.5">게시글</th>
-              <th className="text-left px-3 py-2.5">플랫폼</th>
-              <th className="text-right px-3 py-2.5">게시일</th>
-              <th className="text-right px-3 py-2.5">조회</th>
-              <th className="text-right px-3 py-2.5">좋아요</th>
-              <th className="text-right px-3 py-2.5">댓글</th>
-              <th className="text-right px-3 py-2.5">공유</th>
-              <th className="text-right px-3 py-2.5">저장</th>
-              <th className="text-right px-3 py-2.5">클릭</th>
-              <th className="text-right px-3 py-2.5">부스트</th>
-              <th className="text-right px-3 py-2.5">업데이트</th>
+              {COLUMNS.map((col) => (
+                <th
+                  key={col.key}
+                  onClick={() => toggleSort(col.key)}
+                  className={`px-3 py-2.5 first:pl-4 cursor-pointer select-none hover:text-ink transition-colors ${
+                    col.align === 'left' ? 'text-left' : 'text-right'
+                  } ${sortKey === col.key ? 'text-ink' : ''}`}
+                >
+                  <span className={`inline-flex items-center gap-0.5 ${col.align === 'left' ? '' : 'flex-row-reverse'}`}>
+                    {col.label}
+                    {sortKey === col.key
+                      ? (sortDir === 'asc' ? <ChevronUp size={11} /> : <ChevronDown size={11} />)
+                      : <ChevronsUpDown size={11} className="opacity-30" />}
+                  </span>
+                </th>
+              ))}
               <th className="px-3 py-2.5"></th>
             </tr>
           </thead>
