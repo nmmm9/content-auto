@@ -4,6 +4,8 @@ import { Youtube, FileText, Facebook, Instagram, CheckCircle, Clock, AlertCircle
 import { api } from '../services/api'
 import type { AnalyticsSummary } from '../types'
 
+import CollectResultModal, { type CollectResult } from '../components/CollectResultModal'
+
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
 interface AccountDailyRow { platform: string; metric: string; date: string; value: number }
@@ -92,6 +94,7 @@ export default function Dashboard() {
   const [linkFilter, setLinkFilter] = useState<'all' | string>('all')
   const [postsSummary, setPostsSummary] = useState<PostsSummary | null>(null)
   const [collecting, setCollecting] = useState(false)
+  const [collectResult, setCollectResult] = useState<CollectResult | null>(null)
   const [accountDaily, setAccountDaily] = useState<AccountDailyRow[]>([])
 
   // 통합 분석 API 한 번으로 대시보드 데이터 전체 로드 (service_role 서버 집계)
@@ -133,16 +136,11 @@ export default function Dashboard() {
       const res = await fetch(`${API_BASE}/cron/collect`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const r = await res.json()
-      if (r.skipped === 'cooldown') {
-        alert('최근 10분 내에 이미 수집했습니다. 잠시 후 다시 시도하세요.')
-        return
-      }
-      const synced = Object.values(r.synced ?? {}).reduce((a: number, b) => a + Number(b), 0)
-      alert(`수집 완료 — 수치 갱신 ${r.collected}건${synced > 0 ? `, 새 게시물 ${synced}건 등록` : ''}${r.failed?.length ? `, 실패 ${r.failed.length}건` : ''}`)
-      fetchData()
+      setCollectResult(r)
+      if (!r.skipped) fetchData()
     } catch (err) {
       console.error('collect failed:', err)
-      alert('수집에 실패했습니다')
+      setCollectResult({ error: err instanceof Error ? err.message : String(err) })
     } finally {
       setCollecting(false)
     }
@@ -382,6 +380,10 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
+      )}
+
+      {collectResult && (
+        <CollectResultModal result={collectResult} onClose={() => setCollectResult(null)} />
       )}
 
       {/* 게시글 성과 요약 */}
