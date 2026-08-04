@@ -412,27 +412,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: '등록 게시글', value: ps.total.count.toLocaleString(), icon: FileText },
-                { label: '총 조회', value: ps.total.views.toLocaleString(), icon: TrendingUp },
-                { label: '총 참여', value: ps.total.engage.toLocaleString(), icon: Activity },
-                { label: '광고 지출', value: ps.total.spend > 0 ? `₩${Math.round(ps.total.spend).toLocaleString()}` : '–', icon: Megaphone },
-              ].map(card => (
-                <div key={card.label} className="bg-paper-white p-4 rounded border border-paper-gray">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded bg-paper-beige flex items-center justify-center">
-                      <card.icon size={20} className="text-ink" strokeWidth={2} />
-                    </div>
-                    <div>
-                      <div className="text-xs font-medium text-muted-gray">{card.label}</div>
-                      <div className="text-2xl font-extrabold text-ink">{card.value}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* 플랫폼별 조회수 */}
               <div className="bg-paper-white rounded p-5 border border-paper-gray">
