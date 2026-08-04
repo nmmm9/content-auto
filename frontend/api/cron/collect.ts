@@ -419,6 +419,7 @@ interface AdRow {
   name?: string
   creative?: { instagram_permalink_url?: string; effective_object_story_id?: string }
   insights?: { data?: Array<{ spend?: string; impressions?: string; clicks?: string }> }
+  campaign?: { lifetime_budget?: string; daily_budget?: string; budget_remaining?: string }
 }
 
 /** 광고 계정의 게시물별 집행액을 수집해 posts.boost_spend에 반영 */
@@ -428,7 +429,7 @@ async function collectAdSpend(
   adAccountId: string
 ): Promise<{ matched: number; totalSpend: number; unmatched: string[] }> {
   const json = await fetchJson(
-    `https://graph.facebook.com/v23.0/${adAccountId}/ads?fields=id,name,creative{instagram_permalink_url,effective_object_story_id},insights.date_preset(maximum){spend,impressions,clicks}&limit=100&access_token=${token}`
+    `https://graph.facebook.com/v23.0/${adAccountId}/ads?fields=id,name,creative{instagram_permalink_url,effective_object_story_id},campaign{lifetime_budget,daily_budget,budget_remaining},insights.date_preset(maximum){spend,impressions,clicks}&limit=100&access_token=${token}`
   )
   const ads = (json.data as AdRow[]) ?? []
   if (ads.length === 0) return { matched: 0, totalSpend: 0, unmatched: [] }
@@ -436,8 +437,9 @@ async function collectAdSpend(
   const { data: posts } = await sb.from('posts').select('id, title, post_url, platform, posted_at')
   const rows = posts ?? []
 
-  // 게시물 단위 집행액 합산 (같은 게시물에 광고가 여러 개일 수 있음)
+  // 게시물 단위 집행액·예산 합산 (같은 게시물에 광고가 여러 개일 수 있음)
   const spendByPost = new Map<number, number>()
+  const budgetByPost = new Map<number, number>()
   const unmatched: string[] = []
   let totalSpend = 0
 
@@ -445,6 +447,8 @@ async function collectAdSpend(
     const spend = Number(ad.insights?.data?.[0]?.spend ?? 0)
     if (!spend) continue
     totalSpend += spend
+    // 캠페인 총 예산 (일예산만 설정된 경우 소진액 + 잔여로 추정)
+    const budget = Number(ad.campaign?.lifetime_budget ?? 0)
 
     const permalink = ad.creative?.instagram_permalink_url ?? ''
     const shortcode = (permalink.match(/\/(?:p|reel)\/([^/?]+)/) ?? [])[1]
@@ -470,6 +474,7 @@ async function collectAdSpend(
 
     if (hit) {
       spendByPost.set(hit.id, (spendByPost.get(hit.id) ?? 0) + spend)
+      if (budget > 0) budgetByPost.set(hit.id, (budgetByPost.get(hit.id) ?? 0) + budget)
     } else {
       unmatched.push(`${(ad.name ?? '').slice(0, 40)} (₩${spend.toLocaleString()})`)
     }
@@ -478,13 +483,18 @@ async function collectAdSpend(
   // 자동 수집분만 초기화 후 재적용 — 수동 입력값(boost_source='manual')은 보존
   await sb
     .from('posts')
-    .update({ boosted: false, boost_spend: 0 })
+    .update({ boosted: false, boost_spend: 0, boost_budget: 0 })
     .eq('boost_source', 'meta_ads')
 
   for (const [postId, spend] of spendByPost) {
     await sb
       .from('posts')
-      .update({ boosted: true, boost_spend: spend, boost_source: 'meta_ads' })
+      .update({
+        boosted: true,
+        boost_spend: spend,
+        boost_budget: budgetByPost.get(postId) ?? 0,
+        boost_source: 'meta_ads',
+      })
       .eq('id', postId)
   }
   return { matched: spendByPost.size, totalSpend, unmatched }
