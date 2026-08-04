@@ -12,6 +12,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     platform?: string
     model?: string
     brand_voice?: string
+    custom_prompt?: { system?: string; user?: string } | null
   }
   const text = String(body.text ?? '').trim()
   const platform = body.platform ?? ''
@@ -24,7 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let model = body.model || OPENAI_DEFAULT_MODEL
   if (model.startsWith('gemini')) model = OPENAI_DEFAULT_MODEL
 
-  const { system, user } = buildAdaptMessages(platform, text, body.brand_voice ?? '')
+  const { system, user } = buildAdaptMessages(platform, text, body.brand_voice ?? '', body.custom_prompt)
 
   try {
     const data = await generateContent(user, system, model)
