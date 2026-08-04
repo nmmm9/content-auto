@@ -306,12 +306,12 @@ export default function Dashboard() {
                       />
                     </div>
 
-                    <div className="flex justify-between mt-2 text-xs">
-                      <span className="text-charcoal">
-                        잔액 <b className="text-success font-extrabold">₩{adAccount.balance.toLocaleString()}</b>
+                    <div className="flex justify-between items-baseline mt-2.5">
+                      <span className="text-charcoal text-sm font-medium">
+                        잔액 <b className="text-success font-extrabold text-lg ml-0.5">₩{adAccount.balance.toLocaleString()}</b>
                       </span>
-                      <span className="text-muted-gray">
-                        충전 ₩{adAccount.charged.toLocaleString()}
+                      <span className="text-muted-gray text-sm font-medium">
+                        충전 <b className="text-charcoal font-bold text-base ml-0.5">₩{adAccount.charged.toLocaleString()}</b>
                       </span>
                     </div>
                   </>
