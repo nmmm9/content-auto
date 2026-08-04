@@ -133,6 +133,10 @@ export default function Dashboard() {
       const res = await fetch(`${API_BASE}/cron/collect`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const r = await res.json()
+      if (r.skipped === 'cooldown') {
+        alert('최근 10분 내에 이미 수집했습니다. 잠시 후 다시 시도하세요.')
+        return
+      }
       const synced = Object.values(r.synced ?? {}).reduce((a: number, b) => a + Number(b), 0)
       alert(`수집 완료 — 수치 갱신 ${r.collected}건${synced > 0 ? `, 새 게시물 ${synced}건 등록` : ''}${r.failed?.length ? `, 실패 ${r.failed.length}건` : ''}`)
       fetchData()

@@ -401,6 +401,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const sb = getSupabase()
 
+  // 남용 방지: 최근 10분 내 수집 이력이 있으면 스킵 (실수 연타·외부 호출로 인한 API 버스트 차단)
+  const { data: recentRun } = await sb
+    .from('post_metrics')
+    .select('captured_at')
+    .eq('source', 'api')
+    .order('captured_at', { ascending: false })
+    .limit(1)
+  const lastRunAt = recentRun?.[0]?.captured_at
+  if (lastRunAt && Date.now() - new Date(lastRunAt).getTime() < 10 * 60 * 1000) {
+    return res.status(200).json({
+      skipped: 'cooldown',
+      detail: '최근 10분 내에 이미 수집했습니다',
+      last_collected_at: lastRunAt,
+    })
+  }
+
   const { data: connections } = await sb
     .from('platform_connections')
     .select('platform, access_token, account_id, account_name')
@@ -509,6 +525,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       continue
     }
     try {
+      // Meta API 버스트 완화 (게시물 간 짧은 간격)
+      await new Promise((r) => setTimeout(r, 300))
       const m = await collectClamped(collector, post.external_id, token)
       await sb.from('post_metrics').insert({
         post_id: post.id,
