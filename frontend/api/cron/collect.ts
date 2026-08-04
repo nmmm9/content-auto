@@ -186,25 +186,111 @@ async function syncFacebookPosts(sb: Supabase, token: string, pageId: string): P
   return fresh.length
 }
 
-/** TikTok Display API: video/query */
+/** TikTok Display API: video/list (계정 전체를 한 번에 받아 캐시) */
+interface TiktokVideo {
+  id: string
+  title?: string
+  view_count?: number
+  like_count?: number
+  comment_count?: number
+  share_count?: number
+  create_time?: number
+  share_url?: string
+}
+
+let tiktokCache: Map<string, TiktokVideo> | null = null
+
+async function fetchTiktokVideos(token: string): Promise<TiktokVideo[]> {
+  const all: TiktokVideo[] = []
+  let cursor: number | undefined
+  for (let page = 0; page < 5; page++) {
+    const json = await fetchJson(
+      'https://open.tiktokapis.com/v2/video/list/?fields=id,title,view_count,like_count,comment_count,share_count,create_time,share_url',
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(cursor ? { max_count: 20, cursor } : { max_count: 20 }),
+      }
+    )
+    const data = json.data as { videos?: TiktokVideo[]; has_more?: boolean; cursor?: number }
+    all.push(...(data?.videos ?? []))
+    if (!data?.has_more || !data.cursor) break
+    cursor = data.cursor
+  }
+  return all
+}
+
 async function collectTiktok(externalId: string, token: string): Promise<Collected> {
-  const json = await fetchJson(
-    'https://open.tiktokapis.com/v2/video/query/?fields=id,view_count,like_count,comment_count,share_count',
-    {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ filters: { video_ids: [externalId] } }),
-    }
-  )
-  const video = (json.data as { videos?: Array<Record<string, number>> })?.videos?.[0]
-  if (!video) throw new Error('video not found')
+  if (!tiktokCache) {
+    tiktokCache = new Map((await fetchTiktokVideos(token)).map((v) => [v.id, v]))
+  }
+  const video = tiktokCache.get(externalId)
+  if (!video) throw new Error('video not found in list')
   return {
     views: video.view_count,
     likes: video.like_count,
     comments: video.comment_count,
     shares: video.share_count,
-    raw: json,
+    raw: video,
   }
+}
+
+/** TikTok 액세스 토큰 리프레시 (24시간 만료 — 매 실행마다 갱신) */
+async function refreshTiktokToken(
+  sb: Supabase,
+  refreshToken: string
+): Promise<{ token: string | null; refreshed: boolean }> {
+  const clientKey = process.env.TIKTOK_CLIENT_KEY
+  const clientSecret = process.env.TIKTOK_CLIENT_SECRET
+  if (!clientKey || !clientSecret) return { token: null, refreshed: false }
+  try {
+    const res = await fetch('https://open.tiktokapis.com/v2/oauth/token/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_key: clientKey,
+        client_secret: clientSecret,
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+      }),
+    })
+    const json = (await res.json()) as { access_token?: string; refresh_token?: string }
+    if (!json.access_token) return { token: null, refreshed: false }
+    await sb
+      .from('platform_connections')
+      .update({ access_token: json.access_token, refresh_token: json.refresh_token ?? refreshToken })
+      .eq('platform', 'tiktok')
+    return { token: json.access_token, refreshed: true }
+  } catch (err) {
+    console.warn('tiktok token refresh failed:', err instanceof Error ? err.message : err)
+    return { token: null, refreshed: false }
+  }
+}
+
+/** 새 TikTok 영상 자동 등록 */
+async function syncTiktokPosts(sb: Supabase, token: string): Promise<number> {
+  if (!tiktokCache) {
+    tiktokCache = new Map((await fetchTiktokVideos(token)).map((v) => [v.id, v]))
+  }
+  const videos = [...tiktokCache.values()]
+  if (videos.length === 0) return 0
+
+  const { data: existing } = await sb.from('posts').select('external_id').eq('platform', 'tiktok')
+  const known = new Set((existing ?? []).map((e) => e.external_id))
+  const fresh = videos.filter((v) => !known.has(v.id))
+  if (fresh.length === 0) return 0
+
+  const { error } = await sb.from('posts').insert(
+    fresh.map((v) => ({
+      platform: 'tiktok',
+      external_id: v.id,
+      post_url: (v.share_url ?? '').split('?')[0],
+      title: String(v.title ?? '').split('\n')[0].trim().slice(0, 60) || '영상',
+      posted_at: v.create_time ? new Date(v.create_time * 1000).toISOString() : new Date().toISOString(),
+    }))
+  )
+  if (error) throw new Error(error.message)
+  return fresh.length
 }
 
 const COLLECTORS: Record<string, (id: string, token: string) => Promise<Collected>> = {
@@ -419,7 +505,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { data: connections } = await sb
     .from('platform_connections')
-    .select('platform, access_token, account_id, account_name')
+    .select('platform, access_token, refresh_token, account_id, account_name')
   const tokens: Record<string, string> = {}
   const accountIds: Record<string, string> = {}
   const accountNames: Record<string, string> = {}
@@ -433,8 +519,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const report = {
     collected: 0,
     skipped_no_token: 0,
-    synced: { threads: 0, instagram: 0, facebook: 0, naver_blog: 0 },
-    token_refreshed: { threads: false, instagram: false },
+    synced: { threads: 0, instagram: 0, facebook: 0, naver_blog: 0, tiktok: 0 },
+    token_refreshed: { threads: false, instagram: false, tiktok: false },
     account_daily_points: 0,
     failed: [] as string[],
   }
@@ -448,6 +534,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       report.synced.threads = await syncThreadsPosts(sb, token)
     } catch (err) {
       report.failed.push(`threads sync: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }
+
+  // TikTok: 액세스 토큰 리프레시(24시간 만료) + 새 영상 자동 등록
+  const tiktokRefreshToken = (connections ?? []).find((c) => c.platform === 'tiktok')?.refresh_token
+  if (tiktokRefreshToken) {
+    const { token, refreshed } = await refreshTiktokToken(sb, tiktokRefreshToken)
+    if (token) tokens.tiktok = token
+    report.token_refreshed.tiktok = refreshed
+  }
+  if (tokens.tiktok) {
+    try {
+      report.synced.tiktok = await syncTiktokPosts(sb, tokens.tiktok)
+    } catch (err) {
+      report.failed.push(`tiktok sync: ${err instanceof Error ? err.message : String(err)}`)
     }
   }
 
