@@ -433,7 +433,7 @@ async function collectAdSpend(
   const ads = (json.data as AdRow[]) ?? []
   if (ads.length === 0) return { matched: 0, totalSpend: 0, unmatched: [] }
 
-  const { data: posts } = await sb.from('posts').select('id, title, post_url, platform')
+  const { data: posts } = await sb.from('posts').select('id, title, post_url, platform, posted_at')
   const rows = posts ?? []
 
   // 게시물 단위 집행액 합산 (같은 게시물에 광고가 여러 개일 수 있음)
@@ -450,13 +450,23 @@ async function collectAdSpend(
     const shortcode = (permalink.match(/\/(?:p|reel)\/([^/?]+)/) ?? [])[1]
     const adName = normalizeForMatch(ad.name ?? '')
 
+    // 광고가 어느 플랫폼 게시물인지 판별 — 다른 플랫폼의 동명 게시물에 잘못 붙는 것을 막는다
+    const isInstagramAd = Boolean(permalink) || /instagram/i.test(ad.name ?? '')
+    const targetPlatforms = isInstagramAd ? ['instagram', 'instagram_reels'] : ['facebook']
+    const candidates = rows.filter((p) => targetPlatforms.includes(p.platform))
+
     // ① permalink 숏코드 일치 ② 광고명이 게시물 제목을 포함 (부스트 시 캡션이 광고명에 들어감)
-    const hit =
-      (shortcode && rows.find((p) => String(p.post_url).includes(shortcode))) ||
-      rows.find((p) => {
+    let hit = shortcode ? candidates.find((p) => String(p.post_url).includes(shortcode)) : undefined
+    if (!hit) {
+      const titleHits = candidates.filter((p) => {
         const t = normalizeForMatch(p.title ?? '')
         return t.length >= 6 && adName.includes(t)
       })
+      // 제목이 같은 게시물이 여럿이면 가장 최근 것 하나만 (중복 배정 방지)
+      hit = titleHits.sort(
+        (a, b) => new Date(b.posted_at).getTime() - new Date(a.posted_at).getTime()
+      )[0]
+    }
 
     if (hit) {
       spendByPost.set(hit.id, (spendByPost.get(hit.id) ?? 0) + spend)
@@ -465,8 +475,17 @@ async function collectAdSpend(
     }
   }
 
+  // 자동 수집분만 초기화 후 재적용 — 수동 입력값(boost_source='manual')은 보존
+  await sb
+    .from('posts')
+    .update({ boosted: false, boost_spend: 0 })
+    .eq('boost_source', 'meta_ads')
+
   for (const [postId, spend] of spendByPost) {
-    await sb.from('posts').update({ boosted: true, boost_spend: spend }).eq('id', postId)
+    await sb
+      .from('posts')
+      .update({ boosted: true, boost_spend: spend, boost_source: 'meta_ads' })
+      .eq('id', postId)
   }
   return { matched: spendByPost.size, totalSpend, unmatched }
 }
