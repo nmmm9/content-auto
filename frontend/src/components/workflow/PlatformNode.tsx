@@ -104,6 +104,8 @@ export default function PlatformNode({ id, data }: NodeProps) {
   const config = platformConfig[d.platform] || platformConfig.youtube
   const Icon = config.icon
   const [urlInput, setUrlInput] = useState('')
+  const [inputMode, setInputMode] = useState<'url' | 'text'>('url')
+  const [textInput, setTextInput] = useState('')
 
   const handleApprove = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -127,6 +129,13 @@ export default function PlatformNode({ id, data }: NodeProps) {
     setUrlInput('')
   }
 
+  const handleTextSubmit = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (textInput.trim().length < 2) return
+    window.workflowEvents?.emit('text-prompt', textInput.trim())
+    setTextInput('')
+  }
+
   const handleNodeClick = () => {
     if (d.isMain && d.analysisResult && (d.status === 'ready' || d.status === 'success')) {
       window.workflowEvents?.emit('show-analysis', null)
@@ -134,7 +143,7 @@ export default function PlatformNode({ id, data }: NodeProps) {
   }
 
   const statusInfo: Record<string, { icon: React.ReactNode; text: string; color: string }> = {
-    idle: { icon: <Clock size={14} className="text-ash-gray" />, text: 'URL을 입력하세요', color: 'text-muted-gray' },
+    idle: { icon: <Clock size={14} className="text-ash-gray" />, text: 'URL 또는 주제를 입력하세요', color: 'text-muted-gray' },
     ready: { icon: <CheckCircle size={14} className="text-success" />, text: '준비 완료', color: 'text-success' },
     pending: { icon: <Clock size={14} className="text-muted-gray" />, text: '준비 중', color: 'text-muted-gray' },
     waiting_approval: { icon: <UserCheck size={14} className="text-ink" />, text: '승인 대기', color: 'text-ink' },
@@ -190,28 +199,61 @@ export default function PlatformNode({ id, data }: NodeProps) {
         </div>
       </div>
 
-      {/* YouTube URL Input (main node only, idle state) */}
+      {/* 소스 입력 (main node only, idle state) — YouTube URL 또는 주제 텍스트 */}
       {d.isMain && d.status === 'idle' && (
         <div className="mb-2">
-          <div className="flex gap-1.5">
-            <div className="flex-1 relative">
-              <Link size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-ash-gray" />
-              <input
-                type="text"
-                value={urlInput}
-                onChange={(e) => setUrlInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleUrlSubmit(e as unknown as React.MouseEvent) }}
-                placeholder="YouTube URL 붙여넣기"
-                className="w-full pl-7 pr-2 py-1.5 text-xs border border-paper-gray rounded focus:ring-1 focus:ring-paper-ink focus:border-paper-ink nowheel nodrag"
-              />
-            </div>
-            <button
-              onClick={handleUrlSubmit}
-              className="px-2 py-1.5 bg-paper-ink text-paper-white rounded hover:bg-charcoal transition nowheel nodrag"
-            >
-              <ArrowRight size={14} />
-            </button>
+          <div className="flex gap-1 mb-1.5">
+            {([['url', 'YouTube URL'], ['text', '주제 입력']] as const).map(([mode, label]) => (
+              <button
+                key={mode}
+                onClick={(e) => { e.stopPropagation(); setInputMode(mode) }}
+                className={`px-2 py-1 text-[10px] font-bold rounded nowheel nodrag transition-colors ${
+                  inputMode === mode
+                    ? 'bg-paper-ink text-paper-white'
+                    : 'bg-paper-beige text-muted-gray hover:text-ink'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
+          {inputMode === 'url' ? (
+            <div className="flex gap-1.5">
+              <div className="flex-1 relative">
+                <Link size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-ash-gray" />
+                <input
+                  type="text"
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleUrlSubmit(e as unknown as React.MouseEvent) }}
+                  placeholder="YouTube URL 붙여넣기"
+                  className="w-full pl-7 pr-2 py-1.5 text-xs border border-paper-gray rounded focus:ring-1 focus:ring-paper-ink focus:border-paper-ink nowheel nodrag"
+                />
+              </div>
+              <button
+                onClick={handleUrlSubmit}
+                className="px-2 py-1.5 bg-paper-ink text-paper-white rounded hover:bg-charcoal transition nowheel nodrag"
+              >
+                <ArrowRight size={14} />
+              </button>
+            </div>
+          ) : (
+            <div>
+              <textarea
+                value={textInput}
+                onChange={(e) => setTextInput(e.target.value)}
+                placeholder={'글로 만들 주제/브리프 입력\n예: 소형 아파트에서 수납을 늘리는 5가지 방법'}
+                rows={3}
+                className="w-full px-2 py-1.5 text-xs border border-paper-gray rounded focus:ring-1 focus:ring-paper-ink focus:border-paper-ink resize-none nowheel nodrag"
+              />
+              <button
+                onClick={handleTextSubmit}
+                className="w-full mt-1 py-1.5 bg-paper-ink text-paper-white text-xs font-bold rounded hover:bg-charcoal transition nowheel nodrag flex items-center justify-center gap-1"
+              >
+                주제로 기획 분석 <ArrowRight size={12} />
+              </button>
+            </div>
+          )}
         </div>
       )}
 

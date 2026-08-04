@@ -522,6 +522,49 @@ function WorkflowInner() {
     }
   }, [setNodes, selectedAnalysisModel, updateMainNode])
 
+  // 주제/브리프 텍스트로 기획 분석 (영상 없이 GPT가 분석 스키마 생성)
+  const handleTextPrompt = useCallback(async (prompt: string) => {
+    setYoutubeUrl(null)
+    setCurrentPhase('pending')
+    updateMainNode({
+      status: 'pending',
+      youtubeUrl: undefined,
+      videoThumbnail: '',
+      message: 'GPT가 주제를 기획 분석 중… (10~30초)',
+      progress: undefined,
+      analysisSteps: undefined,
+    } as Partial<PlatformNodeData>)
+
+    try {
+      const res = await fetch(`${API_BASE}/workflow/analyze-text`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, model: selectedModel }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: '알 수 없는 오류' }))
+        throw new Error(err.detail || `HTTP ${res.status}`)
+      }
+      const data = await res.json()
+      const topic = (data.analysis?.topic as string) || prompt.slice(0, 50)
+
+      setVideoInfo({ video_id: '', title: topic, channel_name: '주제 입력', thumbnail_url: '' })
+      setAnalysisResult(data.analysis)
+      updateMainNode({
+        status: 'ready',
+        videoTitle: topic,
+        channelName: '주제 입력 (영상 없음)',
+        videoThumbnail: '',
+        analysisResult: data.analysis,
+        message: '기획 분석 완료 (클릭하여 상세보기)',
+      } as Partial<PlatformNodeData>)
+      setCurrentPhase('ready')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '기획 분석 실패'
+      updateMainNode({ status: 'failed', message } as Partial<PlatformNodeData>)
+    }
+  }, [selectedModel, updateMainNode])
+
   // 변환(GPT) 모델 변경 처리
   const handleModelChange = useCallback((model: string) => {
     setSelectedModel(model)
@@ -554,6 +597,7 @@ function WorkflowInner() {
     const onReject = (data: unknown) => handleReject(data as string)
     const onEdit = (data: unknown) => handleEdit(data as string)
     const onYoutubeUrl = (data: unknown) => handleYoutubeUrl(data as string)
+    const onTextPrompt = (data: unknown) => handleTextPrompt(data as string)
     const onModelChange = (data: unknown) => handleModelChange(data as string)
     const onAnalysisModelChange = (data: unknown) => handleAnalysisModelChange(data as string)
     const onShowAnalysis = () => { setAnalysisTab('overview'); setAnalysisModalOpen(true) }
@@ -562,6 +606,7 @@ function WorkflowInner() {
     eventBus.on('reject', onReject)
     eventBus.on('edit', onEdit)
     eventBus.on('youtube-url', onYoutubeUrl)
+    eventBus.on('text-prompt', onTextPrompt)
     eventBus.on('model-change', onModelChange)
     eventBus.on('analysis-model-change', onAnalysisModelChange)
     eventBus.on('show-analysis', onShowAnalysis)
@@ -571,11 +616,12 @@ function WorkflowInner() {
       eventBus.off('reject', onReject)
       eventBus.off('edit', onEdit)
       eventBus.off('youtube-url', onYoutubeUrl)
+      eventBus.off('text-prompt', onTextPrompt)
       eventBus.off('model-change', onModelChange)
       eventBus.off('analysis-model-change', onAnalysisModelChange)
       eventBus.off('show-analysis', onShowAnalysis)
     }
-  }, [handleApprove, handleReject, handleEdit, handleYoutubeUrl, handleModelChange, handleAnalysisModelChange])
+  }, [handleApprove, handleReject, handleEdit, handleYoutubeUrl, handleTextPrompt, handleModelChange, handleAnalysisModelChange])
 
   // 수정 저장 — 노드와 저장 결과(lastResults) 양쪽에 반영 (수정본 유실 방지)
   const handleSaveEdit = useCallback((content: typeof editingContent) => {
