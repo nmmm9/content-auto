@@ -30,6 +30,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .order('date', { ascending: true }),
   ])
 
+  // ── 계정 일별 API가 없는 플랫폼(틱톡·네이버): 게시물 스냅샷 합계의 전일 대비 증감으로 일별 추이 생성 ──
+  const SNAPSHOT_DAILY_PLATFORMS = new Set(['tiktok', 'naver_blog'])
+  const snapshotDaily: Array<{ platform: string; metric: string; date: string; value: number }> = []
+  {
+    const postPlatform = new Map<number, string>(
+      (postsQ.data ?? []).map((p) => [p.id as number, p.platform as string])
+    )
+    // platform → date → postId → 그날의 마지막 누적 조회수
+    const byPlatformDate = new Map<string, Map<string, Map<number, number>>>()
+    for (const m of [...(metricsQ.data ?? [])].reverse()) {
+      const platform = postPlatform.get(m.post_id)
+      if (!platform || !SNAPSHOT_DAILY_PLATFORMS.has(platform)) continue
+      const views = Number(m.views ?? 0)
+      if (!m.captured_at) continue
+      const date = String(m.captured_at).slice(0, 10)
+      if (!byPlatformDate.has(platform)) byPlatformDate.set(platform, new Map())
+      const dates = byPlatformDate.get(platform)!
+      if (!dates.has(date)) dates.set(date, new Map())
+      dates.get(date)!.set(m.post_id, views)
+    }
+    for (const [platform, dates] of byPlatformDate) {
+      const sorted = [...dates.keys()].sort()
+      let prevTotal: number | null = null
+      for (const date of sorted) {
+        const total = [...dates.get(date)!.values()].reduce((s, v) => s + v, 0)
+        // 첫날은 증감을 알 수 없으므로 건너뛴다
+        if (prevTotal != null) {
+          snapshotDaily.push({ platform, metric: 'views', date, value: Math.max(0, total - prevTotal) })
+        }
+        prevTotal = total
+      }
+    }
+  }
+
   const contents = contentsQ.data ?? []
   const clicks = clicksQ.data ?? []
   const links = linksQ.data ?? []
@@ -159,7 +193,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       daily_trend: dailyTrend,
     },
     tracking_links: trackingLinks,
-    account_daily: accountDailyQ.data ?? [],
+    account_daily: [...(accountDailyQ.data ?? []), ...snapshotDaily],
     posts: {
       total: {
         count: posts.length,
