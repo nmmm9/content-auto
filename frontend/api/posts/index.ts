@@ -11,6 +11,12 @@ const EDITABLE_FIELDS = [
   'boost_started_at', 'boost_ended_at', 'external_id', 'content_id', 'notes',
 ] as const
 
+// 사용자가 부스트 금액을 직접 수정하면 수동 입력으로 표시 (광고 API 자동 수집이 덮어쓰지 않도록)
+function markManualBoost(row: Record<string, unknown>) {
+  if ('boost_spend' in row || 'boosted' in row) row.boost_source = 'manual'
+  return row
+}
+
 function pickEditable(body: Record<string, unknown>) {
   const row: Record<string, unknown> = {}
   for (const f of EDITABLE_FIELDS) {
@@ -68,7 +74,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!VALID_PLATFORMS.includes(platform)) {
       return res.status(400).json({ detail: `지원하지 않는 플랫폼: ${platform}` })
     }
-    const row = pickEditable(body)
+    const row = markManualBoost(pickEditable(body))
     const { data, error } = await sb.from('posts').insert(row).select()
     if (error || !data?.length) return res.status(500).json({ detail: error?.message ?? 'insert failed' })
     return res.status(200).json(data[0])
@@ -81,7 +87,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if ('platform' in body && !VALID_PLATFORMS.includes(String(body.platform))) {
       return res.status(400).json({ detail: `지원하지 않는 플랫폼: ${body.platform}` })
     }
-    const { data, error } = await sb.from('posts').update(pickEditable(body)).eq('id', id).select()
+    const { data, error } = await sb
+      .from('posts')
+      .update(markManualBoost(pickEditable(body)))
+      .eq('id', id)
+      .select()
     if (error) return res.status(500).json({ detail: error.message })
     if (!data?.length) return res.status(404).json({ detail: 'Post not found' })
     return res.status(200).json(data[0])
