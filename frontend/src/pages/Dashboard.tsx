@@ -70,7 +70,7 @@ const trackingPlatformColor: Record<string, string> = {
 }
 
 export default function Dashboard() {
-  const [stats, setStats] = useState<Stats>({
+  const [, setStats] = useState<Stats>({
     total: 0,
     completed: 0,
     pending: 0,
@@ -200,68 +200,74 @@ export default function Dashboard() {
         <h2 className="text-2xl font-bold tracking-tight text-ink">대시보드 개요</h2>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-paper-white p-6 rounded border border-paper-gray transition-colors relative overflow-hidden group">
-          <div className="absolute -right-4 -bottom-4 p-4 opacity-5 group-hover:scale-110 group-hover:opacity-10 transition-all duration-500">
-            <LayoutDashboard size={100} className="text-ink" />
+      {/* Stats Cards — 실제 수집 중인 게시물 성과 기준 */}
+      {(() => {
+        const ps = postsSummary
+        const connectedCount = platforms.filter((p) => p.is_connected).length
+        const cards = [
+          {
+            label: '수집 중 게시물',
+            value: (ps?.total.count ?? 0).toLocaleString(),
+            sub: `${connectedCount}개 플랫폼 연동`,
+            icon: FileText,
+            bgIcon: LayoutDashboard,
+            color: 'text-ink',
+            to: '/posts',
+          },
+          {
+            label: '총 조회',
+            value: (ps?.total.views ?? 0).toLocaleString(),
+            sub: ps && ps.total.count > 0 ? `게시물 평균 ${Math.round(ps.total.views / ps.total.count).toLocaleString()}` : '—',
+            icon: TrendingUp,
+            bgIcon: TrendingUp,
+            color: 'text-ink',
+            to: '/posts',
+          },
+          {
+            label: '총 참여',
+            value: (ps?.total.engage ?? 0).toLocaleString(),
+            sub: ps && ps.total.views > 0 ? `참여율 ${((ps.total.engage / ps.total.views) * 100).toFixed(1)}%` : '—',
+            icon: Activity,
+            bgIcon: Activity,
+            color: 'text-success',
+            to: '/posts',
+          },
+          {
+            label: '광고 지출',
+            value: (ps?.total.spend ?? 0) > 0 ? `₩${Math.round(ps!.total.spend).toLocaleString()}` : '–',
+            sub: ps && ps.boosted.count > 0 ? `부스트 ${ps.boosted.count}건` : '부스트 없음',
+            icon: Megaphone,
+            bgIcon: Megaphone,
+            color: 'text-danger',
+            to: '/posts',
+          },
+        ]
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {cards.map((card) => (
+              <Link
+                key={card.label}
+                to={card.to}
+                className="bg-paper-white p-6 rounded border border-paper-gray hover:border-ash-gray transition-colors relative overflow-hidden group"
+              >
+                <div className="absolute -right-4 -bottom-4 p-4 opacity-5 group-hover:scale-110 group-hover:opacity-10 transition-all duration-500">
+                  <card.bgIcon size={100} className={card.color} />
+                </div>
+                <div className="flex items-center gap-4 relative z-10">
+                  <div className="w-12 h-12 rounded bg-paper-beige flex items-center justify-center shrink-0">
+                    <card.icon size={24} className={card.color} strokeWidth={2} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-muted-gray">{card.label}</div>
+                    <div className="text-3xl font-extrabold text-ink mt-0.5 truncate">{card.value}</div>
+                    <div className="text-[11px] text-ash-gray mt-0.5">{card.sub}</div>
+                  </div>
+                </div>
+              </Link>
+            ))}
           </div>
-          <div className="flex items-center gap-4 relative z-10">
-            <div className="w-12 h-12 rounded bg-paper-beige flex items-center justify-center">
-              <FileText size={24} className="text-ink" strokeWidth={2} />
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-gray">전체 콘텐츠</div>
-              <div className="text-3xl font-extrabold text-ink mt-0.5">{stats.total}</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-paper-white p-6 rounded border border-paper-gray transition-colors relative overflow-hidden group">
-          <div className="absolute -right-4 -bottom-4 p-4 opacity-5 group-hover:scale-110 group-hover:opacity-10 transition-all duration-500">
-            <CheckCircle size={100} className="text-success" />
-          </div>
-          <div className="flex items-center gap-4 relative z-10">
-            <div className="w-12 h-12 rounded bg-paper-beige flex items-center justify-center">
-              <CheckCircle size={24} className="text-success" strokeWidth={2} />
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-gray">업로드 완료</div>
-              <div className="text-3xl font-extrabold text-ink mt-0.5">{stats.completed}</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-paper-white p-6 rounded border border-paper-gray transition-colors relative overflow-hidden group">
-          <div className="absolute -right-4 -bottom-4 p-4 opacity-5 group-hover:scale-110 group-hover:opacity-10 transition-all duration-500">
-            <Clock size={100} className="text-muted-gray" />
-          </div>
-          <div className="flex items-center gap-4 relative z-10">
-            <div className="w-12 h-12 rounded bg-paper-beige flex items-center justify-center">
-              <Clock size={24} className="text-muted-gray" strokeWidth={2} />
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-gray">대기 중</div>
-              <div className="text-3xl font-extrabold text-ink mt-0.5">{stats.pending}</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-paper-white p-6 rounded border border-paper-gray transition-colors relative overflow-hidden group">
-          <div className="absolute -right-4 -bottom-4 p-4 opacity-5 group-hover:scale-110 group-hover:opacity-10 transition-all duration-500">
-            <AlertCircle size={100} className="text-danger" />
-          </div>
-          <div className="flex items-center gap-4 relative z-10">
-            <div className="w-12 h-12 rounded bg-paper-beige flex items-center justify-center">
-              <AlertCircle size={24} className="text-danger" strokeWidth={2} />
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-gray">실패</div>
-              <div className="text-3xl font-extrabold text-ink mt-0.5">{stats.failed}</div>
-            </div>
-          </div>
-        </div>
-      </div>
+        )
+      })()}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Platform Status */}
