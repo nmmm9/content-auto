@@ -24,7 +24,7 @@ import TemplateNode from '../components/workflow/TemplateNode'
 import EditModal from '../components/workflow/EditModal'
 import PromptReviewModal, { type PromptData, type PromptDefaults } from '../components/workflow/PromptReviewModal'
 
-import { Play, RotateCcw, Zap, CheckCircle, XCircle, Sparkles, Target, Eye, Film, MessageSquare, Lightbulb, TrendingUp, Users, Hash, Volume2, Palette, X, Map } from 'lucide-react'
+import { Play, RotateCcw, Zap, CheckCircle, XCircle, Sparkles, Target, Eye, Film, MessageSquare, Lightbulb, TrendingUp, Users, Hash, Volume2, Palette, X, Map, FileCode2 } from 'lucide-react'
 
 const nodeTypes = {
   platformNode: PlatformNode,
@@ -291,8 +291,10 @@ function WorkflowInner() {
   const [analysisTab, setAnalysisTab] = useState<'overview' | 'detail' | 'strategy'>('overview')
   const [showMiniMap, setShowMiniMap] = useState(true)
 
-  // 프롬프트 검토 모달
+  // 프롬프트 검토 모달 ('run': 변환 전 검토 / 'manage': 변환 없이 기본 프롬프트 관리)
   const [promptModalOpen, setPromptModalOpen] = useState(false)
+  const [modalMode, setModalMode] = useState<'run' | 'manage'>('run')
+  const [manageSet, setManageSet] = useState<'video' | 'text'>('video')
   const [promptDefaults, setPromptDefaults] = useState<
     (PromptDefaults & { adapt_platforms?: Record<string, PromptData>; adapt_variables?: Record<string, string> }) | null
   >(null)
@@ -848,25 +850,57 @@ function WorkflowInner() {
     setIsRunning(false)
   }, [isRunning, analysisResult, videoInfo, selectedModel, youtubeUrl, sourceMode, sourceText, customPrompts, customAdaptPrompts, brandVoice, setNodes, setEdges, updateResultNode])
 
+  const ensurePromptDefaults = useCallback(async () => {
+    if (promptDefaults) return promptDefaults
+    const res = await fetch(`${API_BASE}/workflow/prompts`)
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const d = await res.json()
+    setPromptDefaults(d)
+    return d
+  }, [promptDefaults])
+
   // 보내기 → 프롬프트 검토 모달 열기 (텍스트 모드는 경량 변환 프롬프트를 표시)
   const openPromptReview = useCallback(async () => {
     if (isRunning || !analysisResult || !videoInfo) return
-    let defaults = promptDefaults
-    if (!defaults) {
-      try {
-        const res = await fetch(`${API_BASE}/workflow/prompts`)
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        defaults = await res.json()
-        setPromptDefaults(defaults)
-      } catch (err) {
-        console.error('Failed to load prompts, running with defaults:', err)
-        // 프롬프트 조회 실패 시 검토 없이 기본 프롬프트로 바로 실행
-        runWorkflow({}, '')
-        return
-      }
+    try {
+      await ensurePromptDefaults()
+    } catch (err) {
+      console.error('Failed to load prompts, running with defaults:', err)
+      // 프롬프트 조회 실패 시 검토 없이 기본 프롬프트로 바로 실행
+      runWorkflow({}, '')
+      return
     }
+    setModalMode('run')
     setPromptModalOpen(true)
-  }, [isRunning, analysisResult, videoInfo, promptDefaults, runWorkflow])
+  }, [isRunning, analysisResult, videoInfo, ensurePromptDefaults, runWorkflow])
+
+  // 프롬프트 관리 — 변환 없이 언제든 기본 프롬프트 확인·수정·저장
+  const openPromptManage = useCallback(async () => {
+    try {
+      await ensurePromptDefaults()
+    } catch (err) {
+      console.error('Failed to load prompts:', err)
+      alert('프롬프트를 불러오지 못했습니다')
+      return
+    }
+    setManageSet(sourceMode === 'text' ? 'text' : 'video')
+    setModalMode('manage')
+    setPromptModalOpen(true)
+  }, [ensurePromptDefaults, sourceMode])
+
+  // 관리 모드 저장 — 변환 실행 없이 기본값으로만 저장
+  const handleManageConfirm = useCallback((prompts: Record<string, PromptData>, voice: string) => {
+    if (manageSet === 'text') {
+      setCustomAdaptPrompts(prompts)
+      saveStored('workflow_custom_adapt_prompts', prompts)
+    } else {
+      setCustomPrompts(prompts)
+      saveStored('workflow_custom_prompts', prompts)
+    }
+    setBrandVoice(voice)
+    saveStored('workflow_brand_voice', voice)
+    setPromptModalOpen(false)
+  }, [manageSet])
 
   // 프롬프트 확정 → 기본값으로 영구 저장 + 변환 실행 (모드별 분리 저장)
   const handlePromptConfirm = useCallback((prompts: Record<string, PromptData>, voice: string) => {
@@ -1013,6 +1047,14 @@ function WorkflowInner() {
             </button>
           )}
           <button
+            onClick={openPromptManage}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-charcoal bg-paper-white border border-paper-gray rounded hover:bg-paper-beige transition-colors"
+            title="변환 없이 기본 프롬프트를 확인·수정·저장"
+          >
+            <FileCode2 size={16} strokeWidth={2.5} />
+            프롬프트 관리
+          </button>
+          <button
             onClick={resetWorkflow}
             className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-charcoal bg-paper-white border border-paper-gray rounded hover:bg-paper-beige transition-colors"
           >
@@ -1094,26 +1136,31 @@ function WorkflowInner() {
         videoThumbnail={videoInfo?.thumbnail_url}
       />
 
-      {/* Prompt Review Modal — 영상 모드/텍스트 모드에 맞는 프롬프트 세트 표시 */}
-      {promptDefaults && (
-        <PromptReviewModal
-          isOpen={promptModalOpen}
-          onClose={() => setPromptModalOpen(false)}
-          onConfirm={handlePromptConfirm}
-          platforms={derivedPlatformIds.map((id) => ({ key: platformKeys[id], name: platformNames[id] }))}
-          defaults={
-            sourceMode === 'text' && promptDefaults.adapt_platforms
-              ? {
-                  brand_voice: promptDefaults.brand_voice,
-                  platforms: promptDefaults.adapt_platforms,
-                  variables: promptDefaults.adapt_variables ?? {},
-                }
-              : promptDefaults
-          }
-          initialPrompts={sourceMode === 'text' ? customAdaptPrompts : customPrompts}
-          initialBrandVoice={brandVoice}
-        />
-      )}
+      {/* Prompt Review Modal — 실행 전 검토(run) 또는 기본 프롬프트 관리(manage) */}
+      {promptDefaults && (() => {
+        const activeSet = modalMode === 'manage' ? manageSet : sourceMode === 'text' ? 'text' : 'video'
+        const modalDefaults =
+          activeSet === 'text' && promptDefaults.adapt_platforms
+            ? {
+                brand_voice: promptDefaults.brand_voice,
+                platforms: promptDefaults.adapt_platforms,
+                variables: promptDefaults.adapt_variables ?? {},
+              }
+            : promptDefaults
+        return (
+          <PromptReviewModal
+            isOpen={promptModalOpen}
+            onClose={() => setPromptModalOpen(false)}
+            onConfirm={modalMode === 'manage' ? handleManageConfirm : handlePromptConfirm}
+            platforms={derivedPlatformIds.map((id) => ({ key: platformKeys[id], name: platformNames[id] }))}
+            defaults={modalDefaults}
+            initialPrompts={activeSet === 'text' ? customAdaptPrompts : customPrompts}
+            initialBrandVoice={brandVoice}
+            confirmLabel={modalMode === 'manage' ? '기본값으로 저장' : undefined}
+            setToggle={modalMode === 'manage' ? { value: manageSet, onChange: setManageSet } : undefined}
+          />
+        )
+      })()}
 
       {/* Analysis Result Modal */}
       {analysisModalOpen && analysisResult && (

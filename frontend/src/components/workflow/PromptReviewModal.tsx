@@ -22,6 +22,10 @@ interface PromptReviewModalProps {
   /** 이전 실행에서 수정했던 값 유지용 */
   initialPrompts?: Record<string, PromptData>
   initialBrandVoice?: string
+  /** 확인 버튼 라벨 (관리 모드에서는 "저장") */
+  confirmLabel?: string
+  /** 관리 모드에서 영상/텍스트 프롬프트 세트 전환 */
+  setToggle?: { value: 'video' | 'text'; onChange: (v: 'video' | 'text') => void }
 }
 
 const BRAND_TAB = '__brand__'
@@ -34,6 +38,8 @@ export default function PromptReviewModal({
   defaults,
   initialPrompts,
   initialBrandVoice,
+  confirmLabel,
+  setToggle,
 }: PromptReviewModalProps) {
   const [activeTab, setActiveTab] = useState<string>(BRAND_TAB)
   const [prompts, setPrompts] = useState<Record<string, PromptData>>({})
@@ -108,6 +114,21 @@ export default function PromptReviewModal({
               각 플랫폼에 적용될 프롬프트를 확인·수정하세요. 수정하면 기본값으로 저장되어 다음에도 유지됩니다 (탭별 "기본값 복원"으로 원복).
             </p>
           </div>
+          {setToggle && (
+            <div className="flex items-center gap-1 bg-paper-white/10 rounded p-1 mr-2">
+              {([['video', '영상 변환'], ['text', '텍스트 변환']] as const).map(([v, label]) => (
+                <button
+                  key={v}
+                  onClick={() => setToggle.onChange(v)}
+                  className={`px-3 py-1.5 text-xs font-bold rounded transition-colors ${
+                    setToggle.value === v ? 'bg-paper-white text-ink' : 'text-paper-white/70 hover:text-paper-white'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
           <button onClick={onClose} className="text-paper-white/60 hover:text-paper-white transition-colors p-1">
             <X size={18} />
           </button>
@@ -240,7 +261,7 @@ export default function PromptReviewModal({
                   className="flex items-center gap-1.5 px-6 py-2 text-sm font-bold text-ink rounded bg-lemon hover:opacity-80 transition"
                 >
                   <Play size={15} />
-                  이 프롬프트로 변환 시작
+                  {confirmLabel ?? '이 프롬프트로 변환 시작'}
                 </button>
               </div>
             </div>
