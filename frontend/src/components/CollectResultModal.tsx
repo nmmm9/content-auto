@@ -8,6 +8,7 @@ export interface CollectResult {
   synced?: Record<string, number>
   token_refreshed?: Record<string, boolean>
   account_daily_points?: number
+  ad_spend?: { matched: number; total: number; unmatched: string[] }
   failed?: string[]
   error?: string
 }
@@ -41,6 +42,7 @@ export default function CollectResultModal({
     synced = {},
     token_refreshed = {},
     account_daily_points = 0,
+    ad_spend,
     failed = [],
     error,
   } = result
@@ -112,6 +114,32 @@ export default function CollectResultModal({
                           <span className="font-bold text-ink">{v}건</span>
                         </div>
                       ))}
+                  </div>
+                </div>
+              )}
+
+              {ad_spend && ad_spend.total > 0 && (
+                <div>
+                  <div className="text-[10px] font-bold text-muted-gray uppercase tracking-wider mb-1.5">
+                    광고 지출 (Meta 자동 수집)
+                  </div>
+                  <div className="border border-paper-beige rounded bg-paper-ivory p-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-charcoal">총 집행액</span>
+                      <span className="font-extrabold text-danger">₩{Math.round(ad_spend.total).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-xs mt-1">
+                      <span className="text-muted-gray">게시물 매칭</span>
+                      <span className="font-semibold text-ink">{ad_spend.matched}건</span>
+                    </div>
+                    {ad_spend.unmatched.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-paper-beige">
+                        <div className="text-[10px] text-muted-gray mb-1">매칭 실패 (수동 확인 필요)</div>
+                        {ad_spend.unmatched.slice(0, 3).map((u, i) => (
+                          <p key={i} className="text-[10px] text-charcoal truncate">{u}</p>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
