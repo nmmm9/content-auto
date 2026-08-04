@@ -246,9 +246,12 @@ export default function Dashboard() {
             to: '/posts',
           },
         ]
+        const spentPct = adAccount && adAccount.charged > 0
+          ? Math.min(100, (adAccount.spent / adAccount.charged) * 100)
+          : 0
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {cards.map((card) => (
+            {cards.slice(0, 3).map((card) => (
               <Link
                 key={card.label}
                 to={card.to}
@@ -269,6 +272,61 @@ export default function Dashboard() {
                 </div>
               </Link>
             ))}
+
+            {/* 광고 지출 — 잔액/소진률을 함께 보여주는 전용 카드 */}
+            <Link
+              to="/posts"
+              className="bg-paper-white p-6 rounded border border-paper-gray hover:border-ash-gray transition-colors relative overflow-hidden group"
+            >
+              <div className="absolute -right-4 -bottom-4 p-4 opacity-5 group-hover:scale-110 group-hover:opacity-10 transition-all duration-500">
+                <Megaphone size={100} className="text-danger" />
+              </div>
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 mb-2">
+                  <Megaphone size={16} className="text-danger" strokeWidth={2.5} />
+                  <span className="text-sm font-medium text-muted-gray">광고</span>
+                  {adAccount && (
+                    <span className="ml-auto text-[11px] font-bold text-muted-gray">{spentPct.toFixed(0)}% 소진</span>
+                  )}
+                </div>
+
+                {adAccount ? (
+                  <>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-extrabold text-danger">
+                        ₩{adAccount.spent.toLocaleString()}
+                      </span>
+                      <span className="text-xs font-semibold text-ash-gray">사용</span>
+                    </div>
+
+                    <div className="bg-paper-beige rounded-none h-2 overflow-hidden mt-2.5">
+                      <div
+                        className="h-full bg-danger transition-all duration-700"
+                        style={{ width: `${spentPct}%` }}
+                      />
+                    </div>
+
+                    <div className="flex justify-between mt-2 text-xs">
+                      <span className="text-charcoal">
+                        잔액 <b className="text-success font-extrabold">₩{adAccount.balance.toLocaleString()}</b>
+                      </span>
+                      <span className="text-muted-gray">
+                        충전 ₩{adAccount.charged.toLocaleString()}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-3xl font-extrabold text-ink mt-0.5">
+                      {(ps?.total.spend ?? 0) > 0 ? `₩${Math.round(ps!.total.spend).toLocaleString()}` : '–'}
+                    </div>
+                    <div className="text-[11px] text-ash-gray mt-0.5">
+                      {ps && ps.boosted.count > 0 ? `부스트 ${ps.boosted.count}건` : '부스트 없음'}
+                    </div>
+                  </>
+                )}
+              </div>
+            </Link>
           </div>
         )
       })()}
