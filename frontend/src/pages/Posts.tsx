@@ -333,6 +333,7 @@ export default function Posts() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<string>('all')
   const [boostFilter, setBoostFilter] = useState<'all' | 'boosted' | 'organic'>('all')
+  const [adAccount, setAdAccount] = useState<{ charged: number; spent: number; balance: number } | null>(null)
   const [registerOpen, setRegisterOpen] = useState(false)
   const [editing, setEditing] = useState<Post | null>(null)
   const [metricPost, setMetricPost] = useState<Post | null>(null)
@@ -353,10 +354,17 @@ export default function Posts() {
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/posts`)
+      const [res, analyticsRes] = await Promise.all([
+        fetch(`${API_BASE}/posts`),
+        fetch(`${API_BASE}/analytics?days=30`).catch(() => null),
+      ])
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
       setPosts(data.posts ?? [])
+      if (analyticsRes?.ok) {
+        const a = await analyticsRes.json()
+        setAdAccount(a.ad_account ?? null)
+      }
     } catch (err) {
       console.error('load posts failed:', err)
     } finally {
@@ -566,7 +574,41 @@ export default function Posts() {
         ))}
       </div>
 
-      {/* 부스트만 볼 때: 광고 효율 요약 */}
+      {/* 부스트만 볼 때: 광고 계정 잔액 + 효율 요약 */}
+      {boostFilter === 'boosted' && adAccount && (
+        <div className="bg-paper-white border border-paper-gray rounded p-4 mb-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Megaphone size={13} className="text-danger" />
+            <span className="text-[10px] font-bold text-muted-gray uppercase tracking-wider">Meta 광고 계정</span>
+          </div>
+          <div className="flex items-end gap-6 flex-wrap">
+            <div>
+              <div className="text-[11px] text-muted-gray">총 충전</div>
+              <div className="text-lg font-extrabold text-ink">₩{adAccount.charged.toLocaleString()}</div>
+            </div>
+            <div>
+              <div className="text-[11px] text-muted-gray">사용</div>
+              <div className="text-lg font-extrabold text-danger">₩{adAccount.spent.toLocaleString()}</div>
+            </div>
+            <div>
+              <div className="text-[11px] text-muted-gray">잔액</div>
+              <div className="text-lg font-extrabold text-success">₩{adAccount.balance.toLocaleString()}</div>
+            </div>
+            <div className="flex-1 min-w-[160px]">
+              <div className="bg-paper-beige rounded-none h-2.5 overflow-hidden">
+                <div
+                  className="h-full bg-danger transition-all duration-700"
+                  style={{ width: `${adAccount.charged > 0 ? Math.min(100, (adAccount.spent / adAccount.charged) * 100) : 0}%` }}
+                />
+              </div>
+              <div className="text-[10px] text-ash-gray mt-1 text-right">
+                {adAccount.charged > 0 ? `${((adAccount.spent / adAccount.charged) * 100).toFixed(0)}% 소진` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {boostFilter === 'boosted' && visibleTotals.count > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
           {[

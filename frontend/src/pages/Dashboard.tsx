@@ -96,6 +96,7 @@ export default function Dashboard() {
   const [collecting, setCollecting] = useState(false)
   const [collectResult, setCollectResult] = useState<CollectResult | null>(null)
   const [accountDaily, setAccountDaily] = useState<AccountDailyRow[]>([])
+  const [adAccount, setAdAccount] = useState<{ charged: number; spent: number; balance: number } | null>(null)
 
   // 통합 분석 API 한 번으로 대시보드 데이터 전체 로드 (service_role 서버 집계)
   const fetchData = useCallback(async () => {
@@ -117,6 +118,7 @@ export default function Dashboard() {
       )
       setPostsSummary(data.posts ?? null)
       setAccountDaily(data.account_daily ?? [])
+      setAdAccount(data.ad_account ?? null)
     } catch (error) {
       console.error('Failed to fetch analytics:', error)
     } finally {
@@ -232,8 +234,12 @@ export default function Dashboard() {
           },
           {
             label: '광고 지출',
-            value: (ps?.total.spend ?? 0) > 0 ? `₩${Math.round(ps!.total.spend).toLocaleString()}` : '–',
-            sub: ps && ps.boosted.count > 0 ? `부스트 ${ps.boosted.count}건` : '부스트 없음',
+            value: adAccount
+              ? `₩${adAccount.spent.toLocaleString()}`
+              : (ps?.total.spend ?? 0) > 0 ? `₩${Math.round(ps!.total.spend).toLocaleString()}` : '–',
+            sub: adAccount
+              ? `잔액 ₩${adAccount.balance.toLocaleString()} · 충전 ₩${adAccount.charged.toLocaleString()}`
+              : ps && ps.boosted.count > 0 ? `부스트 ${ps.boosted.count}건` : '부스트 없음',
             icon: Megaphone,
             bgIcon: Megaphone,
             color: 'text-danger',
