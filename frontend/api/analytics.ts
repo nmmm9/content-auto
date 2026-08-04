@@ -193,7 +193,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       daily_trend: dailyTrend,
     },
     tracking_links: trackingLinks,
-    account_daily: [...(accountDailyQ.data ?? []), ...snapshotDaily],
+    account_daily: [...(accountDailyQ.data ?? [])
+      .filter((r) => r.platform !== 'meta_ads'), ...snapshotDaily],
+    ad_account: (() => {
+      // 광고 계정 잔액/충전/사용 — account_metrics의 최신 값
+      const rows = (accountDailyQ.data ?? []).filter((r) => r.platform === 'meta_ads')
+      if (rows.length === 0) return null
+      const latest: Record<string, number> = {}
+      for (const r of rows) latest[r.metric] = Number(r.value) // 날짜 오름차순이라 마지막이 최신
+      return {
+        charged: latest.charged ?? 0,
+        spent: latest.spent ?? 0,
+        balance: latest.balance ?? 0,
+      }
+    })(),
     posts: {
       total: {
         count: posts.length,

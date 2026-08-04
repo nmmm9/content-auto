@@ -490,6 +490,36 @@ async function collectAdSpend(
   return { matched: spendByPost.size, totalSpend, unmatched }
 }
 
+/** 광고 계정 잔액·누적지출 수집 (선불 계정: 충전액 = 잔액 + 사용액) */
+async function collectAdAccountStatus(
+  sb: Supabase,
+  token: string,
+  adAccountId: string
+): Promise<{ spent: number; balance: number; charged: number } | null> {
+  const json = await fetchJson(
+    `https://graph.facebook.com/v23.0/${adAccountId}?fields=amount_spent,spend_cap,is_prepay_account,funding_source_details&access_token=${token}`
+  )
+  const spent = Number(json.amount_spent ?? 0)
+  // 선불 계정은 결제수단 표시 문자열에 사용 가능 잔액이 담긴다 (예: "사용 가능한 잔액(₩42,491 KRW)")
+  const display = (json.funding_source_details as { display_string?: string })?.display_string ?? ''
+  const balanceMatch = display.match(/([\d,]+)/)
+  const balance = balanceMatch ? Number(balanceMatch[1].replace(/,/g, '')) : 0
+  const charged = spent + balance
+
+  if (!spent && !balance) return null
+
+  const today = new Date().toISOString().slice(0, 10)
+  await sb.from('account_metrics').upsert(
+    [
+      { platform: 'meta_ads', metric: 'spent', date: today, value: Math.round(spent) },
+      { platform: 'meta_ads', metric: 'balance', date: today, value: Math.round(balance) },
+      { platform: 'meta_ads', metric: 'charged', date: today, value: Math.round(charged) },
+    ],
+    { onConflict: 'platform,metric,date' }
+  )
+  return { spent, balance, charged }
+}
+
 /** Meta 사용자 토큰 갱신 (60일 만료 — 매일 연장해 사실상 무기한 유지) */
 async function refreshMetaUserToken(sb: Supabase, token: string): Promise<string> {
   const appId = process.env.META_APP_ID
@@ -625,6 +655,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     token_refreshed: { threads: false, instagram: false, tiktok: false },
     account_daily_points: 0,
     ad_spend: { matched: 0, total: 0, unmatched: [] as string[] },
+    ad_account: null as { spent: number; balance: number; charged: number } | null,
     failed: [] as string[],
   }
 
@@ -692,6 +723,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const adToken = await refreshMetaUserToken(sb, adsConn.access_token)
       const r = await collectAdSpend(sb, adToken, adsConn.account_id)
       report.ad_spend = { matched: r.matched, total: r.totalSpend, unmatched: r.unmatched }
+      const status = await collectAdAccountStatus(sb, adToken, adsConn.account_id)
+      if (status) report.ad_account = status
     } catch (err) {
       report.failed.push(`ad spend: ${err instanceof Error ? err.message : String(err)}`)
     }
