@@ -471,36 +471,36 @@ export default function Posts() {
   return (
     <div className="animate-in fade-in duration-500">
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-paper-ink rounded">
-            <BarChart3 size={20} className="text-paper-white" strokeWidth={2.5} />
+          <div className="p-2 xl:p-2.5 bg-paper-ink rounded">
+            <BarChart3 className="text-paper-white w-5 h-5 xl:w-6 xl:h-6" strokeWidth={2.5} />
           </div>
           <div>
-            <h2 className="text-lg font-extrabold tracking-tight text-ink">게시글 성과</h2>
-            <p className="text-xs text-muted-gray">플랫폼별 게시글 수치 · 부스트 지출 · 트래킹 클릭</p>
+            <h2 className="text-lg xl:text-2xl font-extrabold tracking-tight text-ink">게시글 성과</h2>
+            <p className="text-xs xl:text-sm text-muted-gray">플랫폼별 게시글 수치 · 부스트 지출 · 트래킹 클릭</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={collectNow}
             disabled={collecting}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-paper-white bg-paper-ink rounded hover:bg-charcoal disabled:opacity-60"
+            className="flex items-center gap-1.5 px-3 xl:px-4 py-2 xl:py-2.5 text-xs xl:text-sm font-bold text-paper-white bg-paper-ink rounded hover:bg-charcoal disabled:opacity-60"
           >
-            <CloudDownload size={14} className={collecting ? 'animate-bounce' : ''} />
+            <CloudDownload className={`w-3.5 h-3.5 xl:w-4 xl:h-4 ${collecting ? 'animate-bounce' : ''}`} />
             {collecting ? '수집 중… (최대 1~2분)' : '지금 수집'}
           </button>
           <button
             onClick={load}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-charcoal bg-paper-white border border-paper-gray rounded hover:bg-paper-beige"
+            className="flex items-center gap-1.5 px-3 xl:px-4 py-2 xl:py-2.5 text-xs xl:text-sm font-semibold text-charcoal bg-paper-white border border-paper-gray rounded hover:bg-paper-beige"
           >
-            <RefreshCw size={14} /> 새로고침
+            <RefreshCw className="w-3.5 h-3.5 xl:w-4 xl:h-4" /> 새로고침
           </button>
           <button
             onClick={() => { setEditing(null); setRegisterOpen(true) }}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-ink rounded bg-lemon hover:opacity-80"
+            className="flex items-center gap-1.5 px-4 xl:px-5 py-2 xl:py-2.5 text-xs xl:text-sm font-bold text-ink rounded bg-lemon hover:opacity-80"
           >
-            <Plus size={14} /> 게시글 등록
+            <Plus className="w-3.5 h-3.5 xl:w-4 xl:h-4" /> 게시글 등록
           </button>
         </div>
       </div>
@@ -512,17 +512,17 @@ export default function Posts() {
             <button
               key={platform}
               onClick={() => setFilter(filter === platform ? 'all' : platform)}
-              className={`text-left bg-paper-white border rounded p-3.5 transition-colors ${
+              className={`text-left bg-paper-white border rounded p-3.5 xl:p-4 transition-colors ${
                 filter === platform ? 'border-paper-ink' : 'border-paper-gray hover:border-ash-gray'
               }`}
             >
-              <div className="text-[10px] font-bold text-muted-gray uppercase tracking-wider mb-1.5">
+              <div className="text-[10px] xl:text-xs font-bold text-muted-gray uppercase tracking-wider mb-1.5">
                 {PLATFORM_LABELS[platform] ?? platform} · {s.count}건
               </div>
-              <div className="text-lg font-extrabold text-ink">{s.views.toLocaleString()}<span className="text-[10px] font-semibold text-ash-gray ml-1">조회</span></div>
-              <div className="flex items-center gap-2 mt-1 text-[11px] text-charcoal">
+              <div className="text-lg xl:text-2xl font-extrabold text-ink">{s.views.toLocaleString()}<span className="text-[10px] xl:text-xs font-semibold text-ash-gray ml-1">조회</span></div>
+              <div className="flex items-center gap-2 mt-1 text-[11px] xl:text-xs text-charcoal">
                 <span>참여 {s.engage.toLocaleString()}</span>
-                {s.clicks > 0 && <span className="flex items-center gap-0.5"><MousePointerClick size={11} />{s.clicks.toLocaleString()}</span>}
+                {s.clicks > 0 && <span className="flex items-center gap-0.5"><MousePointerClick className="w-3 h-3" />{s.clicks.toLocaleString()}</span>}
                 {s.spend > 0 && <span className="text-danger font-semibold">{fmtWon(s.spend)}</span>}
               </div>
             </button>
@@ -534,7 +534,7 @@ export default function Posts() {
       <div className="flex items-center gap-1.5 mb-3 flex-wrap">
         <button
           onClick={() => setFilter('all')}
-          className={`px-3 py-1.5 text-xs font-semibold rounded border ${
+          className={`px-3 xl:px-4 py-1.5 xl:py-2 text-xs xl:text-sm font-semibold rounded border ${
             filter === 'all' ? 'bg-paper-ink text-paper-white border-paper-ink' : 'bg-paper-white text-charcoal border-paper-gray hover:bg-paper-beige'
           }`}
         >
@@ -544,7 +544,7 @@ export default function Posts() {
           <button
             key={p}
             onClick={() => setFilter(p)}
-            className={`px-3 py-1.5 text-xs font-semibold rounded border ${
+            className={`px-3 xl:px-4 py-1.5 xl:py-2 text-xs xl:text-sm font-semibold rounded border ${
               filter === p ? 'bg-paper-ink text-paper-white border-paper-ink' : 'bg-paper-white text-charcoal border-paper-gray hover:bg-paper-beige'
             }`}
           >
@@ -563,7 +563,7 @@ export default function Posts() {
           <button
             key={b.key}
             onClick={() => setBoostFilter(b.key)}
-            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded border ${
+            className={`flex items-center gap-1 px-3 xl:px-4 py-1.5 xl:py-2 text-xs xl:text-sm font-semibold rounded border ${
               boostFilter === b.key
                 ? b.key === 'boosted'
                   ? 'bg-danger text-paper-white border-danger'
@@ -639,22 +639,22 @@ export default function Posts() {
 
       {/* 게시글 테이블 */}
       <div className="bg-paper-white border border-paper-gray rounded overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm xl:text-base">
           <thead>
-            <tr className="border-b border-paper-gray bg-paper-ivory text-[10px] font-bold text-muted-gray uppercase tracking-wider">
+            <tr className="border-b border-paper-gray bg-paper-ivory text-[10px] xl:text-xs font-bold text-muted-gray uppercase tracking-wider">
               {COLUMNS.map((col) => (
                 <th
                   key={col.key}
                   onClick={() => toggleSort(col.key)}
-                  className={`px-3 py-2.5 first:pl-4 cursor-pointer select-none hover:text-ink transition-colors ${
+                  className={`px-3 xl:px-4 py-2.5 xl:py-3 first:pl-4 cursor-pointer select-none hover:text-ink transition-colors ${
                     col.align === 'left' ? 'text-left' : 'text-right'
                   } ${sortKey === col.key ? 'text-ink' : ''}`}
                 >
                   <span className={`inline-flex items-center gap-0.5 ${col.align === 'left' ? '' : 'flex-row-reverse'}`}>
                     {col.label}
                     {sortKey === col.key
-                      ? (sortDir === 'asc' ? <ChevronUp size={11} /> : <ChevronDown size={11} />)
-                      : <ChevronsUpDown size={11} className="opacity-30" />}
+                      ? (sortDir === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />)
+                      : <ChevronsUpDown className="w-3 h-3 opacity-30" />}
                   </span>
                 </th>
               ))}
@@ -671,7 +671,7 @@ export default function Posts() {
             ) : (
               visible.map((p) => (
                 <tr key={p.id} className="border-b border-paper-beige last:border-0 hover:bg-paper-ivory/60">
-                  <td className="px-4 py-2.5 max-w-[260px]">
+                  <td className="px-4 xl:px-5 py-2.5 xl:py-3.5 max-w-[260px] xl:max-w-[360px]">
                     <div className="flex items-center gap-1.5">
                       <span className="font-semibold text-ink truncate">{p.title || '(제목 없음)'}</span>
                       {p.post_url && (
@@ -681,25 +681,25 @@ export default function Posts() {
                       )}
                     </div>
                   </td>
-                  <td className="px-3 py-2.5">
-                    <span className="px-1.5 py-0.5 border border-paper-gray text-charcoal text-[10px] rounded-none whitespace-nowrap">
+                  <td className="px-3 xl:px-4 py-2.5 xl:py-3.5">
+                    <span className="px-1.5 xl:px-2 py-0.5 border border-paper-gray text-charcoal text-[10px] xl:text-xs rounded-none whitespace-nowrap">
                       {PLATFORM_LABELS[p.platform] ?? p.platform}
                     </span>
                   </td>
-                  <td className="px-3 py-2.5 text-right text-xs text-charcoal whitespace-nowrap">{fmtDate(p.posted_at)}</td>
-                  <td className="px-3 py-2.5 text-right font-semibold text-ink">{fmt(p.latest?.views)}</td>
-                  <td className="px-3 py-2.5 text-right text-charcoal">{fmt(p.latest?.likes)}</td>
-                  <td className="px-3 py-2.5 text-right text-charcoal">{fmt(p.latest?.comments)}</td>
-                  <td className="px-3 py-2.5 text-right text-charcoal">{fmt(p.latest?.shares)}</td>
-                  <td className="px-3 py-2.5 text-right text-charcoal">{fmt(p.latest?.saves)}</td>
-                  <td className="px-3 py-2.5 text-right text-charcoal">{p.clicks == null ? '–' : fmt(p.clicks)}</td>
-                  <td className="px-3 py-2.5 text-right text-xs text-charcoal whitespace-nowrap">
+                  <td className="px-3 xl:px-4 py-2.5 xl:py-3.5 text-right text-xs xl:text-sm text-charcoal whitespace-nowrap">{fmtDate(p.posted_at)}</td>
+                  <td className="px-3 xl:px-4 py-2.5 xl:py-3.5 text-right font-semibold text-ink">{fmt(p.latest?.views)}</td>
+                  <td className="px-3 xl:px-4 py-2.5 xl:py-3.5 text-right text-charcoal">{fmt(p.latest?.likes)}</td>
+                  <td className="px-3 xl:px-4 py-2.5 xl:py-3.5 text-right text-charcoal">{fmt(p.latest?.comments)}</td>
+                  <td className="px-3 xl:px-4 py-2.5 xl:py-3.5 text-right text-charcoal">{fmt(p.latest?.shares)}</td>
+                  <td className="px-3 xl:px-4 py-2.5 xl:py-3.5 text-right text-charcoal">{fmt(p.latest?.saves)}</td>
+                  <td className="px-3 xl:px-4 py-2.5 xl:py-3.5 text-right text-charcoal">{p.clicks == null ? '–' : fmt(p.clicks)}</td>
+                  <td className="px-3 xl:px-4 py-2.5 xl:py-3.5 text-right text-xs xl:text-sm text-charcoal whitespace-nowrap">
                     {Number(p.boost_budget) > 0 ? fmtWon(Number(p.boost_budget)) : '–'}
                   </td>
-                  <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                  <td className="px-3 xl:px-4 py-2.5 xl:py-3.5 text-right whitespace-nowrap">
                     {p.boosted ? (
                       <div className="inline-flex flex-col items-end gap-0.5">
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-danger">
+                        <span className="inline-flex items-center gap-1 text-[11px] xl:text-sm font-semibold text-danger">
                           <Megaphone size={11} />{fmtWon(Number(p.boost_spend))}
                         </span>
                         {Number(p.boost_budget) > 0 && (
@@ -717,17 +717,17 @@ export default function Posts() {
                         )}
                       </div>
                     ) : (
-                      <span className="text-[11px] text-ash-gray">오가닉</span>
+                      <span className="text-[11px] xl:text-xs text-ash-gray">오가닉</span>
                     )}
                   </td>
-                  <td className="px-3 py-2.5 text-right text-[11px] text-ash-gray whitespace-nowrap">
+                  <td className="px-3 xl:px-4 py-2.5 xl:py-3.5 text-right text-[11px] xl:text-xs text-ash-gray whitespace-nowrap">
                     {p.latest ? `${fmtDate(p.latest.captured_at)} ${p.latest.source === 'api' ? '자동' : '수동'}` : '기록 없음'}
                   </td>
-                  <td className="px-3 py-2.5">
+                  <td className="px-3 xl:px-4 py-2.5 xl:py-3.5">
                     <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => setMetricPost(p)}
-                        className="px-2 py-1 text-[11px] font-semibold text-ink bg-lemon rounded hover:opacity-80 whitespace-nowrap"
+                        className="px-2 xl:px-3 py-1 xl:py-1.5 text-[11px] xl:text-xs font-semibold text-ink bg-lemon rounded hover:opacity-80 whitespace-nowrap"
                       >
                         수치 입력
                       </button>
