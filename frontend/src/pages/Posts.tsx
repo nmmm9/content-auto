@@ -36,6 +36,7 @@ interface Post {
   posted_at: string
   boosted: boolean
   boost_spend: number
+  boost_budget: number
   external_id: string | null
   notes: string
   latest: MetricSnapshot | null
@@ -44,7 +45,7 @@ interface Post {
 
 type SortKey =
   | 'title' | 'platform' | 'posted_at' | 'views' | 'likes' | 'comments'
-  | 'shares' | 'saves' | 'clicks' | 'boost' | 'updated'
+  | 'shares' | 'saves' | 'clicks' | 'budget' | 'boost' | 'updated'
 
 const COLUMNS: Array<{ key: SortKey; label: string; align: 'left' | 'right' }> = [
   { key: 'title', label: '게시글', align: 'left' },
@@ -56,7 +57,8 @@ const COLUMNS: Array<{ key: SortKey; label: string; align: 'left' | 'right' }> =
   { key: 'shares', label: '공유', align: 'right' },
   { key: 'saves', label: '저장', align: 'right' },
   { key: 'clicks', label: '클릭', align: 'right' },
-  { key: 'boost', label: '부스트', align: 'right' },
+  { key: 'budget', label: '예산', align: 'right' },
+  { key: 'boost', label: '사용', align: 'right' },
   { key: 'updated', label: '업데이트', align: 'right' },
 ]
 
@@ -439,6 +441,7 @@ export default function Posts() {
         case 'shares': return num(p.latest?.shares)
         case 'saves': return num(p.latest?.saves)
         case 'clicks': return num(p.clicks)
+        case 'budget': return Number(p.boost_budget) || 0
         case 'boost': return Number(p.boost_spend) || 0
         case 'updated': return p.latest ? new Date(p.latest.captured_at).getTime() : -1
       }
@@ -660,9 +663,9 @@ export default function Posts() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={12} className="px-4 py-10 text-center text-sm text-ash-gray">불러오는 중…</td></tr>
+              <tr><td colSpan={13} className="px-4 py-10 text-center text-sm text-ash-gray">불러오는 중…</td></tr>
             ) : visible.length === 0 ? (
-              <tr><td colSpan={12} className="px-4 py-10 text-center text-sm text-ash-gray">
+              <tr><td colSpan={13} className="px-4 py-10 text-center text-sm text-ash-gray">
                 등록된 게시글이 없습니다. 우측 상단 "게시글 등록"으로 시작하세요.
               </td></tr>
             ) : (
@@ -690,11 +693,29 @@ export default function Posts() {
                   <td className="px-3 py-2.5 text-right text-charcoal">{fmt(p.latest?.shares)}</td>
                   <td className="px-3 py-2.5 text-right text-charcoal">{fmt(p.latest?.saves)}</td>
                   <td className="px-3 py-2.5 text-right text-charcoal">{p.clicks == null ? '–' : fmt(p.clicks)}</td>
+                  <td className="px-3 py-2.5 text-right text-xs text-charcoal whitespace-nowrap">
+                    {Number(p.boost_budget) > 0 ? fmtWon(Number(p.boost_budget)) : '–'}
+                  </td>
                   <td className="px-3 py-2.5 text-right whitespace-nowrap">
                     {p.boosted ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-danger">
-                        <Megaphone size={11} />{fmtWon(Number(p.boost_spend))}
-                      </span>
+                      <div className="inline-flex flex-col items-end gap-0.5">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-danger">
+                          <Megaphone size={11} />{fmtWon(Number(p.boost_spend))}
+                        </span>
+                        {Number(p.boost_budget) > 0 && (
+                          <div className="w-16">
+                            <div className="bg-paper-beige h-1 overflow-hidden">
+                              <div
+                                className="h-full bg-danger"
+                                style={{ width: `${Math.min(100, (Number(p.boost_spend) / Number(p.boost_budget)) * 100)}%` }}
+                              />
+                            </div>
+                            <div className="text-[9px] text-ash-gray text-right leading-tight">
+                              {Math.min(100, (Number(p.boost_spend) / Number(p.boost_budget)) * 100).toFixed(0)}%
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <span className="text-[11px] text-ash-gray">오가닉</span>
                     )}
