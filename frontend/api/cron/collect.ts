@@ -408,6 +408,89 @@ async function syncInstagramPosts(sb: Supabase, token: string): Promise<number> 
   return fresh.length
 }
 
+// ── Meta 광고 지출 (부스트한 게시물의 실제 집행액 자동 수집) ──
+
+/** 광고 이름/게시물 제목 정규화 — 공백·기호 제거 후 앞부분 비교용 */
+function normalizeForMatch(s: string): string {
+  return String(s).replace(/\s+/g, '').replace(/[.,!?~·…"'"'()]/g, '').toLowerCase()
+}
+
+interface AdRow {
+  name?: string
+  creative?: { instagram_permalink_url?: string; effective_object_story_id?: string }
+  insights?: { data?: Array<{ spend?: string; impressions?: string; clicks?: string }> }
+}
+
+/** 광고 계정의 게시물별 집행액을 수집해 posts.boost_spend에 반영 */
+async function collectAdSpend(
+  sb: Supabase,
+  token: string,
+  adAccountId: string
+): Promise<{ matched: number; totalSpend: number; unmatched: string[] }> {
+  const json = await fetchJson(
+    `https://graph.facebook.com/v23.0/${adAccountId}/ads?fields=id,name,creative{instagram_permalink_url,effective_object_story_id},insights.date_preset(maximum){spend,impressions,clicks}&limit=100&access_token=${token}`
+  )
+  const ads = (json.data as AdRow[]) ?? []
+  if (ads.length === 0) return { matched: 0, totalSpend: 0, unmatched: [] }
+
+  const { data: posts } = await sb.from('posts').select('id, title, post_url, platform')
+  const rows = posts ?? []
+
+  // 게시물 단위 집행액 합산 (같은 게시물에 광고가 여러 개일 수 있음)
+  const spendByPost = new Map<number, number>()
+  const unmatched: string[] = []
+  let totalSpend = 0
+
+  for (const ad of ads) {
+    const spend = Number(ad.insights?.data?.[0]?.spend ?? 0)
+    if (!spend) continue
+    totalSpend += spend
+
+    const permalink = ad.creative?.instagram_permalink_url ?? ''
+    const shortcode = (permalink.match(/\/(?:p|reel)\/([^/?]+)/) ?? [])[1]
+    const adName = normalizeForMatch(ad.name ?? '')
+
+    // ① permalink 숏코드 일치 ② 광고명이 게시물 제목을 포함 (부스트 시 캡션이 광고명에 들어감)
+    const hit =
+      (shortcode && rows.find((p) => String(p.post_url).includes(shortcode))) ||
+      rows.find((p) => {
+        const t = normalizeForMatch(p.title ?? '')
+        return t.length >= 6 && adName.includes(t)
+      })
+
+    if (hit) {
+      spendByPost.set(hit.id, (spendByPost.get(hit.id) ?? 0) + spend)
+    } else {
+      unmatched.push(`${(ad.name ?? '').slice(0, 40)} (₩${spend.toLocaleString()})`)
+    }
+  }
+
+  for (const [postId, spend] of spendByPost) {
+    await sb.from('posts').update({ boosted: true, boost_spend: spend }).eq('id', postId)
+  }
+  return { matched: spendByPost.size, totalSpend, unmatched }
+}
+
+/** Meta 사용자 토큰 갱신 (60일 만료 — 매일 연장해 사실상 무기한 유지) */
+async function refreshMetaUserToken(sb: Supabase, token: string): Promise<string> {
+  const appId = process.env.META_APP_ID
+  const appSecret = process.env.META_APP_SECRET
+  if (!appId || !appSecret) return token
+  try {
+    const json = await fetchJson(
+      `https://graph.facebook.com/v23.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${token}`
+    )
+    const newToken = json.access_token as string | undefined
+    if (newToken && newToken !== token) {
+      await sb.from('platform_connections').update({ access_token: newToken }).eq('platform', 'meta_ads')
+      return newToken
+    }
+  } catch (err) {
+    console.warn('meta_ads token refresh skipped:', err instanceof Error ? err.message : err)
+  }
+  return token
+}
+
 // ── 계정 단위 일별 시계열 (Meta insights: end_time은 PT 기준 하루 버킷의 끝) ──
 
 interface DailyPoint { date: string; value: number }
@@ -522,6 +605,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     synced: { threads: 0, instagram: 0, facebook: 0, naver_blog: 0, tiktok: 0 },
     token_refreshed: { threads: false, instagram: false, tiktok: false },
     account_daily_points: 0,
+    ad_spend: { matched: 0, total: 0, unmatched: [] as string[] },
     failed: [] as string[],
   }
 
@@ -579,6 +663,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       report.synced.instagram = await syncInstagramPosts(sb, token)
     } catch (err) {
       report.failed.push(`instagram sync: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }
+
+  // Meta 광고 지출 — 부스트 게시물의 실제 집행액 반영 (수동 입력 불필요)
+  const adsConn = (connections ?? []).find((c) => c.platform === 'meta_ads')
+  if (adsConn?.access_token && adsConn.account_id) {
+    try {
+      const adToken = await refreshMetaUserToken(sb, adsConn.access_token)
+      const r = await collectAdSpend(sb, adToken, adsConn.account_id)
+      report.ad_spend = { matched: r.matched, total: r.totalSpend, unmatched: r.unmatched }
+    } catch (err) {
+      report.failed.push(`ad spend: ${err instanceof Error ? err.message : String(err)}`)
     }
   }
 
