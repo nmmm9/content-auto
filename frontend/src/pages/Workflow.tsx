@@ -275,8 +275,11 @@ function WorkflowInner() {
 
   // 프롬프트 검토 모달
   const [promptModalOpen, setPromptModalOpen] = useState(false)
-  const [promptDefaults, setPromptDefaults] = useState<PromptDefaults | null>(null)
+  const [promptDefaults, setPromptDefaults] = useState<
+    (PromptDefaults & { adapt_platforms?: Record<string, PromptData>; adapt_variables?: Record<string, string> }) | null
+  >(null)
   const [customPrompts, setCustomPrompts] = useState<Record<string, PromptData>>({})
+  const [customAdaptPrompts, setCustomAdaptPrompts] = useState<Record<string, PromptData>>({})
   const [brandVoice, setBrandVoice] = useState('')
 
   // 동적 자동 레이아웃 (노드 크기 측정 기반)
@@ -643,7 +646,13 @@ function WorkflowInner() {
       const endpoint = sourceMode === 'text' ? 'adapt-text' : 'transform-one'
       const payload =
         sourceMode === 'text'
-          ? { text: sourceText, platform: key, model: selectedModel, brand_voice: brandVoice }
+          ? {
+              text: sourceText,
+              platform: key,
+              model: selectedModel,
+              brand_voice: brandVoice,
+              custom_prompt: customAdaptPrompts[key] ?? null,
+            }
           : {
               analysis: analysisResult,
               video_info: videoInfo,
@@ -671,7 +680,7 @@ function WorkflowInner() {
       console.error('regenerate failed:', err)
       alert(`재생성 실패: ${err instanceof Error ? err.message : String(err)}`)
     }
-  }, [editingNodeId, analysisResult, videoInfo, selectedModel, youtubeUrl, sourceMode, sourceText, brandVoice, customPrompts, setNodes])
+  }, [editingNodeId, analysisResult, videoInfo, selectedModel, youtubeUrl, sourceMode, sourceText, brandVoice, customPrompts, customAdaptPrompts, setNodes])
 
   // 워크플로우 실행 (실제 API 호출)
   const runWorkflow = useCallback(async (
@@ -713,7 +722,7 @@ function WorkflowInner() {
     )
 
     // 플랫폼별 병렬 변환 — 완료되는 노드부터 실시간 반영
-    const activePrompts = promptOverrides ?? customPrompts
+    const activePrompts = promptOverrides ?? (sourceMode === 'text' ? customAdaptPrompts : customPrompts)
     const activeBrandVoice = brandVoiceOverride ?? brandVoice
     const transformResults: Record<string, { status: string; data?: Record<string, unknown>; error?: string }> = {}
 
@@ -734,7 +743,13 @@ function WorkflowInner() {
           const endpoint = sourceMode === 'text' ? 'adapt-text' : 'transform-one'
           const payload =
             sourceMode === 'text'
-              ? { text: sourceText, platform: key, model: selectedModel, brand_voice: activeBrandVoice }
+              ? {
+                  text: sourceText,
+                  platform: key,
+                  model: selectedModel,
+                  brand_voice: activeBrandVoice,
+                  custom_prompt: activePrompts[key] ?? null,
+                }
               : {
                   analysis: analysisResult,
                   video_info: videoInfo,
@@ -812,15 +827,11 @@ function WorkflowInner() {
     }
 
     setIsRunning(false)
-  }, [isRunning, analysisResult, videoInfo, selectedModel, youtubeUrl, sourceMode, sourceText, customPrompts, brandVoice, setNodes, setEdges, updateResultNode])
+  }, [isRunning, analysisResult, videoInfo, selectedModel, youtubeUrl, sourceMode, sourceText, customPrompts, customAdaptPrompts, brandVoice, setNodes, setEdges, updateResultNode])
 
-  // 보내기 → 프롬프트 검토 모달 열기 (텍스트 모드는 경량 변환이라 모달 없이 바로 실행)
+  // 보내기 → 프롬프트 검토 모달 열기 (텍스트 모드는 경량 변환 프롬프트를 표시)
   const openPromptReview = useCallback(async () => {
     if (isRunning || !analysisResult || !videoInfo) return
-    if (sourceMode === 'text') {
-      runWorkflow({}, brandVoice)
-      return
-    }
     let defaults = promptDefaults
     if (!defaults) {
       try {
@@ -836,15 +847,19 @@ function WorkflowInner() {
       }
     }
     setPromptModalOpen(true)
-  }, [isRunning, analysisResult, videoInfo, sourceMode, brandVoice, promptDefaults, runWorkflow])
+  }, [isRunning, analysisResult, videoInfo, promptDefaults, runWorkflow])
 
-  // 프롬프트 확정 → 변환 실행
+  // 프롬프트 확정 → 변환 실행 (모드별로 커스텀 프롬프트 분리 저장)
   const handlePromptConfirm = useCallback((prompts: Record<string, PromptData>, voice: string) => {
-    setCustomPrompts(prompts)
+    if (sourceMode === 'text') {
+      setCustomAdaptPrompts(prompts)
+    } else {
+      setCustomPrompts(prompts)
+    }
     setBrandVoice(voice)
     setPromptModalOpen(false)
     runWorkflow(prompts, voice)
-  }, [runWorkflow])
+  }, [sourceMode, runWorkflow])
 
   // 전체 승인
   const approveAll = useCallback(async () => {
@@ -903,6 +918,7 @@ function WorkflowInner() {
     setSaveStatus('idle')
     setLastResults({})
     setCustomPrompts({})
+    setCustomAdaptPrompts({})
     setBrandVoice('')
   }, [setNodes, setEdges])
 
@@ -1058,15 +1074,23 @@ function WorkflowInner() {
         videoThumbnail={videoInfo?.thumbnail_url}
       />
 
-      {/* Prompt Review Modal */}
+      {/* Prompt Review Modal — 영상 모드/텍스트 모드에 맞는 프롬프트 세트 표시 */}
       {promptDefaults && (
         <PromptReviewModal
           isOpen={promptModalOpen}
           onClose={() => setPromptModalOpen(false)}
           onConfirm={handlePromptConfirm}
           platforms={derivedPlatformIds.map((id) => ({ key: platformKeys[id], name: platformNames[id] }))}
-          defaults={promptDefaults}
-          initialPrompts={customPrompts}
+          defaults={
+            sourceMode === 'text' && promptDefaults.adapt_platforms
+              ? {
+                  brand_voice: promptDefaults.brand_voice,
+                  platforms: promptDefaults.adapt_platforms,
+                  variables: promptDefaults.adapt_variables ?? {},
+                }
+              : promptDefaults
+          }
+          initialPrompts={sourceMode === 'text' ? customAdaptPrompts : customPrompts}
           initialBrandVoice={brandVoice}
         />
       )}

@@ -69,35 +69,6 @@ const ADAPT_OUTPUT: Record<string, string> = {
   living_sequence_lab: '{ "title": "...", "content": "...", "tags": ["태그"] }',
 }
 
-/** 원문 유지 경량 변환용 시스템+유저 프롬프트 생성 */
-export function buildAdaptMessages(
-  platform: string,
-  text: string,
-  brandVoice: string
-): { system: string; user: string } {
-  const hint = ADAPT_HINTS[platform] ?? ''
-  const output = ADAPT_OUTPUT[platform] ?? '{ "caption": "...", "hashtags": ["#태그"] }'
-  const system = `당신은 SNS 채널 운영자입니다. 사용자가 쓴 원문을 ${platform} 게시물 형식으로 다듬습니다.
-
-## 절대 규칙 (위반 시 결과물 폐기)
-- 원문의 내용·메시지·표현을 최대한 그대로 유지한다.
-- 새로운 정보·사실·의견·예시를 추가하지 않는다. 문장을 새로 창작하지 않는다.
-- 허용되는 것: 길이 조절(원문 문장 단위 선택·압축), 줄바꿈·문단 정리, 어미/톤의 미세 조정, 해시태그 생성
-- 해시태그는 원문 주제에서만 뽑는다.
-
-## 플랫폼 형식
-${hint}
-
-## 톤 참고 (브랜드 보이스)
-${brandVoice || DEFAULT_BRAND_VOICE}`
-  const user = `## 원문
-${text}
-
-## 출력 (반드시 아래 JSON만 응답)
-${output}`
-  return { system, user }
-}
-
 export const DEFAULT_BRAND_VOICE = `리빙시퀀스(Living Sequence) 공식 계정 — 인테리어·리빙 콘텐츠를 직접 기획·제작하는 브랜드.
 - 시점: 콘텐츠를 만든 당사자의 1인칭. "소개해드릴 영상을 봤는데요", "이 영상을 보고" 같은 제3자 시청자/큐레이터 화법 금지
 - 톤: 담백하고 신뢰감 있게. 과장된 감탄사·어그로 대신 구체적인 디테일로 설득
@@ -456,4 +427,54 @@ export function buildFormatData(
     video_url: videoUrl || '(링크 미제공 — 링크 안내 문구 생략)',
     brand_voice: brandVoice || DEFAULT_BRAND_VOICE,
   }
+}
+
+/** 텍스트 경량 변환 프롬프트 템플릿 — {brand_voice}, {text} 변수 사용 (검토 모달에서 수정 가능) */
+export const ADAPT_PROMPTS: Record<string, PromptConfig> = Object.fromEntries(
+  Object.keys(PLATFORM_PROMPTS).map((platform) => {
+    const hint = ADAPT_HINTS[platform] ?? ''
+    const output = ADAPT_OUTPUT[platform] ?? '{ "caption": "...", "hashtags": ["#태그"] }'
+    return [
+      platform,
+      {
+        system: `당신은 SNS 채널 운영자입니다. 사용자가 쓴 원문을 ${platform} 게시물 형식으로 다듬습니다.
+
+## 절대 규칙 (위반 시 결과물 폐기)
+- 원문의 내용·메시지·표현을 최대한 그대로 유지한다.
+- 새로운 정보·사실·의견·예시를 추가하지 않는다. 문장을 새로 창작하지 않는다.
+- 허용되는 것: 길이 조절(원문 문장 단위 선택·압축), 줄바꿈·문단 정리, 어미/톤의 미세 조정, 해시태그 생성
+- 해시태그는 원문 주제에서만 뽑는다.
+
+## 플랫폼 형식
+${hint}
+
+## 톤 참고 (브랜드 보이스)
+{brand_voice}`,
+        user: `## 원문
+{text}
+
+## 출력 (반드시 아래 JSON만 응답)
+${output}`,
+      },
+    ]
+  })
+)
+
+export const ADAPT_VARIABLES: Record<string, string> = {
+  text: '입력한 원문 전체',
+  brand_voice: '브랜드 보이스 설정',
+}
+
+/** 원문 유지 경량 변환용 시스템+유저 프롬프트 생성 (custom 오버라이드 지원) */
+export function buildAdaptMessages(
+  platform: string,
+  text: string,
+  brandVoice: string,
+  custom?: { system?: string; user?: string } | null
+): { system: string; user: string } {
+  const base = ADAPT_PROMPTS[platform]
+  const systemTemplate = custom?.system || base.system
+  const userTemplate = custom?.user || base.user
+  const data = { text, brand_voice: brandVoice || DEFAULT_BRAND_VOICE }
+  return { system: render(systemTemplate, data), user: render(userTemplate, data) }
 }
