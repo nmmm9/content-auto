@@ -105,7 +105,7 @@ export default function PromptReviewModal({
           <div className="flex-1">
             <h3 className="text-base font-bold text-paper-white">변환 프롬프트 검토</h3>
             <p className="text-xs text-paper-white/60">
-              각 플랫폼에 적용될 프롬프트를 확인하고 필요하면 수정하세요. 수정 없이 그대로 실행해도 됩니다.
+              각 플랫폼에 적용될 프롬프트를 확인·수정하세요. 수정하면 기본값으로 저장되어 다음에도 유지됩니다 (탭별 "기본값 복원"으로 원복).
             </p>
           </div>
           <button onClick={onClose} className="text-paper-white/60 hover:text-paper-white transition-colors p-1">

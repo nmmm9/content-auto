@@ -213,6 +213,24 @@ const initialEdges: Edge[] = [
   })),
 ]
 
+// 프롬프트 커스터마이징 영구 저장 (localStorage)
+function loadStored<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key)
+    return raw ? (JSON.parse(raw) as T) : fallback
+  } catch {
+    return fallback
+  }
+}
+
+function saveStored(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+  } catch {
+    // 저장 실패는 무시 (프라이빗 모드 등)
+  }
+}
+
 // 전역 이벤트 버스
 const eventBus = {
   listeners: {} as Record<string, ((data: unknown) => void)[]>,
@@ -278,9 +296,10 @@ function WorkflowInner() {
   const [promptDefaults, setPromptDefaults] = useState<
     (PromptDefaults & { adapt_platforms?: Record<string, PromptData>; adapt_variables?: Record<string, string> }) | null
   >(null)
-  const [customPrompts, setCustomPrompts] = useState<Record<string, PromptData>>({})
-  const [customAdaptPrompts, setCustomAdaptPrompts] = useState<Record<string, PromptData>>({})
-  const [brandVoice, setBrandVoice] = useState('')
+  // 수정된 프롬프트는 localStorage에 저장되어 기본값처럼 계속 유지된다
+  const [customPrompts, setCustomPrompts] = useState<Record<string, PromptData>>(() => loadStored('workflow_custom_prompts', {}))
+  const [customAdaptPrompts, setCustomAdaptPrompts] = useState<Record<string, PromptData>>(() => loadStored('workflow_custom_adapt_prompts', {}))
+  const [brandVoice, setBrandVoice] = useState<string>(() => loadStored('workflow_brand_voice', ''))
 
   // 동적 자동 레이아웃 (노드 크기 측정 기반)
   const { fitView, getNodes } = useReactFlow()
@@ -849,14 +868,17 @@ function WorkflowInner() {
     setPromptModalOpen(true)
   }, [isRunning, analysisResult, videoInfo, promptDefaults, runWorkflow])
 
-  // 프롬프트 확정 → 변환 실행 (모드별로 커스텀 프롬프트 분리 저장)
+  // 프롬프트 확정 → 기본값으로 영구 저장 + 변환 실행 (모드별 분리 저장)
   const handlePromptConfirm = useCallback((prompts: Record<string, PromptData>, voice: string) => {
     if (sourceMode === 'text') {
       setCustomAdaptPrompts(prompts)
+      saveStored('workflow_custom_adapt_prompts', prompts)
     } else {
       setCustomPrompts(prompts)
+      saveStored('workflow_custom_prompts', prompts)
     }
     setBrandVoice(voice)
+    saveStored('workflow_brand_voice', voice)
     setPromptModalOpen(false)
     runWorkflow(prompts, voice)
   }, [sourceMode, runWorkflow])
@@ -917,9 +939,7 @@ function WorkflowInner() {
     setSelectedAnalysisModel('gemini-3.5-flash')
     setSaveStatus('idle')
     setLastResults({})
-    setCustomPrompts({})
-    setCustomAdaptPrompts({})
-    setBrandVoice('')
+    // 프롬프트 커스터마이징은 사용자 설정이므로 초기화해도 유지된다 (복원은 모달의 "기본값 복원")
   }, [setNodes, setEdges])
 
   const miniMapNodeColor = useCallback((node: Node) => {
