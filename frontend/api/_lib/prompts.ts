@@ -41,32 +41,62 @@ export const ANALYSIS_PROMPT = `당신은 유튜브 영상 콘텐츠 분석 전�
 - audio_summary: 핵심 발언을 최대한 상세하게, 직접 인용 적극 활용
 - 무음/자막 중심 영상(무드필름 등): audio_summary는 '음성 없음'으로 두고, on_screen_text와 visual_style에 집중`
 
-// 영상 없이 주제/브리프 텍스트만으로 기획 분석을 만드는 프롬프트 (GPT용)
-export const TEXT_ANALYSIS_PROMPT = `당신은 SNS 멀티플랫폼 콘텐츠 기획 전문가입니다.
-사용자가 준 '주제/브리프'를 바탕으로, 여러 플랫폼용 글을 뽑아내는 데 쓸 기획 분석을 작성하세요.
+// ── 텍스트 경량 변환 (원문 유지) ──
+// 사용자가 쓴 원문을 각 플랫폼 형식에 맞게 "살짝만" 다듬는다. 재창작·내용 추가 금지.
 
-## 원칙
-- 브리프에 명시된 사실만 사실로 다룬다. 없는 구체 정보(수치·비용·제품명·사례·인물)를 지어내지 않는다.
-- 브리프가 짧으면 주제에 대한 일반적 관점·각도를 제안하되, 허위 사실은 만들지 않는다.
-- 모든 필드는 한국어로 작성한다.
+const ADAPT_HINTS: Record<string, string> = {
+  youtube_shorts:
+    'title: 원문의 핵심 문장을 40자 이내로 (새 문장 창작 금지, 원문 표현에서 추출). description: 원문을 거의 그대로 담되 300자 이내. hashtags: 3~5개, #shorts 포함',
+  naver_blog:
+    'title: 원문 핵심을 담은 25~40자 제목. content: 원문을 그대로 살리되 문단 나눔·줄바꿈만 정리 (내용 추가·삭제 금지, 필요시 소제목 정도만). tags: 원문 주제 기반 8~10개',
+  facebook:
+    'caption: 원문 유지, 줄바꿈으로 호흡만 정리. 500자를 크게 넘으면 원문 문장 중심으로 압축. hashtags: 0~3개',
+  instagram:
+    'caption: 원문 유지. 첫 줄은 원문 문장 중 가장 눈에 띄는 것을 앞으로 배치. 줄바꿈 정리. hashtags: 8~12개',
+  instagram_reels:
+    'caption: 원문에서 핵심 문장만 골라 150자 이내 (문장 재작성 금지, 선택·압축만). hashtags: 3~8개',
+  threads:
+    'caption: 원문을 450자 이내로 (넘치면 원문 문장 단위로 줄임). 어미만 대화체로 미세 조정 가능. hashtags: 정확히 1개',
+  linkedin:
+    'caption: 원문 유지, 짧은 문단으로 정리. hashtags: 3~5개 (업계 키워드)',
+  living_sequence_lab:
+    'title: 원문 핵심 제목 30~50자. content: 원문 그대로, 문단·소제목 정리만. tags: 8~10개',
+}
 
-## 출력 형식 (반드시 아래 JSON 구조로만 응답)
-{
-  "topic": "핵심 주제 한 문장",
-  "summary": "이 콘텐츠가 다룰 내용의 요약 (브리프를 풀어서 정리)",
-  "detailed_summary": "글에서 다룰 내용을 흐름 순서대로 상세 정리 — 어떤 이야기로 시작해 어떤 포인트를 거쳐 어떻게 마무리할지",
-  "keywords": ["검색에 잘 걸리는 키워드 15~20개 (일반+롱테일 혼합)"],
-  "mood": "이 콘텐츠에 어울리는 톤앤매너",
-  "target_audience": "주요 타겟 (연령대, 관심사, 상황)",
-  "key_points": ["콘텐츠에서 전달할 핵심 메시지들 — 빠짐없이"],
-  "scenes": [],
-  "audio_summary": "해당 없음 (텍스트 기획)",
-  "on_screen_text": "없음",
-  "visual_style": "함께 쓸 이미지/비주얼 방향 제안 (선택적)",
-  "recommended_style": "추천 글쓰기 톤",
-  "viral_hook": "SNS에서 주목받을 핵심 후킹 포인트 (한 문장)",
-  "content_type": "text_brief"
-}`
+const ADAPT_OUTPUT: Record<string, string> = {
+  youtube_shorts: '{ "title": "...", "description": "...", "hashtags": ["#shorts", "#태그"] }',
+  naver_blog: '{ "title": "...", "content": "...", "tags": ["태그"] }',
+  living_sequence_lab: '{ "title": "...", "content": "...", "tags": ["태그"] }',
+}
+
+/** 원문 유지 경량 변환용 시스템+유저 프롬프트 생성 */
+export function buildAdaptMessages(
+  platform: string,
+  text: string,
+  brandVoice: string
+): { system: string; user: string } {
+  const hint = ADAPT_HINTS[platform] ?? ''
+  const output = ADAPT_OUTPUT[platform] ?? '{ "caption": "...", "hashtags": ["#태그"] }'
+  const system = `당신은 SNS 채널 운영자입니다. 사용자가 쓴 원문을 ${platform} 게시물 형식으로 다듬습니다.
+
+## 절대 규칙 (위반 시 결과물 폐기)
+- 원문의 내용·메시지·표현을 최대한 그대로 유지한다.
+- 새로운 정보·사실·의견·예시를 추가하지 않는다. 문장을 새로 창작하지 않는다.
+- 허용되는 것: 길이 조절(원문 문장 단위 선택·압축), 줄바꿈·문단 정리, 어미/톤의 미세 조정, 해시태그 생성
+- 해시태그는 원문 주제에서만 뽑는다.
+
+## 플랫폼 형식
+${hint}
+
+## 톤 참고 (브랜드 보이스)
+${brandVoice || DEFAULT_BRAND_VOICE}`
+  const user = `## 원문
+${text}
+
+## 출력 (반드시 아래 JSON만 응답)
+${output}`
+  return { system, user }
+}
 
 export const DEFAULT_BRAND_VOICE = `리빙시퀀스(Living Sequence) 공식 계정 — 인테리어·리빙 콘텐츠를 직접 기획·제작하는 브랜드.
 - 시점: 콘텐츠를 만든 당사자의 1인칭. "소개해드릴 영상을 봤는데요", "이 영상을 보고" 같은 제3자 시청자/큐레이터 화법 금지

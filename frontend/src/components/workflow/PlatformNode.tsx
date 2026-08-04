@@ -203,7 +203,7 @@ export default function PlatformNode({ id, data }: NodeProps) {
       {d.isMain && d.status === 'idle' && (
         <div className="mb-2">
           <div className="flex gap-1 mb-2">
-            {([['url', 'YouTube URL'], ['text', '주제 입력']] as const).map(([mode, label]) => (
+            {([['url', 'YouTube URL'], ['text', '텍스트 변환']] as const).map(([mode, label]) => (
               <button
                 key={mode}
                 onClick={(e) => { e.stopPropagation(); setInputMode(mode) }}
@@ -242,15 +242,15 @@ export default function PlatformNode({ id, data }: NodeProps) {
               <textarea
                 value={textInput}
                 onChange={(e) => setTextInput(e.target.value)}
-                placeholder={'글로 만들 주제/브리프 입력\n예: 소형 아파트에서 수납을 늘리는 5가지 방법'}
-                rows={3}
+                placeholder={'올릴 글 원문을 붙여넣으세요.\n내용은 그대로 유지하고 플랫폼 형식만 다듬습니다.'}
+                rows={5}
                 className="w-full px-3 py-2 text-sm border border-paper-gray rounded focus:ring-1 focus:ring-paper-ink focus:border-paper-ink resize-none nowheel nodrag"
               />
               <button
                 onClick={handleTextSubmit}
                 className="w-full mt-1.5 py-2 bg-paper-ink text-paper-white text-sm font-bold rounded hover:bg-charcoal transition nowheel nodrag flex items-center justify-center gap-1"
               >
-                주제로 기획 분석 <ArrowRight size={14} />
+                이 원문으로 준비 <ArrowRight size={14} />
               </button>
             </div>
           )}
