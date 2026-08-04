@@ -103,7 +103,7 @@ const createInitialNodes = (): Node[] => [
     id: 'youtube-main',
     type: 'platformNode',
     position: { x: 50, y: 250 },
-    style: { width: 300, height: undefined },
+    style: { width: 360, height: undefined },
     data: {
       label: 'YouTube',
       platform: 'youtube',
@@ -126,56 +126,56 @@ const createInitialNodes = (): Node[] => [
     id: 'youtube-shorts',
     type: 'platformNode',
     position: { x: 720, y: 0 },
-    style: { width: 260 },
+    style: { width: 300 },
     data: { label: 'YouTube Shorts', platform: 'youtube_shorts', status: 'idle' },
   },
   {
     id: 'naver-blog',
     type: 'platformNode',
     position: { x: 720, y: 95 },
-    style: { width: 260 },
+    style: { width: 300 },
     data: { label: '네이버 블로그', platform: 'naver_blog', status: 'idle' },
   },
   {
     id: 'facebook',
     type: 'platformNode',
     position: { x: 720, y: 190 },
-    style: { width: 260 },
+    style: { width: 300 },
     data: { label: 'Facebook', platform: 'facebook', status: 'idle' },
   },
   {
     id: 'instagram',
     type: 'platformNode',
     position: { x: 720, y: 285 },
-    style: { width: 260 },
+    style: { width: 300 },
     data: { label: 'Instagram', platform: 'instagram', status: 'idle' },
   },
   {
     id: 'instagram-reels',
     type: 'platformNode',
     position: { x: 720, y: 380 },
-    style: { width: 260 },
+    style: { width: 300 },
     data: { label: 'Instagram Reels', platform: 'instagram_reels', status: 'idle' },
   },
   {
     id: 'threads',
     type: 'platformNode',
     position: { x: 720, y: 475 },
-    style: { width: 260 },
+    style: { width: 300 },
     data: { label: 'Threads', platform: 'threads', status: 'idle' },
   },
   {
     id: 'linkedin',
     type: 'platformNode',
     position: { x: 720, y: 570 },
-    style: { width: 260 },
+    style: { width: 300 },
     data: { label: 'LinkedIn', platform: 'linkedin', status: 'idle' },
   },
   {
     id: 'living-sequence-lab',
     type: 'platformNode',
     position: { x: 720, y: 665 },
-    style: { width: 260 },
+    style: { width: 300 },
     data: { label: 'Living Sequence Lab', platform: 'living_sequence_lab', status: 'idle' },
   },
   {
@@ -336,7 +336,8 @@ function WorkflowInner() {
       })
     )
 
-    setTimeout(() => fitView({ padding: 0.15, duration: 400 }), 50)
+    // minZoom으로 과도한 축소 방지 — 노드 글자가 읽히는 크기 유지 (넘치는 부분은 스크롤)
+    setTimeout(() => fitView({ padding: 0.08, duration: 400, minZoom: 0.85, maxZoom: 1 }), 50)
   }, [getNodes, setNodes, fitView])
 
   const scheduleLayout = useCallback(() => {
@@ -1007,7 +1008,7 @@ function WorkflowInner() {
           onConnect={onConnect}
           nodeTypes={nodeTypes}
           fitView
-          fitViewOptions={{ padding: 0.2 }}
+          fitViewOptions={{ padding: 0.08, minZoom: 0.85, maxZoom: 1 }}
           defaultEdgeOptions={defaultEdgeOptions}
           proOptions={{ hideAttribution: true }}
           selectionMode={SelectionMode.Partial}

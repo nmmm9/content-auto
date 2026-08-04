@@ -187,12 +187,12 @@ export default function PlatformNode({ id, data }: NodeProps) {
 
       {/* Header */}
       <div className="flex items-center gap-3 mb-3">
-        <div className={`w-9 h-9 ${config.iconBg} rounded flex items-center justify-center ${config.iconColor}`}>
-          <Icon size={20} />
+        <div className={`w-10 h-10 ${config.iconBg} rounded flex items-center justify-center ${config.iconColor}`}>
+          <Icon size={22} />
         </div>
         <div>
-          <div className="font-bold text-ink text-sm">{config.name}</div>
-          <div className={`flex items-center gap-1 text-xs ${currentStatus.color}`}>
+          <div className="font-bold text-ink text-base">{config.name}</div>
+          <div className={`flex items-center gap-1 text-sm ${currentStatus.color}`}>
             {currentStatus.icon}
             <span>{currentStatus.text}</span>
           </div>
@@ -202,12 +202,12 @@ export default function PlatformNode({ id, data }: NodeProps) {
       {/* 소스 입력 (main node only, idle state) — YouTube URL 또는 주제 텍스트 */}
       {d.isMain && d.status === 'idle' && (
         <div className="mb-2">
-          <div className="flex gap-1 mb-1.5">
+          <div className="flex gap-1 mb-2">
             {([['url', 'YouTube URL'], ['text', '주제 입력']] as const).map(([mode, label]) => (
               <button
                 key={mode}
                 onClick={(e) => { e.stopPropagation(); setInputMode(mode) }}
-                className={`px-2 py-1 text-[10px] font-bold rounded nowheel nodrag transition-colors ${
+                className={`px-3 py-1.5 text-xs font-bold rounded nowheel nodrag transition-colors ${
                   inputMode === mode
                     ? 'bg-paper-ink text-paper-white'
                     : 'bg-paper-beige text-muted-gray hover:text-ink'
@@ -220,21 +220,21 @@ export default function PlatformNode({ id, data }: NodeProps) {
           {inputMode === 'url' ? (
             <div className="flex gap-1.5">
               <div className="flex-1 relative">
-                <Link size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-ash-gray" />
+                <Link size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ash-gray" />
                 <input
                   type="text"
                   value={urlInput}
                   onChange={(e) => setUrlInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleUrlSubmit(e as unknown as React.MouseEvent) }}
                   placeholder="YouTube URL 붙여넣기"
-                  className="w-full pl-7 pr-2 py-1.5 text-xs border border-paper-gray rounded focus:ring-1 focus:ring-paper-ink focus:border-paper-ink nowheel nodrag"
+                  className="w-full pl-8 pr-2 py-2 text-sm border border-paper-gray rounded focus:ring-1 focus:ring-paper-ink focus:border-paper-ink nowheel nodrag"
                 />
               </div>
               <button
                 onClick={handleUrlSubmit}
-                className="px-2 py-1.5 bg-paper-ink text-paper-white rounded hover:bg-charcoal transition nowheel nodrag"
+                className="px-3 py-2 bg-paper-ink text-paper-white rounded hover:bg-charcoal transition nowheel nodrag"
               >
-                <ArrowRight size={14} />
+                <ArrowRight size={16} />
               </button>
             </div>
           ) : (
@@ -244,13 +244,13 @@ export default function PlatformNode({ id, data }: NodeProps) {
                 onChange={(e) => setTextInput(e.target.value)}
                 placeholder={'글로 만들 주제/브리프 입력\n예: 소형 아파트에서 수납을 늘리는 5가지 방법'}
                 rows={3}
-                className="w-full px-2 py-1.5 text-xs border border-paper-gray rounded focus:ring-1 focus:ring-paper-ink focus:border-paper-ink resize-none nowheel nodrag"
+                className="w-full px-3 py-2 text-sm border border-paper-gray rounded focus:ring-1 focus:ring-paper-ink focus:border-paper-ink resize-none nowheel nodrag"
               />
               <button
                 onClick={handleTextSubmit}
-                className="w-full mt-1 py-1.5 bg-paper-ink text-paper-white text-xs font-bold rounded hover:bg-charcoal transition nowheel nodrag flex items-center justify-center gap-1"
+                className="w-full mt-1.5 py-2 bg-paper-ink text-paper-white text-sm font-bold rounded hover:bg-charcoal transition nowheel nodrag flex items-center justify-center gap-1"
               >
-                주제로 기획 분석 <ArrowRight size={12} />
+                주제로 기획 분석 <ArrowRight size={14} />
               </button>
             </div>
           )}
@@ -296,13 +296,13 @@ export default function PlatformNode({ id, data }: NodeProps) {
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
             />
           )}
-          <div className="p-2 bg-paper-ivory">
-            <div className="font-semibold text-ink text-xs leading-tight line-clamp-2">{d.videoTitle}</div>
+          <div className="p-2.5 bg-paper-ivory">
+            <div className="font-semibold text-ink text-sm leading-snug line-clamp-2">{d.videoTitle}</div>
             {d.channelName && (
-              <div className="text-[10px] text-muted-gray mt-1">{d.channelName}</div>
+              <div className="text-xs text-muted-gray mt-1">{d.channelName}</div>
             )}
             {d.youtubeUrl && (
-              <div className="text-[10px] text-ash-gray truncate mt-0.5">{d.youtubeUrl}</div>
+              <div className="text-xs text-ash-gray truncate mt-0.5">{d.youtubeUrl}</div>
             )}
           </div>
         </div>
@@ -310,17 +310,17 @@ export default function PlatformNode({ id, data }: NodeProps) {
 
       {/* Generated Content Preview (when waiting approval) */}
       {d.status === 'waiting_approval' && d.generatedContent && (
-        <div className="mb-3 p-2 bg-paper-beige rounded text-xs overflow-hidden max-h-[100px]">
+        <div className="mb-3 p-2.5 bg-paper-beige rounded text-sm overflow-hidden max-h-[130px]">
           {d.generatedContent.title && (
-            <div className="font-medium text-ink line-clamp-1">{d.generatedContent.title}</div>
+            <div className="font-semibold text-ink line-clamp-1">{d.generatedContent.title}</div>
           )}
           {(d.generatedContent.caption || d.generatedContent.content || d.generatedContent.description) && (
-            <div className="text-charcoal line-clamp-2 mt-1">
+            <div className="text-charcoal line-clamp-2 mt-1 leading-snug">
               {d.generatedContent.caption || d.generatedContent.content || d.generatedContent.description}
             </div>
           )}
           {(d.generatedContent.hashtags || d.generatedContent.tags || []).length > 0 && (
-            <div className="text-muted-gray line-clamp-1 mt-1">
+            <div className="text-muted-gray line-clamp-1 mt-1 text-xs">
               {(d.generatedContent.hashtags || d.generatedContent.tags || []).slice(0, 3).join(' ')}
             </div>
           )}
@@ -332,22 +332,22 @@ export default function PlatformNode({ id, data }: NodeProps) {
         <div className="flex gap-2 mb-2">
           <button
             onClick={handleApprove}
-            className="flex-1 py-1.5 px-2 bg-lemon text-ink text-xs font-medium rounded hover:opacity-80 flex items-center justify-center gap-1"
+            className="flex-1 py-2 px-3 bg-lemon text-ink text-sm font-semibold rounded hover:opacity-80 flex items-center justify-center gap-1.5"
           >
-            <CheckCircle size={12} />
+            <CheckCircle size={15} />
             승인
           </button>
           <button
             onClick={handleEdit}
-            className="py-1.5 px-2 bg-paper-ink text-paper-white text-xs font-medium rounded hover:bg-charcoal flex items-center justify-center"
+            className="py-2 px-3 bg-paper-ink text-paper-white text-sm font-medium rounded hover:bg-charcoal flex items-center justify-center"
           >
-            <Edit3 size={12} />
+            <Edit3 size={15} />
           </button>
           <button
             onClick={handleReject}
-            className="py-1.5 px-2 border border-paper-gray text-muted-gray text-xs font-medium rounded hover:bg-paper-beige flex items-center justify-center"
+            className="py-2 px-3 border border-paper-gray text-muted-gray text-sm font-medium rounded hover:bg-paper-beige flex items-center justify-center"
           >
-            <XCircle size={12} />
+            <XCircle size={15} />
           </button>
         </div>
       )}
@@ -367,7 +367,7 @@ export default function PlatformNode({ id, data }: NodeProps) {
 
       {/* Message */}
       {d.message && d.status !== 'waiting_approval' && (
-        <div className={`text-xs mt-1 ${d.status === 'failed' ? 'text-danger' : 'text-muted-gray'}`}>
+        <div className={`text-sm mt-1 ${d.status === 'failed' ? 'text-danger' : 'text-muted-gray'}`}>
           {d.message}
         </div>
       )}

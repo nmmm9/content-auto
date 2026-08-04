@@ -39,14 +39,14 @@ function ModelSelect({
 }) {
   const selected = options.find((m) => m.id === value) || options[0]
   return (
-    <div className="mb-2">
-      <div className="text-[9px] font-bold text-ash-gray uppercase tracking-wider mb-1">{label}</div>
+    <div className="mb-2.5">
+      <div className="text-[11px] font-bold text-ash-gray uppercase tracking-wider mb-1">{label}</div>
       {editable ? (
         <div className="relative">
           <select
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full appearance-none pl-2 pr-7 py-1.5 text-xs border border-paper-gray rounded bg-paper-white focus:ring-1 focus:ring-paper-ink focus:border-paper-ink cursor-pointer nowheel nodrag"
+            className="w-full appearance-none pl-2.5 pr-8 py-2 text-sm border border-paper-gray rounded bg-paper-white focus:ring-1 focus:ring-paper-ink focus:border-paper-ink cursor-pointer nowheel nodrag"
           >
             {options.map((m) => (
               <option key={m.id} value={m.id}>
@@ -54,12 +54,12 @@ function ModelSelect({
               </option>
             ))}
           </select>
-          <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-gray pointer-events-none" />
+          <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-gray pointer-events-none" />
         </div>
       ) : (
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-charcoal">{selected.name}</span>
-          <span className={`text-[10px] px-1.5 py-0.5 rounded-none ${selected.tagColor}`}>
+          <span className="text-sm text-charcoal">{selected.name}</span>
+          <span className={`text-xs px-1.5 py-0.5 rounded-none ${selected.tagColor}`}>
             {selected.tag}
           </span>
         </div>
@@ -87,21 +87,21 @@ export default function TemplateNode({ data }: NodeProps) {
   }
 
   return (
-    <div className={`px-5 py-4 rounded border-2 min-w-[220px] ${statusStyles[status]}`}>
+    <div className={`px-5 py-4 rounded border-2 min-w-[260px] ${statusStyles[status]}`}>
       <Handle type="target" position={Position.Left} className="!w-3 !h-3 !bg-paper-ink !border-2 !border-paper-white" />
 
       <div className="flex items-center gap-2 mb-2">
-        <div className="w-8 h-8 bg-paper-beige rounded flex items-center justify-center text-ink">
+        <div className="w-9 h-9 bg-paper-beige rounded flex items-center justify-center text-ink">
           {status === 'processing' ? (
-            <Loader2 size={18} className="animate-spin" />
+            <Loader2 size={20} className="animate-spin" />
           ) : (
-            <Sparkles size={18} />
+            <Sparkles size={20} />
           )}
         </div>
-        <div className="text-xs font-semibold text-muted-gray uppercase tracking-wider">AI 변환</div>
+        <div className="text-sm font-semibold text-muted-gray uppercase tracking-wider">AI 변환</div>
       </div>
 
-      <div className="font-bold text-ink text-sm mb-2">
+      <div className="font-bold text-ink text-base mb-2.5">
         {status === 'processing' ? 'GPT 변환 중...' : 'AI 콘텐츠 변환'}
       </div>
 
@@ -121,13 +121,13 @@ export default function TemplateNode({ data }: NodeProps) {
       />
 
       <div className="flex flex-wrap gap-1">
-        <span className="px-1.5 py-0.5 border border-paper-gray text-charcoal text-[10px] rounded-none">
+        <span className="px-2 py-0.5 border border-paper-gray text-charcoal text-xs rounded-none">
           영상 분석
         </span>
-        <span className="px-1.5 py-0.5 border border-paper-gray text-charcoal text-[10px] rounded-none">
+        <span className="px-2 py-0.5 border border-paper-gray text-charcoal text-xs rounded-none">
           플랫폼 변환
         </span>
-        <span className="px-1.5 py-0.5 border border-paper-gray text-charcoal text-[10px] rounded-none">
+        <span className="px-2 py-0.5 border border-paper-gray text-charcoal text-xs rounded-none">
           해시태그
         </span>
       </div>

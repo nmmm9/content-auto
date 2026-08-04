@@ -16,7 +16,7 @@ export default function ResultNode({ data }: NodeProps) {
   const hasFailures = d.failed > 0
 
   return (
-    <div className={`px-5 py-4 rounded border-2 bg-paper-white min-w-[180px] ${
+    <div className={`px-5 py-4 rounded border-2 bg-paper-white min-w-[210px] ${
       allDone
         ? hasFailures
           ? 'border-danger'
@@ -26,34 +26,34 @@ export default function ResultNode({ data }: NodeProps) {
       <Handle type="target" position={Position.Left} className="!w-3 !h-3 !bg-paper-ink !border-2 !border-paper-white" />
 
       <div className="flex items-center gap-2 mb-3">
-        <div className={`w-8 h-8 rounded flex items-center justify-center bg-paper-beige ${
+        <div className={`w-9 h-9 rounded flex items-center justify-center bg-paper-beige ${
           allDone
             ? hasFailures ? 'text-danger' : 'text-success'
             : 'text-muted-gray'
         }`}>
-          <BarChart3 size={18} />
+          <BarChart3 size={20} />
         </div>
-        <div className="text-xs font-semibold text-muted-gray uppercase tracking-wider">결과</div>
+        <div className="text-sm font-semibold text-muted-gray uppercase tracking-wider">결과</div>
       </div>
 
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between text-xs">
-          <span className="flex items-center gap-1 text-success">
-            <CheckCircle size={12} /> 성공
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-sm">
+          <span className="flex items-center gap-1.5 text-success">
+            <CheckCircle size={15} /> 성공
           </span>
-          <span className="font-bold text-success">{d.completed}</span>
+          <span className="font-bold text-success text-base">{d.completed}</span>
         </div>
-        <div className="flex items-center justify-between text-xs">
-          <span className="flex items-center gap-1 text-danger">
-            <XCircle size={12} /> 실패
+        <div className="flex items-center justify-between text-sm">
+          <span className="flex items-center gap-1.5 text-danger">
+            <XCircle size={15} /> 실패
           </span>
-          <span className="font-bold text-danger">{d.failed}</span>
+          <span className="font-bold text-danger text-base">{d.failed}</span>
         </div>
-        <div className="flex items-center justify-between text-xs">
-          <span className="flex items-center gap-1 text-ash-gray">
-            <Clock size={12} /> 대기
+        <div className="flex items-center justify-between text-sm">
+          <span className="flex items-center gap-1.5 text-ash-gray">
+            <Clock size={15} /> 대기
           </span>
-          <span className="font-bold text-muted-gray">{d.pending}</span>
+          <span className="font-bold text-muted-gray text-base">{d.pending}</span>
         </div>
       </div>
     </div>
