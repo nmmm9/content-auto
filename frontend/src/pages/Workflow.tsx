@@ -247,6 +247,8 @@ function WorkflowInner() {
   const [completedCount, setCompletedCount] = useState(0)
   const [failedCount, setFailedCount] = useState(0)
   const [youtubeUrl, setYoutubeUrl] = useState<string | null>(null)
+  const [sourceMode, setSourceMode] = useState<'video' | 'text'>('video')
+  const [sourceText, setSourceText] = useState('')
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null)
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
   const [selectedModel, setSelectedModel] = useState('gpt-5-mini')
@@ -469,6 +471,8 @@ function WorkflowInner() {
   // YouTube URL 처리 — 실제 진행 상태만 표시 (가짜 단계 연출 없음)
   const handleYoutubeUrl = useCallback(async (url: string) => {
     setYoutubeUrl(url)
+    setSourceMode('video')
+    setSourceText('')
 
     const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([^&\n?#]+)/)
     const videoId = videoIdMatch ? videoIdMatch[1] : ''
@@ -523,48 +527,26 @@ function WorkflowInner() {
     }
   }, [setNodes, selectedAnalysisModel, updateMainNode])
 
-  // 주제/브리프 텍스트로 기획 분석 (영상 없이 GPT가 분석 스키마 생성)
-  const handleTextPrompt = useCallback(async (prompt: string) => {
+  // 텍스트 모드 — 분석 없이 원문을 그대로 사용, 변환 시 플랫폼 형식만 다듬는다
+  const handleTextPrompt = useCallback((text: string) => {
+    const title = text.split('\n')[0].trim().slice(0, 50) || '텍스트 변환'
     setYoutubeUrl(null)
-    setCurrentPhase('pending')
+    setSourceMode('text')
+    setSourceText(text)
+    setVideoInfo({ video_id: '', title, channel_name: '텍스트 입력', thumbnail_url: '' })
+    // 변환 게이팅용 최소 정보 (분석 단계 없음)
+    setAnalysisResult({ topic: title, summary: text } as unknown as AnalysisResult)
     updateMainNode({
-      status: 'pending',
-      youtubeUrl: undefined,
+      status: 'ready',
+      videoTitle: title,
+      channelName: '텍스트 입력 (원문 유지 변환)',
       videoThumbnail: '',
-      message: 'GPT가 주제를 기획 분석 중… (10~30초)',
-      progress: undefined,
-      analysisSteps: undefined,
+      youtubeUrl: undefined,
+      analysisResult: undefined,
+      message: '원문 준비 완료 — 보내기를 누르면 플랫폼별로 다듬습니다',
     } as Partial<PlatformNodeData>)
-
-    try {
-      const res = await fetch(`${API_BASE}/workflow/analyze-text`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, model: selectedModel }),
-      })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ detail: '알 수 없는 오류' }))
-        throw new Error(err.detail || `HTTP ${res.status}`)
-      }
-      const data = await res.json()
-      const topic = (data.analysis?.topic as string) || prompt.slice(0, 50)
-
-      setVideoInfo({ video_id: '', title: topic, channel_name: '주제 입력', thumbnail_url: '' })
-      setAnalysisResult(data.analysis)
-      updateMainNode({
-        status: 'ready',
-        videoTitle: topic,
-        channelName: '주제 입력 (영상 없음)',
-        videoThumbnail: '',
-        analysisResult: data.analysis,
-        message: '기획 분석 완료 (클릭하여 상세보기)',
-      } as Partial<PlatformNodeData>)
-      setCurrentPhase('ready')
-    } catch (err) {
-      const message = err instanceof Error ? err.message : '기획 분석 실패'
-      updateMainNode({ status: 'failed', message } as Partial<PlatformNodeData>)
-    }
-  }, [selectedModel, updateMainNode])
+    setCurrentPhase('ready')
+  }, [updateMainNode])
 
   // 변환(GPT) 모델 변경 처리
   const handleModelChange = useCallback((model: string) => {
@@ -653,23 +635,28 @@ function WorkflowInner() {
     setEditingNodeId(null)
   }, [editingNodeId, setNodes])
 
-  // AI 재생성 — 해당 플랫폼만 실제 재변환
+  // AI 재생성 — 해당 플랫폼만 실제 재변환 (텍스트 모드는 경량 변환으로)
   const handleRegenerate = useCallback(async () => {
     if (!editingNodeId || !analysisResult || !videoInfo) return
     const key = platformKeys[editingNodeId]
     try {
-      const res = await fetch(`${API_BASE}/workflow/transform-one`, {
+      const endpoint = sourceMode === 'text' ? 'adapt-text' : 'transform-one'
+      const payload =
+        sourceMode === 'text'
+          ? { text: sourceText, platform: key, model: selectedModel, brand_voice: brandVoice }
+          : {
+              analysis: analysisResult,
+              video_info: videoInfo,
+              platform: key,
+              model: selectedModel,
+              youtube_url: youtubeUrl || '',
+              brand_voice: brandVoice,
+              custom_prompt: customPrompts[key] ?? null,
+            }
+      const res = await fetch(`${API_BASE}/workflow/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          analysis: analysisResult,
-          video_info: videoInfo,
-          platform: key,
-          model: selectedModel,
-          youtube_url: youtubeUrl || '',
-          brand_voice: brandVoice,
-          custom_prompt: customPrompts[key] ?? null,
-        }),
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
       if (!res.ok || data.status !== 'success') {
@@ -684,7 +671,7 @@ function WorkflowInner() {
       console.error('regenerate failed:', err)
       alert(`재생성 실패: ${err instanceof Error ? err.message : String(err)}`)
     }
-  }, [editingNodeId, analysisResult, videoInfo, selectedModel, youtubeUrl, brandVoice, customPrompts, setNodes])
+  }, [editingNodeId, analysisResult, videoInfo, selectedModel, youtubeUrl, sourceMode, sourceText, brandVoice, customPrompts, setNodes])
 
   // 워크플로우 실행 (실제 API 호출)
   const runWorkflow = useCallback(async (
@@ -743,18 +730,24 @@ function WorkflowInner() {
       derivedPlatformIds.map(async (id) => {
         const key = platformKeys[id]
         try {
-          const res = await fetch(`${API_BASE}/workflow/transform-one`, {
+          // 텍스트 모드: 원문 유지 경량 변환 / 영상 모드: 분석 기반 변환
+          const endpoint = sourceMode === 'text' ? 'adapt-text' : 'transform-one'
+          const payload =
+            sourceMode === 'text'
+              ? { text: sourceText, platform: key, model: selectedModel, brand_voice: activeBrandVoice }
+              : {
+                  analysis: analysisResult,
+                  video_info: videoInfo,
+                  platform: key,
+                  model: selectedModel,
+                  youtube_url: youtubeUrl || '',
+                  brand_voice: activeBrandVoice,
+                  custom_prompt: activePrompts[key] ?? null,
+                }
+          const res = await fetch(`${API_BASE}/workflow/${endpoint}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              analysis: analysisResult,
-              video_info: videoInfo,
-              platform: key,
-              model: selectedModel,
-              youtube_url: youtubeUrl || '',
-              brand_voice: activeBrandVoice,
-              custom_prompt: activePrompts[key] ?? null,
-            }),
+            body: JSON.stringify(payload),
           })
           const data = await res.json()
           if (!res.ok || data.status !== 'success') {
@@ -819,11 +812,15 @@ function WorkflowInner() {
     }
 
     setIsRunning(false)
-  }, [isRunning, analysisResult, videoInfo, selectedModel, youtubeUrl, customPrompts, brandVoice, setNodes, setEdges, updateResultNode])
+  }, [isRunning, analysisResult, videoInfo, selectedModel, youtubeUrl, sourceMode, sourceText, customPrompts, brandVoice, setNodes, setEdges, updateResultNode])
 
-  // 보내기 → 프롬프트 검토 모달 열기 (기본 프롬프트 lazy fetch)
+  // 보내기 → 프롬프트 검토 모달 열기 (텍스트 모드는 경량 변환이라 모달 없이 바로 실행)
   const openPromptReview = useCallback(async () => {
     if (isRunning || !analysisResult || !videoInfo) return
+    if (sourceMode === 'text') {
+      runWorkflow({}, brandVoice)
+      return
+    }
     let defaults = promptDefaults
     if (!defaults) {
       try {
@@ -839,7 +836,7 @@ function WorkflowInner() {
       }
     }
     setPromptModalOpen(true)
-  }, [isRunning, analysisResult, videoInfo, promptDefaults, runWorkflow])
+  }, [isRunning, analysisResult, videoInfo, sourceMode, brandVoice, promptDefaults, runWorkflow])
 
   // 프롬프트 확정 → 변환 실행
   const handlePromptConfirm = useCallback((prompts: Record<string, PromptData>, voice: string) => {
@@ -897,6 +894,8 @@ function WorkflowInner() {
     setCompletedCount(0)
     setFailedCount(0)
     setYoutubeUrl(null)
+    setSourceMode('video')
+    setSourceText('')
     setVideoInfo(null)
     setAnalysisResult(null)
     setSelectedModel('gpt-5-mini')
