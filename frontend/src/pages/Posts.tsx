@@ -332,6 +332,7 @@ export default function Posts() {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<string>('all')
+  const [boostFilter, setBoostFilter] = useState<'all' | 'boosted' | 'organic'>('all')
   const [registerOpen, setRegisterOpen] = useState(false)
   const [editing, setEditing] = useState<Post | null>(null)
   const [metricPost, setMetricPost] = useState<Post | null>(null)
@@ -407,8 +408,17 @@ export default function Posts() {
     return by
   }, [posts])
 
+  const boostCount = useMemo(
+    () => posts.filter((p) => p.boosted || Number(p.boost_spend) > 0).length,
+    [posts]
+  )
+
   const visible = useMemo(() => {
-    const rows = filter === 'all' ? posts : posts.filter((p) => p.platform === filter)
+    let rows = filter === 'all' ? posts : posts.filter((p) => p.platform === filter)
+    if (boostFilter !== 'all') {
+      const isBoosted = (p: Post) => p.boosted || Number(p.boost_spend) > 0
+      rows = rows.filter((p) => (boostFilter === 'boosted' ? isBoosted(p) : !isBoosted(p)))
+    }
     const num = (v: number | null | undefined) => (v == null ? -1 : v) // 미수집(–)은 항상 뒤로
     const value = (p: Post): number | string => {
       switch (sortKey) {
@@ -433,7 +443,19 @@ export default function Posts() {
         : av - bv
       return sortDir === 'asc' ? cmp : -cmp
     })
-  }, [posts, filter, sortKey, sortDir])
+  }, [posts, filter, boostFilter, sortKey, sortDir])
+
+  // 현재 보이는 목록 기준 합계 (부스트만 볼 때 효율 지표 계산용)
+  const visibleTotals = useMemo(() => {
+    const t = { count: visible.length, views: 0, engage: 0, clicks: 0, spend: 0 }
+    for (const p of visible) {
+      t.views += p.latest?.views ?? 0
+      t.engage += (p.latest?.likes ?? 0) + (p.latest?.comments ?? 0) + (p.latest?.shares ?? 0) + (p.latest?.saves ?? 0)
+      t.clicks += p.clicks ?? 0
+      t.spend += Number(p.boost_spend) || 0
+    }
+    return t
+  }, [visible])
 
   return (
     <div className="animate-in fade-in duration-500">
@@ -518,7 +540,57 @@ export default function Posts() {
             {PLATFORM_LABELS[p] ?? p}
           </button>
         ))}
+
+        <div className="w-px h-6 bg-paper-gray mx-1" />
+
+        {/* 과금(부스트) 필터 */}
+        {([
+          { key: 'all' as const, label: '전체' },
+          { key: 'boosted' as const, label: `부스트 ${boostCount}` },
+          { key: 'organic' as const, label: '오가닉' },
+        ]).map((b) => (
+          <button
+            key={b.key}
+            onClick={() => setBoostFilter(b.key)}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded border ${
+              boostFilter === b.key
+                ? b.key === 'boosted'
+                  ? 'bg-danger text-paper-white border-danger'
+                  : 'bg-paper-ink text-paper-white border-paper-ink'
+                : 'bg-paper-white text-charcoal border-paper-gray hover:bg-paper-beige'
+            }`}
+          >
+            {b.key === 'boosted' && <Megaphone size={12} />}
+            {b.label}
+          </button>
+        ))}
       </div>
+
+      {/* 부스트만 볼 때: 광고 효율 요약 */}
+      {boostFilter === 'boosted' && visibleTotals.count > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
+          {[
+            { label: '집행액', value: fmtWon(visibleTotals.spend), accent: 'text-danger' },
+            { label: '조회', value: visibleTotals.views.toLocaleString(), accent: 'text-ink' },
+            { label: '참여', value: visibleTotals.engage.toLocaleString(), accent: 'text-ink' },
+            {
+              label: '조회당 비용',
+              value: visibleTotals.views > 0 ? `₩${(visibleTotals.spend / visibleTotals.views).toFixed(1)}` : '–',
+              accent: 'text-ink',
+            },
+            {
+              label: '참여당 비용',
+              value: visibleTotals.engage > 0 ? `₩${Math.round(visibleTotals.spend / visibleTotals.engage).toLocaleString()}` : '–',
+              accent: 'text-ink',
+            },
+          ].map((s) => (
+            <div key={s.label} className="bg-paper-white border border-paper-gray rounded p-3">
+              <div className="text-[10px] font-bold text-muted-gray uppercase tracking-wider">{s.label}</div>
+              <div className={`text-lg font-extrabold mt-0.5 ${s.accent}`}>{s.value}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* 게시글 테이블 */}
       <div className="bg-paper-white border border-paper-gray rounded overflow-x-auto">
