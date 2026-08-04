@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { BarChart3, Plus, Trash2, Pencil, RefreshCw, X, ExternalLink, Megaphone, MousePointerClick, CloudDownload, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react'
+import CollectResultModal, { type CollectResult } from '../components/CollectResultModal'
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
@@ -335,6 +336,7 @@ export default function Posts() {
   const [editing, setEditing] = useState<Post | null>(null)
   const [metricPost, setMetricPost] = useState<Post | null>(null)
   const [collecting, setCollecting] = useState(false)
+  const [collectResult, setCollectResult] = useState<CollectResult | null>(null)
   const [sortKey, setSortKey] = useState<SortKey>('views')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
@@ -370,17 +372,12 @@ export default function Posts() {
     try {
       const res = await fetch(`${API_BASE}/cron/collect`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const r = await res.json()
-      if (r.skipped === 'cooldown') {
-        alert('최근 10분 내에 이미 수집했습니다. 잠시 후 다시 시도하세요.')
-        return
-      }
-      const synced = Object.values(r.synced ?? {}).reduce((a: number, b) => a + Number(b), 0)
-      alert(`수집 완료 — 수치 갱신 ${r.collected}건${synced > 0 ? `, 새 게시물 ${synced}건 등록` : ''}${r.failed?.length ? `, 실패 ${r.failed.length}건` : ''}`)
-      load()
+      const r = (await res.json()) as CollectResult
+      setCollectResult(r)
+      if (!r.skipped) load()
     } catch (err) {
       console.error('collect failed:', err)
-      alert('수집에 실패했습니다')
+      setCollectResult({ error: err instanceof Error ? err.message : String(err) })
     } finally {
       setCollecting(false)
     }
@@ -621,6 +618,10 @@ export default function Posts() {
           </tbody>
         </table>
       </div>
+
+      {collectResult && (
+        <CollectResultModal result={collectResult} onClose={() => setCollectResult(null)} />
+      )}
 
       {registerOpen && (
         <PostModal
