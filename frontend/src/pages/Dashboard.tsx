@@ -55,6 +55,10 @@ function platformChannelUrl(conn: PlatformConnection): string | null {
       return name ? `https://www.tiktok.com/@${name}` : null
     case 'naver_blog':
       return name ? `https://blog.naver.com/${name}` : null
+    case 'meta_ads':
+      return conn.account_id
+        ? `https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${conn.account_id.replace('act_', '')}`
+        : null
     default:
       return null
   }
@@ -174,6 +178,7 @@ export default function Dashboard() {
     instagram_reels: { icon: <Film size={22} />, name: 'Instagram Reels' },
     threads: { icon: <AtSign size={22} />, name: 'Threads' },
     tiktok: { icon: <Music2 size={22} />, name: 'TikTok' },
+    meta_ads: { icon: <Megaphone size={22} />, name: 'Meta 광고 계정' },
     linkedin: { icon: <Linkedin size={22} />, name: 'LinkedIn' },
     living_sequence_lab: { icon: <FlaskConical size={22} />, name: 'Living Sequence Lab' },
   }
