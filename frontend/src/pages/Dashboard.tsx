@@ -101,6 +101,13 @@ export default function Dashboard() {
   const [collectResult, setCollectResult] = useState<CollectResult | null>(null)
   const [accountDaily, setAccountDaily] = useState<AccountDailyRow[]>([])
   const [adAccount, setAdAccount] = useState<{ charged: number; spent: number; balance: number } | null>(null)
+  const [hoverPoint, setHoverPoint] = useState<{
+    platform: string
+    date: string
+    value: number
+    x: number
+    y: number
+  } | null>(null)
 
   // 통합 분석 API 한 번으로 대시보드 데이터 전체 로드 (service_role 서버 집계)
   const fetchData = useCallback(async () => {
@@ -618,7 +625,38 @@ export default function Dashboard() {
                         <g key={p}>
                           <path d={path} fill="none" stroke={color} strokeWidth="1.6" strokeLinejoin="round" />
                           {points.map((pt) => (
-                            <circle key={pt.i} cx={getX(pt.i)} cy={getY(pt.v)} r="2" fill="#fffefb" stroke={color} strokeWidth="1.1" />
+                            <circle
+                              key={pt.i}
+                              cx={getX(pt.i)}
+                              cy={getY(pt.v)}
+                              r="2"
+                              fill="#fffefb"
+                              stroke={color}
+                              strokeWidth="1.1"
+                              className="transition-all"
+                              style={{ pointerEvents: 'none' }}
+                            />
+                          ))}
+                          {/* 호버 영역 — 점보다 넓게 잡아 마우스가 쉽게 닿도록 */}
+                          {points.map((pt) => (
+                            <circle
+                              key={`hit-${pt.i}`}
+                              cx={getX(pt.i)}
+                              cy={getY(pt.v)}
+                              r="9"
+                              fill="transparent"
+                              className="cursor-pointer"
+                              onMouseEnter={() =>
+                                setHoverPoint({
+                                  platform: p,
+                                  date: dates[pt.i],
+                                  value: pt.v,
+                                  x: getX(pt.i),
+                                  y: getY(pt.v),
+                                })
+                              }
+                              onMouseLeave={() => setHoverPoint(null)}
+                            />
                           ))}
                         </g>
                       )
@@ -628,6 +666,32 @@ export default function Dashboard() {
                         {dates[idx].slice(5)}
                       </text>
                     ))}
+
+                    {/* 호버 툴팁 */}
+                    {hoverPoint && (() => {
+                      const color = trackingPlatformColor[hoverPoint.platform] || '#0c0c0c'
+                      const metric = accountDaily.find(r => r.platform === hoverPoint.platform)?.metric ?? 'views'
+                      const text = `${trackingPlatformLabel[hoverPoint.platform] ?? hoverPoint.platform} ${hoverPoint.value.toLocaleString()}`
+                      const sub = `${hoverPoint.date.slice(5)} · ${metricLabel[metric] || metric}`
+                      const boxW = Math.max(text.length, sub.length) * 6.2 + 16
+                      const boxH = 34
+                      // 오른쪽 끝에서는 왼쪽으로 뒤집어 잘리지 않게
+                      const flip = hoverPoint.x + boxW + 12 > W
+                      const bx = flip ? hoverPoint.x - boxW - 10 : hoverPoint.x + 10
+                      const by = Math.max(2, Math.min(hoverPoint.y - boxH / 2, H - boxH - 2))
+                      return (
+                        <g style={{ pointerEvents: 'none' }}>
+                          <circle cx={hoverPoint.x} cy={hoverPoint.y} r="4" fill={color} />
+                          <rect x={bx} y={by} width={boxW} height={boxH} rx="3" fill="#0c0c0c" opacity="0.92" />
+                          <text x={bx + 8} y={by + 14} style={{ fontSize: '10px', fill: '#fffefb', fontWeight: 700 }}>
+                            {text}
+                          </text>
+                          <text x={bx + 8} y={by + 26} style={{ fontSize: '9px', fill: '#9e9e9e' }}>
+                            {sub}
+                          </text>
+                        </g>
+                      )
+                    })()}
                   </svg>
                 </div>
               )
