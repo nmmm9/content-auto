@@ -563,14 +563,36 @@ export default function Dashboard() {
             {/* 플랫폼별 일별 추이 (계정 단위 API 시계열) */}
             {(() => {
               const metricLabel: Record<string, string> = { views: '조회', reach: '도달' }
+              // 자연 도달 + 유료 노출을 날짜별로 합산해 표시
+              const organicRows = accountDaily.filter(r => r.metric !== 'paid_views')
+              const paidRows = accountDaily.filter(r => r.metric === 'paid_views')
               const dates = [...new Set(accountDaily.map(r => r.date))].sort()
               if (dates.length < 2) return null
+
               const byPlatform = new Map<string, Map<string, number>>()
-              for (const r of accountDaily) {
+              const paidByPlatform = new Map<string, Map<string, number>>()
+              for (const r of organicRows) {
                 if (!byPlatform.has(r.platform)) byPlatform.set(r.platform, new Map())
                 byPlatform.get(r.platform)!.set(r.date, r.value)
               }
-              const maxVal = Math.max(...accountDaily.map(r => r.value), 1)
+              for (const r of paidRows) {
+                if (!paidByPlatform.has(r.platform)) paidByPlatform.set(r.platform, new Map())
+                paidByPlatform.get(r.platform)!.set(r.date, r.value)
+                // 유료만 있고 자연이 없는 날짜도 선에 포함되도록 합산 맵에 반영
+                if (!byPlatform.has(r.platform)) byPlatform.set(r.platform, new Map())
+                const m = byPlatform.get(r.platform)!
+                if (!m.has(r.date)) m.set(r.date, 0)
+              }
+              // 합산 값으로 교체
+              for (const [platform, series] of byPlatform) {
+                const paid = paidByPlatform.get(platform)
+                if (!paid) continue
+                for (const [date, v] of series) series.set(date, v + (paid.get(date) ?? 0))
+              }
+              const maxVal = Math.max(
+                ...[...byPlatform.values()].flatMap(s => [...s.values()]),
+                1
+              )
               const W = 1200, H = 170, PL = 44, PR = 14, PT = 14, PB = 24
               const chartW = W - PL - PR, chartH = H - PT - PB
               const getX = (i: number) => PL + (i / (dates.length - 1)) * chartW
@@ -582,12 +604,12 @@ export default function Dashboard() {
                       <TrendingUp size={14} className="text-ink" />
                       플랫폼별 일별 추이
                       <span className="text-[10px] font-medium text-ash-gray">
-                        최근 {dates.length}일 · 계정 단위 · 최신일은 집계 중일 수 있음
+                        최근 {dates.length}일 · 자연 + 유료 합산 · 최신일은 집계 중일 수 있음
                       </span>
                     </h4>
                     <div className="flex items-center gap-3">
                       {[...byPlatform.keys()].map(p => {
-                        const metric = accountDaily.find(r => r.platform === p)?.metric ?? 'views'
+                        const metric = organicRows.find(r => r.platform === p)?.metric ?? 'views'
                         return (
                           <span key={p} className="flex items-center gap-1 text-[10px] font-semibold text-charcoal">
                             <span className="w-2 h-2 rounded-none" style={{ backgroundColor: trackingPlatformColor[p] || '#0c0c0c' }} />
@@ -670,9 +692,13 @@ export default function Dashboard() {
                     {/* 호버 툴팁 */}
                     {hoverPoint && (() => {
                       const color = trackingPlatformColor[hoverPoint.platform] || '#0c0c0c'
-                      const metric = accountDaily.find(r => r.platform === hoverPoint.platform)?.metric ?? 'views'
+                      const metric = organicRows.find(r => r.platform === hoverPoint.platform)?.metric ?? 'views'
+                      const paid = paidByPlatform.get(hoverPoint.platform)?.get(hoverPoint.date) ?? 0
+                      const organic = hoverPoint.value - paid
                       const text = `${trackingPlatformLabel[hoverPoint.platform] ?? hoverPoint.platform} ${hoverPoint.value.toLocaleString()}`
-                      const sub = `${hoverPoint.date.slice(5)} · ${metricLabel[metric] || metric}`
+                      const sub = paid > 0
+                        ? `${hoverPoint.date.slice(5)} · 자연 ${organic.toLocaleString()} + 유료 ${paid.toLocaleString()}`
+                        : `${hoverPoint.date.slice(5)} · ${metricLabel[metric] || metric}`
                       const boxW = Math.max(text.length, sub.length) * 6.2 + 16
                       const boxH = 34
                       // 오른쪽 끝에서는 왼쪽으로 뒤집어 잘리지 않게
