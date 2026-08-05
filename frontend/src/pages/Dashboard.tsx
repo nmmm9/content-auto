@@ -574,7 +574,9 @@ export default function Dashboard() {
                     <h4 className="text-sm font-bold text-charcoal flex items-center gap-2">
                       <TrendingUp size={14} className="text-ink" />
                       플랫폼별 일별 추이
-                      <span className="text-[10px] font-medium text-ash-gray">최근 {dates.length}일 · 계정 단위</span>
+                      <span className="text-[10px] font-medium text-ash-gray">
+                        최근 {dates.length}일 · 계정 단위 · 최신일은 집계 중일 수 있음
+                      </span>
                     </h4>
                     <div className="flex items-center gap-3">
                       {[...byPlatform.keys()].map(p => {
@@ -603,14 +605,20 @@ export default function Dashboard() {
                     })}
                     {[...byPlatform.entries()].map(([p, series]) => {
                       const color = trackingPlatformColor[p] || '#0c0c0c'
-                      const path = dates
-                        .map((d, i) => `${i === 0 ? 'M' : 'L'}${getX(i)},${getY(series.get(d) ?? 0)}`)
+                      // 데이터가 없는 날짜는 0으로 찍지 않고 건너뛴다
+                      // (플랫폼마다 집계 완료 시점이 달라 최근 날짜가 비어 있을 수 있음)
+                      const points = dates
+                        .map((d, i) => ({ i, v: series.get(d) }))
+                        .filter((pt): pt is { i: number; v: number } => pt.v != null)
+                      if (points.length === 0) return null
+                      const path = points
+                        .map((pt, idx) => `${idx === 0 ? 'M' : 'L'}${getX(pt.i)},${getY(pt.v)}`)
                         .join(' ')
                       return (
                         <g key={p}>
                           <path d={path} fill="none" stroke={color} strokeWidth="1.6" strokeLinejoin="round" />
-                          {dates.map((d, i) => (
-                            <circle key={i} cx={getX(i)} cy={getY(series.get(d) ?? 0)} r="2" fill="#fffefb" stroke={color} strokeWidth="1.1" />
+                          {points.map((pt) => (
+                            <circle key={pt.i} cx={getX(pt.i)} cy={getY(pt.v)} r="2" fill="#fffefb" stroke={color} strokeWidth="1.1" />
                           ))}
                         </g>
                       )
