@@ -12,7 +12,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') return res.status(405).json({ detail: 'Method not allowed' })
 
   const sb = getSupabase()
-  let { data, error } = await sb.from('platform_connections').select(COLUMNS)
+  // meta_ads는 광고 계정(인프라 연동)이라 콘텐츠 플랫폼 목록에서 제외
+  let { data, error } = await sb.from('platform_connections').select(COLUMNS).neq('platform', 'meta_ads')
   if (error) return res.status(500).json({ detail: error.message })
 
   const existing = new Set((data ?? []).map((row) => row.platform))
