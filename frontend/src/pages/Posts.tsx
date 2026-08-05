@@ -53,8 +53,8 @@ const COLUMNS: Array<{ key: SortKey; label: string; align: 'left' | 'right' }> =
   { key: 'title', label: '게시글', align: 'left' },
   { key: 'platform', label: '플랫폼', align: 'left' },
   { key: 'posted_at', label: '게시일', align: 'right' },
-  { key: 'views', label: '오가닉', align: 'right' },
-  { key: 'paid', label: '광고', align: 'right' },
+  { key: 'views', label: '자연', align: 'right' },
+  { key: 'paid', label: '유료', align: 'right' },
   { key: 'total', label: '총 도달', align: 'right' },
   { key: 'likes', label: '좋아요', align: 'right' },
   { key: 'comments', label: '댓글', align: 'right' },
@@ -533,7 +533,7 @@ export default function Posts() {
               </div>
               {s.paid > 0 && (
                 <div className="text-[10px] xl:text-[11px] text-muted-gray mt-0.5">
-                  오가닉 {s.views.toLocaleString()} · <span className="text-danger font-semibold">광고 {s.paid.toLocaleString()}</span>
+                  자연 {s.views.toLocaleString()} · <span className="text-danger font-semibold">유료 {s.paid.toLocaleString()}</span>
                 </div>
               )}
               <div className="flex items-center gap-2 mt-1 text-[11px] xl:text-xs text-charcoal">
@@ -573,8 +573,8 @@ export default function Posts() {
         {/* 과금(부스트) 필터 */}
         {([
           { key: 'all' as const, label: '전체' },
-          { key: 'boosted' as const, label: `부스트 ${boostCount}` },
-          { key: 'organic' as const, label: '오가닉' },
+          { key: 'boosted' as const, label: `유료 ${boostCount}` },
+          { key: 'organic' as const, label: '자연' },
         ]).map((b) => (
           <button
             key={b.key}
@@ -632,10 +632,10 @@ export default function Posts() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
           {[
             { label: '집행액', value: fmtWon(visibleTotals.spend), accent: 'text-danger' },
-            { label: '광고 노출', value: visibleTotals.paid.toLocaleString(), accent: 'text-danger' },
+            { label: '유료 노출', value: visibleTotals.paid.toLocaleString(), accent: 'text-danger' },
             { label: '총 도달', value: (visibleTotals.views + visibleTotals.paid).toLocaleString(), accent: 'text-ink' },
             {
-              label: '광고 노출당 비용',
+              label: '유료 노출당 비용',
               value: visibleTotals.paid > 0 ? `₩${(visibleTotals.spend / visibleTotals.paid).toFixed(1)}` : '–',
               accent: 'text-ink',
             },
@@ -739,7 +739,7 @@ export default function Posts() {
                         )}
                       </div>
                     ) : (
-                      <span className="text-[11px] xl:text-xs text-ash-gray">오가닉</span>
+                      <span className="text-[11px] xl:text-xs text-ash-gray">자연</span>
                     )}
                   </td>
                   <td className="px-3 xl:px-4 py-2.5 xl:py-3.5 text-right text-[11px] xl:text-xs text-ash-gray whitespace-nowrap">

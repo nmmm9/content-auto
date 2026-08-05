@@ -483,7 +483,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
               {/* 플랫폼별 조회수 */}
               <div className="bg-paper-white rounded p-5 border border-paper-gray">
                 <h4 className="text-sm font-bold text-charcoal mb-3 flex items-center gap-2">
@@ -518,25 +518,26 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* 부스트 vs 오가닉 */}
-              <div className="bg-paper-white rounded p-6 border border-paper-gray">
-                <h4 className="text-sm font-bold text-charcoal mb-4 flex items-center gap-2">
+              {/* 유료 vs 자연 (Meta 한국어 UI 용어) */}
+              <div className="bg-paper-white rounded p-5 border border-paper-gray flex flex-col">
+                <h4 className="text-sm font-bold text-charcoal mb-3 flex items-center gap-2">
                   <Megaphone size={14} className="text-ink" />
-                  부스트 vs 오가닉
+                  유료 vs 자연
                 </h4>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 flex-1">
                   {[
-                    { label: '부스트', agg: ps.boosted, accent: 'text-danger' },
-                    { label: '오가닉', agg: ps.organic, accent: 'text-success' },
+                    { label: '유료 (광고 집행)', agg: ps.boosted, accent: 'text-danger' },
+                    { label: '자연 (광고 없음)', agg: ps.organic, accent: 'text-success' },
                   ].map(({ label, agg, accent }) => (
-                    <div key={label} className="border border-paper-beige rounded bg-paper-ivory p-3.5">
-                      <div className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${accent}`}>
+                    <div key={label} className="border border-paper-beige rounded bg-paper-ivory p-3.5 flex flex-col">
+                      <div className={`text-[10px] font-bold tracking-wider mb-2 ${accent}`}>
                         {label} · {agg.count}건
                       </div>
-                      <div className="space-y-1 text-xs text-charcoal">
+                      <div className="space-y-1.5 text-xs text-charcoal flex-1">
                         <div className="flex justify-between"><span className="text-muted-gray">총 조회</span><span className="font-bold text-ink">{agg.views.toLocaleString()}</span></div>
                         <div className="flex justify-between"><span className="text-muted-gray">평균 조회</span><span className="font-semibold">{agg.count > 0 ? Math.round(agg.views / agg.count).toLocaleString() : '–'}</span></div>
                         <div className="flex justify-between"><span className="text-muted-gray">참여</span><span className="font-semibold">{agg.engage.toLocaleString()}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-gray">참여율</span><span className="font-semibold">{agg.views > 0 ? `${((agg.engage / agg.views) * 100).toFixed(1)}%` : '–'}</span></div>
                         <div className="flex justify-between"><span className="text-muted-gray">클릭</span><span className="font-semibold">{agg.clicks.toLocaleString()}</span></div>
                       </div>
                     </div>
@@ -544,7 +545,7 @@ export default function Dashboard() {
                 </div>
                 {(cpv != null || cpc != null) && (
                   <div className="mt-3 flex items-center gap-4 border-t border-paper-beige pt-3 text-xs">
-                    <span className="text-[10px] font-bold text-muted-gray uppercase tracking-wider">부스트 효율</span>
+                    <span className="text-[10px] font-bold text-muted-gray tracking-wider">광고 효율</span>
                     {cpv != null && <span className="text-charcoal">조회당 <b className="text-ink">₩{cpv.toFixed(1)}</b></span>}
                     {cpc != null && <span className="text-charcoal">클릭당 <b className="text-ink">₩{Math.round(cpc).toLocaleString()}</b></span>}
                   </div>

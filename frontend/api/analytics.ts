@@ -22,7 +22,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     sb.from('contents').select('id, title, status, created_at').order('created_at', { ascending: false }),
     sb.from('click_events').select('content_id, platform, tracking_link_id, clicked_at').gte('clicked_at', sinceStr),
     sb.from('tracking_links').select('*').order('created_at', { ascending: false }),
-    sb.from('platform_connections').select('platform, is_connected, account_name, account_id'),
+    // meta_ads는 광고 계정(인프라 연동)이라 콘텐츠 플랫폼 목록에서 제외
+    sb.from('platform_connections').select('platform, is_connected, account_name, account_id')
+      .neq('platform', 'meta_ads'),
     sb.from('posts').select('*').order('posted_at', { ascending: false }),
     sb.from('post_metrics').select('*').order('captured_at', { ascending: false }).limit(2000),
     sb.from('account_metrics').select('platform, metric, date, value')
