@@ -548,6 +548,34 @@ async function collectAdAccountStatus(
   return { spent, balance, charged }
 }
 
+/** 일별 광고 노출을 플랫폼별로 수집 — 일별 추이에서 자연 도달과 합산해 표시 */
+async function collectDailyAdImpressions(
+  sb: Supabase,
+  token: string,
+  adAccountId: string
+): Promise<number> {
+  const json = await fetchJson(
+    `https://graph.facebook.com/v23.0/${adAccountId}/insights?fields=impressions&breakdowns=publisher_platform&time_increment=1&date_preset=last_30d&access_token=${token}`
+  )
+  const rows = (json.data as Array<{ date_start?: string; publisher_platform?: string; impressions?: string }>) ?? []
+  // publisher_platform: facebook | instagram | messenger | audience_network
+  const PLATFORM_MAP: Record<string, string> = { facebook: 'facebook', instagram: 'instagram' }
+  const out = rows
+    .filter((r) => r.date_start && PLATFORM_MAP[r.publisher_platform ?? ''])
+    .map((r) => ({
+      platform: PLATFORM_MAP[r.publisher_platform as string],
+      metric: 'paid_views',
+      date: r.date_start as string,
+      value: Number(r.impressions ?? 0),
+    }))
+  if (out.length === 0) return 0
+  const { error } = await sb
+    .from('account_metrics')
+    .upsert(out, { onConflict: 'platform,metric,date' })
+  if (error) throw new Error(error.message)
+  return out.length
+}
+
 /** Meta 사용자 토큰 갱신 (60일 만료 — 매일 연장해 사실상 무기한 유지) */
 async function refreshMetaUserToken(sb: Supabase, token: string): Promise<string> {
   const appId = process.env.META_APP_ID
@@ -753,6 +781,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       report.ad_spend = { matched: r.matched, total: r.totalSpend, unmatched: r.unmatched }
       const status = await collectAdAccountStatus(sb, adToken, adsConn.account_id)
       if (status) report.ad_account = status
+      report.account_daily_points += await collectDailyAdImpressions(sb, adToken, adsConn.account_id)
     } catch (err) {
       report.failed.push(`ad spend: ${err instanceof Error ? err.message : String(err)}`)
     }
