@@ -10,13 +10,13 @@ const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
 interface AccountDailyRow { platform: string; metric: string; date: string; value: number }
 
-interface PostAgg { count: number; views: number; engage: number; clicks: number; spend: number }
+interface PostAgg { count: number; views: number; paid: number; engage: number; clicks: number; spend: number }
 interface PostsSummary {
-  total: { count: number; views: number; engage: number; spend: number }
+  total: { count: number; views: number; paid: number; engage: number; spend: number }
   by_platform: Array<{ platform: string } & PostAgg>
   boosted: PostAgg
   organic: PostAgg
-  top: Array<{ id: number; title: string; platform: string; post_url: string; boosted: boolean; views: number; engage: number; clicks: number }>
+  top: Array<{ id: number; title: string; platform: string; post_url: string; boosted: boolean; views: number; paid: number; engage: number; clicks: number }>
 }
 
 interface Stats {
@@ -228,8 +228,10 @@ export default function Dashboard() {
           },
           {
             label: '총 조회',
-            value: (ps?.total.views ?? 0).toLocaleString(),
-            sub: ps && ps.total.count > 0 ? `게시물 평균 ${Math.round(ps.total.views / ps.total.count).toLocaleString()}` : '—',
+            value: ((ps?.total.views ?? 0) + (ps?.total.paid ?? 0)).toLocaleString(),
+            sub: ps && (ps.total.paid ?? 0) > 0
+              ? `자연 ${ps.total.views.toLocaleString()} + 유료 ${ps.total.paid.toLocaleString()}`
+              : ps && ps.total.count > 0 ? `게시물 평균 ${Math.round(ps.total.views / ps.total.count).toLocaleString()}` : '—',
             icon: TrendingUp,
             bgIcon: TrendingUp,
             color: 'text-ink',
@@ -238,7 +240,7 @@ export default function Dashboard() {
           {
             label: '총 참여',
             value: (ps?.total.engage ?? 0).toLocaleString(),
-            sub: ps && ps.total.views > 0 ? `참여율 ${((ps.total.engage / ps.total.views) * 100).toFixed(1)}%` : '—',
+            sub: ps && (ps.total.views + (ps.total.paid ?? 0)) > 0 ? `참여율 ${((ps.total.engage / (ps.total.views + (ps.total.paid ?? 0))) * 100).toFixed(1)}%` : '—',
             icon: Activity,
             bgIcon: Activity,
             color: 'text-success',
@@ -465,8 +467,10 @@ export default function Dashboard() {
       {/* 게시글 성과 요약 */}
       {postsSummary && postsSummary.total.count > 0 && (() => {
         const ps = postsSummary
-        const maxViews = Math.max(...ps.by_platform.map(p => p.views), 1)
-        const cpv = ps.boosted.views > 0 ? ps.boosted.spend / ps.boosted.views : null
+        const maxViews = Math.max(...ps.by_platform.map(p => p.views + p.paid), 1)
+        // 조회당 비용은 광고로 발생한 조회(유료) 기준 — 없으면 부스트 게시물 자연 조회로 폴백
+        const cpvBase = ps.boosted.paid > 0 ? ps.boosted.paid : ps.boosted.views
+        const cpv = cpvBase > 0 ? ps.boosted.spend / cpvBase : null
         const cpc = ps.boosted.clicks > 0 ? ps.boosted.spend / ps.boosted.clicks : null
         return (
           <>
@@ -498,8 +502,9 @@ export default function Dashboard() {
                   플랫폼별 조회수
                 </h4>
                 <div className="space-y-3">
-                  {[...ps.by_platform].sort((a, b) => b.views - a.views).map(p => {
+                  {[...ps.by_platform].sort((a, b) => (b.views + b.paid) - (a.views + a.paid)).map(p => {
                     const color = trackingPlatformColor[p.platform] || '#0c0c0c'
+                    const total = p.views + p.paid
                     return (
                       <div key={p.platform}>
                         <div className="flex items-baseline justify-between mb-1">
@@ -511,13 +516,18 @@ export default function Dashboard() {
                             )}
                           </div>
                           <div className="text-base font-extrabold text-ink">
-                            {p.views.toLocaleString()}
+                            {p.paid > 0 && (
+                              <span className="text-[10px] font-semibold text-muted-gray mr-1.5">
+                                자연 {p.views.toLocaleString()} + 유료 {p.paid.toLocaleString()}
+                              </span>
+                            )}
+                            {total.toLocaleString()}
                             <span className="text-[10px] font-semibold text-ash-gray ml-1">조회</span>
                           </div>
                         </div>
                         <div className="bg-paper-beige rounded-none h-2 overflow-hidden">
                           <div className="h-full rounded-none transition-all duration-700 ease-out"
-                            style={{ width: `${Math.max((p.views / maxViews) * 100, 3)}%`, backgroundColor: color }} />
+                            style={{ width: `${Math.max((total / maxViews) * 100, 3)}%`, backgroundColor: color }} />
                         </div>
                       </div>
                     )
@@ -541,10 +551,13 @@ export default function Dashboard() {
                         {label} · {agg.count}건
                       </div>
                       <div className="space-y-1.5 text-xs text-charcoal flex-1">
-                        <div className="flex justify-between"><span className="text-muted-gray">총 조회</span><span className="font-bold text-ink">{agg.views.toLocaleString()}</span></div>
-                        <div className="flex justify-between"><span className="text-muted-gray">평균 조회</span><span className="font-semibold">{agg.count > 0 ? Math.round(agg.views / agg.count).toLocaleString() : '–'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-gray">총 조회</span><span className="font-bold text-ink">{(agg.views + agg.paid).toLocaleString()}</span></div>
+                        {agg.paid > 0 && (
+                          <div className="flex justify-between"><span className="text-muted-gray">└ 자연 + 유료</span><span className="font-semibold">{agg.views.toLocaleString()} + {agg.paid.toLocaleString()}</span></div>
+                        )}
+                        <div className="flex justify-between"><span className="text-muted-gray">평균 조회</span><span className="font-semibold">{agg.count > 0 ? Math.round((agg.views + agg.paid) / agg.count).toLocaleString() : '–'}</span></div>
                         <div className="flex justify-between"><span className="text-muted-gray">참여</span><span className="font-semibold">{agg.engage.toLocaleString()}</span></div>
-                        <div className="flex justify-between"><span className="text-muted-gray">참여율</span><span className="font-semibold">{agg.views > 0 ? `${((agg.engage / agg.views) * 100).toFixed(1)}%` : '–'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-gray">참여율</span><span className="font-semibold">{(agg.views + agg.paid) > 0 ? `${((agg.engage / (agg.views + agg.paid)) * 100).toFixed(1)}%` : '–'}</span></div>
                         <div className="flex justify-between"><span className="text-muted-gray">클릭</span><span className="font-semibold">{agg.clicks.toLocaleString()}</span></div>
                       </div>
                     </div>
@@ -732,7 +745,8 @@ export default function Dashboard() {
                 </h4>
                 <div className="space-y-2.5">
                   {ps.top.map((item, idx) => {
-                    const maxTop = Math.max(...ps.top.map(t => t.views), 1)
+                    const maxTop = Math.max(...ps.top.map(t => t.views + t.paid), 1)
+                    const itemTotal = item.views + item.paid
                     const color = trackingPlatformColor[item.platform] || '#0c0c0c'
                     const RankIcon = idx === 0 ? Crown : idx === 1 ? Medal : idx === 2 ? Award : null
                     const RowTag = item.post_url ? 'a' : 'div'
@@ -756,16 +770,17 @@ export default function Dashboard() {
                             <span className="text-xs font-semibold text-ink truncate">{item.title}</span>
                             {item.boosted && <Megaphone size={11} className="text-danger shrink-0" />}
                             <span className="text-[11px] text-muted-gray shrink-0 ml-auto">
+                              {item.paid > 0 && <>자연 {item.views.toLocaleString()} + <span className="text-danger font-semibold">유료 {item.paid.toLocaleString()}</span> · </>}
                               참여 {item.engage.toLocaleString()} · 클릭 {item.clicks.toLocaleString()}
                             </span>
                           </div>
                           <div className="bg-paper-beige rounded-none h-2 overflow-hidden">
                             <div className="h-full rounded-none transition-all duration-700"
-                              style={{ width: `${Math.max((item.views / maxTop) * 100, 4)}%`, backgroundColor: color }} />
+                              style={{ width: `${Math.max((itemTotal / maxTop) * 100, 4)}%`, backgroundColor: color }} />
                           </div>
                         </div>
                         <div className="w-16 text-right shrink-0">
-                          <span className="text-base font-extrabold text-ink">{item.views.toLocaleString()}</span>
+                          <span className="text-base font-extrabold text-ink">{itemTotal.toLocaleString()}</span>
                           <span className="text-[10px] font-semibold text-ash-gray ml-0.5">조회</span>
                         </div>
                       </RowTag>

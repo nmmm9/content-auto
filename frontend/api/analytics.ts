@@ -135,8 +135,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const num = (v: unknown) => (typeof v === 'number' ? v : Number(v) || 0)
-  interface PostAgg { count: number; views: number; engage: number; clicks: number; spend: number }
-  const emptyAgg = (): PostAgg => ({ count: 0, views: 0, engage: 0, clicks: 0, spend: 0 })
+  interface PostAgg { count: number; views: number; paid: number; engage: number; clicks: number; spend: number }
+  const emptyAgg = (): PostAgg => ({ count: 0, views: 0, paid: 0, engage: 0, clicks: 0, spend: 0 })
 
   const byPlatform: Record<string, PostAgg> = {}
   const boosted = emptyAgg()
@@ -145,33 +145,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const postRows = posts.map((p) => {
     const latest = latestByPost[p.id] ?? null
     const views = num(latest?.views)
+    const paid = num(p.paid_views)
     const engage = num(latest?.likes) + num(latest?.comments) + num(latest?.shares) + num(latest?.saves)
     const postClicks = p.content_id != null ? (clicksByKey[`${p.content_id}|${p.platform}`] ?? 0) : 0
-    return { post: p, views, engage, clicks: postClicks }
+    return { post: p, views, paid, engage, clicks: postClicks }
   })
 
-  for (const { post, views, engage, clicks: pc } of postRows) {
+  for (const { post, views, paid, engage, clicks: pc } of postRows) {
     const agg = (byPlatform[post.platform] ??= emptyAgg())
     const target = post.boosted ? boosted : organic
     for (const a of [agg, target]) {
       a.count += 1
       a.views += views
+      a.paid += paid
       a.engage += engage
       a.clicks += pc
       a.spend += num(post.boost_spend)
     }
   }
 
+  // 상위 게시글은 자연+유료 합산 조회수 기준 (인앱 조회수 카운터와 같은 기준)
   const topPosts = postRows
-    .sort((a, b) => b.views - a.views)
+    .sort((a, b) => (b.views + b.paid) - (a.views + a.paid))
     .slice(0, 5)
-    .map(({ post, views, engage, clicks: pc }) => ({
+    .map(({ post, views, paid, engage, clicks: pc }) => ({
       id: post.id,
       title: post.title || post.post_url,
       platform: post.platform,
       post_url: post.post_url ?? '',
       boosted: post.boosted,
       views,
+      paid,
       engage,
       clicks: pc,
     }))
@@ -213,6 +217,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       total: {
         count: posts.length,
         views: postRows.reduce((s, r) => s + r.views, 0),
+        paid: postRows.reduce((s, r) => s + r.paid, 0),
         engage: postRows.reduce((s, r) => s + r.engage, 0),
         spend: posts.reduce((s, p) => s + num(p.boost_spend), 0),
       },
