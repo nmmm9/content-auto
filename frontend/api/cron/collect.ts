@@ -417,7 +417,12 @@ function normalizeForMatch(s: string): string {
 
 interface AdRow {
   name?: string
-  creative?: { instagram_permalink_url?: string; effective_object_story_id?: string }
+  creative?: {
+    instagram_permalink_url?: string
+    effective_object_story_id?: string
+    effective_instagram_media_id?: string
+    body?: string
+  }
   insights?: {
     data?: Array<{
       spend?: string
@@ -437,12 +442,12 @@ async function collectAdSpend(
   adAccountId: string
 ): Promise<{ matched: number; totalSpend: number; unmatched: string[] }> {
   const json = await fetchJson(
-    `https://graph.facebook.com/v23.0/${adAccountId}/ads?fields=id,name,creative{instagram_permalink_url,effective_object_story_id},campaign{lifetime_budget,daily_budget,budget_remaining},insights.date_preset(maximum){spend,impressions,reach,clicks,video_play_actions}&limit=100&access_token=${token}`
+    `https://graph.facebook.com/v23.0/${adAccountId}/ads?fields=id,name,creative{instagram_permalink_url,effective_object_story_id,effective_instagram_media_id,body},campaign{lifetime_budget,daily_budget,budget_remaining},insights.date_preset(maximum){spend,impressions,reach,clicks,video_play_actions}&limit=100&access_token=${token}`
   )
   const ads = (json.data as AdRow[]) ?? []
   if (ads.length === 0) return { matched: 0, totalSpend: 0, unmatched: [] }
 
-  const { data: posts } = await sb.from('posts').select('id, title, post_url, platform, posted_at')
+  const { data: posts } = await sb.from('posts').select('id, title, post_url, platform, posted_at, external_id')
   const rows = posts ?? []
 
   // 게시물 단위 집행액·예산 합산 (같은 게시물에 광고가 여러 개일 수 있음)
@@ -460,8 +465,9 @@ async function collectAdSpend(
     totalSpend += spend
     // 캠페인 총 예산 (일예산만 설정된 경우 소진액 + 잔여로 추정)
     const budget = Number(ad.campaign?.lifetime_budget ?? 0)
-    // 광고로 발생한 노출/도달 — 오가닉 조회수와 합쳐지지 않으므로 따로 저장
-    const paidViews = Number(ins?.impressions ?? 0)
+    // 광고로 발생한 조회/도달 — 오가닉 조회수와 합쳐지지 않으므로 따로 저장
+    // 영상 광고는 재생수가 인앱 조회수 카운터에 해당 (노출은 이미지 광고 폴백)
+    const paidViews = Number(ins?.video_play_actions?.[0]?.value ?? ins?.impressions ?? 0)
     const paidReach = Number(ins?.reach ?? 0)
 
     const permalink = ad.creative?.instagram_permalink_url ?? ''
@@ -473,8 +479,13 @@ async function collectAdSpend(
     const targetPlatforms = isInstagramAd ? ['instagram', 'instagram_reels'] : ['facebook']
     const candidates = rows.filter((p) => targetPlatforms.includes(p.platform))
 
-    // ① permalink 숏코드 일치 ② 광고명이 게시물 제목을 포함 (부스트 시 캡션이 광고명에 들어감)
-    let hit = shortcode ? candidates.find((p) => String(p.post_url).includes(shortcode)) : undefined
+    // ① 광고가 기존 게시물을 그대로 쓴 경우: 미디어 ID 또는 permalink 숏코드 일치
+    const igMediaId = ad.creative?.effective_instagram_media_id ?? ''
+    let hit = igMediaId
+      ? candidates.find((p) => String(p.external_id ?? '') === igMediaId)
+      : undefined
+    if (!hit && shortcode) hit = candidates.find((p) => String(p.post_url).includes(shortcode))
+    // ② 광고명이 게시물 제목을 포함 (부스트 시 캡션이 광고명에 들어감)
     if (!hit) {
       const titleHits = candidates.filter((p) => {
         const t = normalizeForMatch(p.title ?? '')
@@ -484,6 +495,21 @@ async function collectAdSpend(
       hit = titleHits.sort(
         (a, b) => new Date(b.posted_at).getTime() - new Date(a.posted_at).getTime()
       )[0]
+    }
+    // ③ 광고 관리자에서 만든 광고는 별도 미디어(다크포스트)라 ①·②가 실패한다.
+    //    캡션을 원본 게시물과 동일하게 재사용하므로, 광고 본문이 게시물 제목(캡션 첫 줄)으로
+    //    시작하면 그 게시물의 광고로 본다. (모든 광고 꼬리에 붙는 공통 슬로건 때문에 startsWith)
+    if (!hit) {
+      const body = normalizeForMatch(ad.creative?.body ?? '')
+      if (body) {
+        const bodyHits = candidates.filter((p) => {
+          const t = normalizeForMatch(p.title ?? '')
+          return t.length >= 6 && body.startsWith(t)
+        })
+        hit = bodyHits.sort(
+          (a, b) => new Date(b.posted_at).getTime() - new Date(a.posted_at).getTime()
+        )[0]
+      }
     }
 
     if (hit) {
