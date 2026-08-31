@@ -433,6 +433,7 @@ interface AdRow {
     }>
   }
   campaign?: { lifetime_budget?: string; daily_budget?: string; budget_remaining?: string }
+  adset?: { lifetime_budget?: string; daily_budget?: string; budget_remaining?: string }
 }
 
 /** 토큰으로 접근 가능한 광고 계정 전체 — 다른 계정이 권한을 공유하면 자동으로 수집 대상에 포함 */
@@ -460,7 +461,7 @@ async function collectAdSpend(
   const ads: AdRow[] = []
   for (const adAccountId of adAccountIds) {
     const json = await fetchJson(
-      `https://graph.facebook.com/v23.0/${adAccountId}/ads?fields=id,name,creative{instagram_permalink_url,effective_object_story_id,effective_instagram_media_id,body},campaign{lifetime_budget,daily_budget,budget_remaining},insights.date_preset(maximum){spend,impressions,reach,clicks,video_play_actions}&limit=100&access_token=${token}`
+      `https://graph.facebook.com/v23.0/${adAccountId}/ads?fields=id,name,creative{instagram_permalink_url,effective_object_story_id,effective_instagram_media_id,body},campaign{lifetime_budget,daily_budget,budget_remaining},adset{lifetime_budget,daily_budget,budget_remaining},insights.date_preset(maximum){spend,impressions,reach,clicks,video_play_actions}&limit=100&access_token=${token}`
     )
     ads.push(...(((json.data as AdRow[]) ?? [])))
   }
@@ -482,12 +483,14 @@ async function collectAdSpend(
     const spend = Number(ins?.spend ?? 0)
     if (!spend) continue
     totalSpend += spend
-    // 캠페인 총 예산 — 일일예산 캠페인은 총예산이 없으므로 현재까지 집행액 + 당일 잔여로 근사
-    const budget =
-      Number(ad.campaign?.lifetime_budget ?? 0) ||
-      (Number(ad.campaign?.daily_budget ?? 0) > 0
-        ? Number(ins?.spend ?? 0) + Number(ad.campaign?.budget_remaining ?? 0)
-        : 0)
+    // 총 예산 — 캠페인(CBO) 또는 광고 세트에 설정될 수 있고,
+    // 일일예산이면 총예산이 없으므로 현재까지 집행액 + 당일 잔여로 근사
+    const lifetime =
+      Number(ad.campaign?.lifetime_budget ?? 0) || Number(ad.adset?.lifetime_budget ?? 0)
+    const daily = Number(ad.campaign?.daily_budget ?? 0) || Number(ad.adset?.daily_budget ?? 0)
+    const remaining =
+      Number(ad.campaign?.budget_remaining ?? 0) || Number(ad.adset?.budget_remaining ?? 0)
+    const budget = lifetime || (daily > 0 ? spend + remaining : 0)
     // 광고로 발생한 조회/도달 — 오가닉 조회수와 합쳐지지 않으므로 따로 저장
     // 영상 광고는 재생수가 인앱 조회수 카운터에 해당 (노출은 이미지 광고 폴백)
     const paidViews = Number(ins?.video_play_actions?.[0]?.value ?? ins?.impressions ?? 0)
