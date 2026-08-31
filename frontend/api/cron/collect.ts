@@ -482,8 +482,12 @@ async function collectAdSpend(
     const spend = Number(ins?.spend ?? 0)
     if (!spend) continue
     totalSpend += spend
-    // 캠페인 총 예산 (일예산만 설정된 경우 소진액 + 잔여로 추정)
-    const budget = Number(ad.campaign?.lifetime_budget ?? 0)
+    // 캠페인 총 예산 — 일일예산 캠페인은 총예산이 없으므로 현재까지 집행액 + 당일 잔여로 근사
+    const budget =
+      Number(ad.campaign?.lifetime_budget ?? 0) ||
+      (Number(ad.campaign?.daily_budget ?? 0) > 0
+        ? Number(ins?.spend ?? 0) + Number(ad.campaign?.budget_remaining ?? 0)
+        : 0)
     // 광고로 발생한 조회/도달 — 오가닉 조회수와 합쳐지지 않으므로 따로 저장
     // 영상 광고는 재생수가 인앱 조회수 카운터에 해당 (노출은 이미지 광고 폴백)
     const paidViews = Number(ins?.video_play_actions?.[0]?.value ?? ins?.impressions ?? 0)
@@ -498,11 +502,14 @@ async function collectAdSpend(
     const targetPlatforms = isInstagramAd ? ['instagram', 'instagram_reels'] : ['facebook']
     const candidates = rows.filter((p) => targetPlatforms.includes(p.platform))
 
-    // ① 광고가 기존 게시물을 그대로 쓴 경우: 미디어 ID 또는 permalink 숏코드 일치
+    // ⓪ 광고 소재의 원본 게시물 ID 정확 일치 — 페북 게시물 소재 광고는 인스타 다크포스트 링크가
+    //    함께 붙어 있어도 원본(페북 게시물)에 귀속해야 한다 (플랫폼 추정보다 우선)
+    const storyId = ad.creative?.effective_object_story_id ?? ''
     const igMediaId = ad.creative?.effective_instagram_media_id ?? ''
-    let hit = igMediaId
-      ? candidates.find((p) => String(p.external_id ?? '') === igMediaId)
-      : undefined
+    let hit =
+      rows.find((p) => String(p.external_id ?? '') === igMediaId && igMediaId !== '') ??
+      rows.find((p) => String(p.external_id ?? '') === storyId && storyId !== '')
+    // ① permalink 숏코드 일치
     if (!hit && shortcode) hit = candidates.find((p) => String(p.post_url).includes(shortcode))
     // ② 광고명이 게시물 제목을 포함 (부스트 시 캡션이 광고명에 들어감)
     if (!hit) {

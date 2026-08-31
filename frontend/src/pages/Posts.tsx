@@ -55,7 +55,7 @@ const COLUMNS: Array<{ key: SortKey; label: string; align: 'left' | 'right' }> =
   { key: 'posted_at', label: '게시일', align: 'right' },
   { key: 'views', label: '자연', align: 'right' },
   { key: 'paid', label: '유료', align: 'right' },
-  { key: 'total', label: '총 도달', align: 'right' },
+  { key: 'total', label: '총 조회', align: 'right' },
   { key: 'likes', label: '좋아요', align: 'right' },
   { key: 'comments', label: '댓글', align: 'right' },
   { key: 'shares', label: '공유', align: 'right' },
@@ -529,7 +529,7 @@ export default function Posts() {
               </div>
               <div className="text-lg xl:text-2xl font-extrabold text-ink">
                 {(s.views + s.paid).toLocaleString()}
-                <span className="text-[10px] xl:text-xs font-semibold text-ash-gray ml-1">총 도달</span>
+                <span className="text-[10px] xl:text-xs font-semibold text-ash-gray ml-1">총 조회</span>
               </div>
               {s.paid > 0 && (
                 <div className="text-[10px] xl:text-[11px] text-muted-gray mt-0.5">
@@ -632,10 +632,10 @@ export default function Posts() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
           {[
             { label: '집행액', value: fmtWon(visibleTotals.spend), accent: 'text-danger' },
-            { label: '유료 노출', value: visibleTotals.paid.toLocaleString(), accent: 'text-danger' },
-            { label: '총 도달', value: (visibleTotals.views + visibleTotals.paid).toLocaleString(), accent: 'text-ink' },
+            { label: '유료 조회', value: visibleTotals.paid.toLocaleString(), accent: 'text-danger' },
+            { label: '총 조회', value: (visibleTotals.views + visibleTotals.paid).toLocaleString(), accent: 'text-ink' },
             {
-              label: '유료 노출당 비용',
+              label: '유료 조회당 비용',
               value: visibleTotals.paid > 0 ? `₩${(visibleTotals.spend / visibleTotals.paid).toFixed(1)}` : '–',
               accent: 'text-ink',
             },
