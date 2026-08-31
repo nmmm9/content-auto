@@ -435,16 +435,35 @@ interface AdRow {
   campaign?: { lifetime_budget?: string; daily_budget?: string; budget_remaining?: string }
 }
 
-/** 광고 계정의 게시물별 집행액을 수집해 posts.boost_spend에 반영 */
+/** 토큰으로 접근 가능한 광고 계정 전체 — 다른 계정이 권한을 공유하면 자동으로 수집 대상에 포함 */
+async function listAdAccounts(token: string, fallbackId: string): Promise<string[]> {
+  try {
+    const json = await fetchJson(
+      `https://graph.facebook.com/v23.0/me/adaccounts?fields=id,amount_spent&limit=50&access_token=${token}`
+    )
+    const ids = ((json.data as Array<{ id?: string; amount_spent?: string }>) ?? [])
+      .filter((a) => a.id && Number(a.amount_spent ?? 0) > 0)
+      .map((a) => a.id as string)
+    if (ids.length > 0) return ids
+  } catch {
+    // me/adaccounts 실패 시 저장된 계정 하나로 폴백
+  }
+  return fallbackId ? [fallbackId] : []
+}
+
+/** 광고 계정들의 게시물별 집행액을 수집해 posts.boost_spend에 반영 */
 async function collectAdSpend(
   sb: Supabase,
   token: string,
-  adAccountId: string
+  adAccountIds: string[]
 ): Promise<{ matched: number; totalSpend: number; unmatched: string[] }> {
-  const json = await fetchJson(
-    `https://graph.facebook.com/v23.0/${adAccountId}/ads?fields=id,name,creative{instagram_permalink_url,effective_object_story_id,effective_instagram_media_id,body},campaign{lifetime_budget,daily_budget,budget_remaining},insights.date_preset(maximum){spend,impressions,reach,clicks,video_play_actions}&limit=100&access_token=${token}`
-  )
-  const ads = (json.data as AdRow[]) ?? []
+  const ads: AdRow[] = []
+  for (const adAccountId of adAccountIds) {
+    const json = await fetchJson(
+      `https://graph.facebook.com/v23.0/${adAccountId}/ads?fields=id,name,creative{instagram_permalink_url,effective_object_story_id,effective_instagram_media_id,body},campaign{lifetime_budget,daily_budget,budget_remaining},insights.date_preset(maximum){spend,impressions,reach,clicks,video_play_actions}&limit=100&access_token=${token}`
+    )
+    ads.push(...(((json.data as AdRow[]) ?? [])))
+  }
   if (ads.length === 0) return { matched: 0, totalSpend: 0, unmatched: [] }
 
   const { data: posts } = await sb.from('posts').select('id, title, post_url, platform, posted_at, external_id')
@@ -544,20 +563,25 @@ async function collectAdSpend(
   return { matched: spendByPost.size, totalSpend, unmatched }
 }
 
-/** 광고 계정 잔액·누적지출 수집 (선불 계정: 충전액 = 잔액 + 사용액) */
+/** 광고 계정 잔액·누적지출 수집 — 접근 가능한 모든 계정 합산 (선불 계정: 충전액 = 잔액 + 사용액) */
 async function collectAdAccountStatus(
   sb: Supabase,
   token: string,
-  adAccountId: string
+  adAccountIds: string[]
 ): Promise<{ spent: number; balance: number; charged: number } | null> {
-  const json = await fetchJson(
-    `https://graph.facebook.com/v23.0/${adAccountId}?fields=amount_spent,spend_cap,is_prepay_account,funding_source_details&access_token=${token}`
-  )
-  const spent = Number(json.amount_spent ?? 0)
-  // 선불 계정은 결제수단 표시 문자열에 사용 가능 잔액이 담긴다 (예: "사용 가능한 잔액(₩42,491 KRW)")
-  const display = (json.funding_source_details as { display_string?: string })?.display_string ?? ''
-  const balanceMatch = display.match(/([\d,]+)/)
-  const balance = balanceMatch ? Number(balanceMatch[1].replace(/,/g, '')) : 0
+  let spent = 0
+  let balance = 0
+  for (const adAccountId of adAccountIds) {
+    const json = await fetchJson(
+      `https://graph.facebook.com/v23.0/${adAccountId}?fields=amount_spent,spend_cap,is_prepay_account,funding_source_details&access_token=${token}`
+    )
+    spent += Number(json.amount_spent ?? 0)
+    // 선불 계정은 결제수단 표시 문자열에 사용 가능 잔액이 담긴다 (예: "사용 가능한 잔액(₩42,491 KRW)")
+    // 후불(카드) 계정은 "Mastercard *8999" 같은 문자열이라 잔액 표기가 있을 때만 파싱
+    const display = (json.funding_source_details as { display_string?: string })?.display_string ?? ''
+    const balanceMatch = /잔액|balance/i.test(display) ? display.match(/([\d,]+)/) : null
+    balance += balanceMatch ? Number(balanceMatch[1].replace(/,/g, '')) : 0
+  }
   const charged = spent + balance
 
   if (!spent && !balance) return null
@@ -574,26 +598,31 @@ async function collectAdAccountStatus(
   return { spent, balance, charged }
 }
 
-/** 일별 광고 노출을 플랫폼별로 수집 — 일별 추이에서 자연 도달과 합산해 표시 */
+/** 일별 광고 노출을 플랫폼별로 수집 — 접근 가능한 모든 계정 합산, 일별 추이에서 자연 도달과 합산해 표시 */
 async function collectDailyAdImpressions(
   sb: Supabase,
   token: string,
-  adAccountId: string
+  adAccountIds: string[]
 ): Promise<number> {
-  const json = await fetchJson(
-    `https://graph.facebook.com/v23.0/${adAccountId}/insights?fields=impressions&breakdowns=publisher_platform&time_increment=1&date_preset=last_30d&access_token=${token}`
-  )
-  const rows = (json.data as Array<{ date_start?: string; publisher_platform?: string; impressions?: string }>) ?? []
   // publisher_platform: facebook | instagram | messenger | audience_network
   const PLATFORM_MAP: Record<string, string> = { facebook: 'facebook', instagram: 'instagram' }
-  const out = rows
-    .filter((r) => r.date_start && PLATFORM_MAP[r.publisher_platform ?? ''])
-    .map((r) => ({
-      platform: PLATFORM_MAP[r.publisher_platform as string],
-      metric: 'paid_views',
-      date: r.date_start as string,
-      value: Number(r.impressions ?? 0),
-    }))
+  const byKey = new Map<string, number>()
+  for (const adAccountId of adAccountIds) {
+    const json = await fetchJson(
+      `https://graph.facebook.com/v23.0/${adAccountId}/insights?fields=impressions&breakdowns=publisher_platform&time_increment=1&date_preset=last_30d&access_token=${token}`
+    )
+    const rows = (json.data as Array<{ date_start?: string; publisher_platform?: string; impressions?: string }>) ?? []
+    for (const r of rows) {
+      const platform = PLATFORM_MAP[r.publisher_platform ?? '']
+      if (!r.date_start || !platform) continue
+      const key = `${platform}|${r.date_start}`
+      byKey.set(key, (byKey.get(key) ?? 0) + Number(r.impressions ?? 0))
+    }
+  }
+  const out = [...byKey.entries()].map(([key, value]) => {
+    const [platform, date] = key.split('|')
+    return { platform, metric: 'paid_views', date, value }
+  })
   if (out.length === 0) return 0
   const { error } = await sb
     .from('account_metrics')
@@ -803,11 +832,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (adsConn?.access_token && adsConn.account_id) {
     try {
       const adToken = await refreshMetaUserToken(sb, adsConn.access_token)
-      const r = await collectAdSpend(sb, adToken, adsConn.account_id)
+      // 접근 가능한 모든 광고 계정 순회 — 담당자 계정이 권한을 공유하면 자동 포함
+      const adAccountIds = await listAdAccounts(adToken, adsConn.account_id)
+      const r = await collectAdSpend(sb, adToken, adAccountIds)
       report.ad_spend = { matched: r.matched, total: r.totalSpend, unmatched: r.unmatched }
-      const status = await collectAdAccountStatus(sb, adToken, adsConn.account_id)
+      const status = await collectAdAccountStatus(sb, adToken, adAccountIds)
       if (status) report.ad_account = status
-      report.account_daily_points += await collectDailyAdImpressions(sb, adToken, adsConn.account_id)
+      report.account_daily_points += await collectDailyAdImpressions(sb, adToken, adAccountIds)
     } catch (err) {
       report.failed.push(`ad spend: ${err instanceof Error ? err.message : String(err)}`)
     }
